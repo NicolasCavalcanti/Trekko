@@ -1,0 +1,82 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  password  String
+  role      UserRole @default(user)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  guide     Guide?   @relation(fields: [guideId], references: [id])
+  guideId   Int?
+}
+
+enum UserRole {
+  user
+  guide
+  admin
+}
+
+model Guide {
+  id          Int                 @id @default(autoincrement())
+  name        String
+  email       String
+  phone       String?
+  cadastur    String              @unique
+  uf          String?
+  city        String?
+  validity    DateTime?
+  specialties String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  imports     GuideImportItem[]
+}
+
+model GuideImport {
+  id        Int           @id @default(autoincrement())
+  status    ImportStatus  @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  items     GuideImportItem[]
+}
+
+enum ImportStatus {
+  PENDING
+  COMPLETED
+  ROLLED_BACK
+}
+
+model GuideImportItem {
+  id            Int              @id @default(autoincrement())
+  guideImportId Int
+  cadastur      String
+  name          String
+  email         String?
+  phone         String?
+  uf            String?
+  city          String?
+  validity      DateTime?
+  specialties   String?
+  status        ImportItemStatus @default(PENDING)
+  error         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  guideImport   GuideImport      @relation(fields: [guideImportId], references: [id])
+  guide         Guide?           @relation(fields: [guideId], references: [id])
+  guideId       Int?
+}
+
+enum ImportItemStatus {
+  PENDING
+  VALID
+  ERROR
+  IMPORTED
+}
