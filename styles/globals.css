@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-white text-gray-800;
+:root {
+  --bg: #ffffff;
+  --fg: #333333;
 }
+body { background: var(--bg); color: var(--fg); }
+a { text-decoration: none; }

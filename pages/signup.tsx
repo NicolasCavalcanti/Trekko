@@ -15,7 +15,7 @@ export default function Signup() {
           <label htmlFor="password" className="block text-sm font-medium">Senha</label>
           <input id="password" type="password" className="mt-1 p-2 border w-full" />
         </div>
-        <button type="submit" className="w-full bg-trekko-yellow hover:bg-yellow-700 text-white py-2 px-4 rounded">
+        <button type="submit" className="w-full bg-trekko-yellow text-black hover:brightness-95 py-2 px-4 rounded">
           Criar Conta
         </button>
       </form>

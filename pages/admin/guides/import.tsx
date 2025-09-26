@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import Papa from 'papaparse'
 
 export default function GuideImport() {
-  const [file, setFile] = useState<File | null>(null)
   const [columns, setColumns] = useState<string[]>([])
   const [data, setData] = useState<any[]>([])
   const [mapping, setMapping] = useState<{ [key: string]: string }>({})
@@ -14,7 +13,6 @@ export default function GuideImport() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
-    setFile(f)
     Papa.parse(f, {
       header: true,
       skipEmptyLines: true,
@@ -24,9 +22,7 @@ export default function GuideImport() {
         setPreview((results.data as any[]).slice(0, 5))
         setStep('mapping')
       },
-      error: (err: any) => {
-        setErrors([err.message])
-      },
+      error: (err: any) => setErrors([err.message])
     })
   }
 
@@ -45,9 +41,7 @@ export default function GuideImport() {
     const duplicates: string[] = []
     data.forEach((row) => {
       const cad = row[mapping['cadastur']]
-      if (cad) {
-        cadasturValues[cad] = (cadasturValues[cad] || 0) + 1
-      }
+      if (cad) cadasturValues[cad] = (cadasturValues[cad] || 0) + 1
     })
     Object.keys(cadasturValues).forEach((cad) => {
       if (cadasturValues[cad] > 1) duplicates.push(cad)
@@ -57,7 +51,7 @@ export default function GuideImport() {
   }
 
   const commit = () => {
-    alert('Importação confirmada!')
+    alert('Importação confirmada! (stub)')
     setStep('commit')
   }
 
@@ -68,20 +62,14 @@ export default function GuideImport() {
         <div className="space-y-4">
           <p>Faça upload do arquivo CSV exportado do Cadastur.</p>
           <input type="file" accept=".csv,text/csv" onChange={handleFileChange} className="border p-2" />
-          {errors.length > 0 && (
-            <div className="text-red-600">
-              {errors.map((e) => (
-                <p key={e}>{e}</p>
-              ))}
-            </div>
-          )}
+          {errors.length > 0 && <div className="text-red-600">{errors.map((e) => <p key={e}>{e}</p>)}</div>}
         </div>
       )}
       {step === 'mapping' && (
         <div className="space-y-4">
           <p>Mapeie as colunas do CSV com os campos do sistema.</p>
           {['cadastur', 'name', 'email', 'phone', 'uf', 'city', 'validity', 'specialties'].map((field) => (
-            <div key={field} className="flex items-center space-x-2">
+            <div key={field} className="flex items-center gap-2">
               <label className="w-32 capitalize">{field}</label>
               <select
                 value={mapping[field] || ''}
@@ -89,45 +77,26 @@ export default function GuideImport() {
                 className="border p-2 flex-1"
               >
                 <option value="">Selecione...</option>
-                {columns.map((col) => (
-                  <option key={col} value={col}>
-                    {col}
-                  </option>
-                ))}
+                {columns.map((col) => <option key={col} value={col}>{col}</option>)}
               </select>
             </div>
           ))}
-          <button onClick={runDryRun} className="mt-4 bg-trekko-yellow hover:bg-yellow-700 text-white px-4 py-2 rounded">
+          <button onClick={runDryRun} className="mt-4 bg-trekko-yellow text-black hover:brightness-95 px-4 py-2 rounded">
             Dry Run
           </button>
-          {errors.length > 0 && (
-            <div className="text-red-600">
-              {errors.map((e) => (
-                <p key={e}>{e}</p>
-              ))}
-            </div>
-          )}
+          {errors.length > 0 && <div className="text-red-600">{errors.map((e) => <p key={e}>{e}</p>)}</div>}
         </div>
       )}
       {step === 'preview' && (
         <div className="space-y-4">
           <h2 className="text-2xl font-semibold">Pré-visualização</h2>
-          {duplicateCadastur.length > 0 && (
-            <div className="text-red-600">
-              <p>Cadastur duplicados encontrados: {duplicateCadastur.join(', ')}</p>
-            </div>
-          )}
+          {duplicateCadastur.length > 0 && <div className="text-red-600"><p>Cadastur duplicados: {duplicateCadastur.join(', ')}</p></div>}
           <div className="overflow-auto border">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   {['cadastur', 'name', 'email', 'phone', 'uf', 'city', 'validity', 'specialties'].map((field) => (
-                    <th
-                      key={field}
-                      className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {field}
-                    </th>
+                    <th key={field} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{field}</th>
                   ))}
                 </tr>
               </thead>
@@ -135,16 +104,14 @@ export default function GuideImport() {
                 {preview.map((row, idx) => (
                   <tr key={idx} className={duplicateCadastur.includes(row[mapping['cadastur']]) ? 'bg-red-50' : ''}>
                     {['cadastur', 'name', 'email', 'phone', 'uf', 'city', 'validity', 'specialties'].map((field) => (
-                      <td key={field} className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
-                        {row[mapping[field]] || ''}
-                      </td>
+                      <td key={field} className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{row[mapping[field]] || ''}</td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <button onClick={commit} className="bg-trekko-yellow hover:bg-yellow-700 text-white px-4 py-2 rounded">
+          <button onClick={commit} className="bg-trekko-yellow text-black hover:brightness-95 px-4 py-2 rounded">
             Importar
           </button>
         </div>

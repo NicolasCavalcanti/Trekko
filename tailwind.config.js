@@ -3,7 +3,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'trekko-red': '#BA1E0A',
+        'trekko-green': '#2D6A4F',
+        'trekko-brown': '#7C4B2A',
+        'trekko-blue': '#1E3A5F',
+        'trekko-sand': '#E7D9C0',
+        'trekko-graphite': '#333333',
         'trekko-yellow': '#E6A30A',
       },
     },
