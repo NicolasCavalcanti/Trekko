@@ -1,0 +1,213 @@
+<!--
+  Página de cadastro para Trekkers e Guias – Trekko Brasil
+  Esta página permite que usuários criem contas como Trekker ou Guia. Ela
+  reutiliza o layout de navegação e estilo do restante do site.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro – Trekko Brasil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="cadastro-page">
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-mountain"></i>
+                Trekko Brasil
+            </a>
+            <nav id="navMenu" class="nav-menu">
+                <a href="trilhas.html" class="nav-link">Trilhas</a>
+                <a href="guias.html" class="nav-link">Guias</a>
+                <a href="expedicoes.html" class="nav-link">Expedições</a>
+                <a href="sobre.html" class="nav-link">Sobre</a>
+                <a href="blog.html" class="nav-link">Blog</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="global-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Busque trilhas, guias, parques..." autocomplete="off">
+                    <div id="searchSuggestions" class="suggestions"></div>
+                </div>
+                <div id="guideCTA" class="guide-cta">
+                    <a href="cadastrar_guia.html" class="btn btn-outline">Sou Guia</a>
+                </div>
+                <!-- Ocultamos os botões de login/cadastro nesta página -->
+                <div class="auth-buttons" style="display:none;"></div>
+                <div id="userNav" class="user-nav">
+                    <button class="user-button"><i class="fas fa-user"></i> <span class="user-name"></span> <i class="fas fa-chevron-down"></i></button>
+                    <div class="user-menu"></div>
+                </div>
+                <a href="index.html" class="btn btn-secondary">Voltar</a>
+                <button id="mobileMenuBtn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+    <main>
+        <section class="cadastro-section">
+            <div class="container">
+                <h1 class="section-title" style="text-align:center;margin-bottom:1.5rem;color:var(--color-primary);">Crie sua conta</h1>
+                <div class="tabs">
+                    <button id="tabTrekker" class="tab-button active">Sou Trekker</button>
+                    <button id="tabGuide" class="tab-button">Sou Guia</button>
+                </div>
+                <div id="trekkerFormWrapper" class="form-wrapper">
+                    <h2 class="form-title">Cadastro de Trekker</h2>
+                    <form id="trekkerForm" class="register-form">
+                        <div class="form-group">
+                            <label for="trekkerName">Nome completo *</label>
+                            <input type="text" id="trekkerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="trekkerEmail">E‑mail *</label>
+                            <input type="email" id="trekkerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="trekkerPassword">Senha *</label>
+                            <input type="password" id="trekkerPassword" required pattern="(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]).{8,}">
+                            <small class="help-text">Mínimo 8 caracteres, incluindo número e caractere especial.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="trekkerPhone">Telefone / WhatsApp</label>
+                            <input type="tel" id="trekkerPhone">
+                        </div>
+                        <div class="form-group">
+                            <label for="trekkerState">Estado</label>
+                            <input type="text" id="trekkerState">
+                        </div>
+                        <div class="form-group">
+                            <label for="trekkerCity">Cidade</label>
+                            <input type="text" id="trekkerCity">
+                        </div>
+                        <div class="form-group">
+                            <label for="trekkerPreferences">Preferências (tipo de trilha/dificuldade)</label>
+                            <input type="text" id="trekkerPreferences">
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="trekkerTerms" required>
+                            <label for="trekkerTerms">Aceito os <a href="politicas/termos.html" target="_blank">Termos de Uso</a> e a <a href="politicas/privacidade.html" target="_blank">Política de Privacidade</a></label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Cadastrar Trekker</button>
+                    </form>
+                </div>
+                <div id="guideFormWrapper" class="form-wrapper" style="display:none;">
+                    <h2 class="form-title">Cadastro de Guia</h2>
+                    <form id="guideForm" class="register-form">
+                        <div class="form-group">
+                            <label for="guideName">Nome completo *</label>
+                            <input type="text" id="guideName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guideEmail">E‑mail *</label>
+                            <input type="email" id="guideEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guidePassword">Senha *</label>
+                            <input type="password" id="guidePassword" required pattern="(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?]).{8,}">
+                            <small class="help-text">Mínimo 8 caracteres, incluindo número e caractere especial.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="guidePhone">Telefone / WhatsApp *</label>
+                            <input type="tel" id="guidePhone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guideCadastur">Número CADASTUR *</label>
+                            <input type="text" id="guideCadastur" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guideDocs">Documentos (PDF/JPG)</label>
+                            <input type="file" id="guideDocs" accept="application/pdf,image/*" multiple>
+                        </div>
+                        <div class="form-group">
+                            <label for="guideLocation">Local de atuação (UF/municípios/parques)</label>
+                            <input type="text" id="guideLocation">
+                        </div>
+                        <div class="form-group">
+                            <label for="guideBio">Bio / Descrição</label>
+                            <textarea id="guideBio" rows="4"></textarea>
+                        </div>
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="guideTerms" required>
+                            <label for="guideTerms">Aceito os <a href="politicas/termos.html" target="_blank">Termos de Uso</a> e a <a href="politicas/privacidade.html" target="_blank">Política de Privacidade</a></label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Cadastrar Guia</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4 class="footer-title">Explorar</h4>
+                <a href="trilhas.html" class="footer-link">Trilhas</a>
+                <a href="guias.html" class="footer-link">Guias</a>
+                <a href="expedicoes.html" class="footer-link">Expedições</a>
+                <a href="blog.html" class="footer-link">Blog</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Institucional</h4>
+                <a href="sobre.html" class="footer-link">Sobre</a>
+                <a href="#" class="footer-link">Contato</a>
+                <a href="#" class="footer-link">Imprensa</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Suporte</h4>
+                <a href="ajuda.html" class="footer-link">Ajuda / FAQ</a>
+                <a href="politicas/privacidade.html" class="footer-link">Política de Privacidade</a>
+                <a href="politicas/termos.html" class="footer-link">Termos de Uso</a>
+                <a href="politicas/cancelamento.html" class="footer-link">Política de Cancelamento</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Siga-nos</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
+    </footer>
+    <script src="data/trails.js"></script>
+    <script src="data/expeditions.js"></script>
+    <script src="data/guides.js"></script>
+    <script src="auth.js"></script>
+    <script src="scripts.js"></script>
+    <script>
+        // Form toggle logic for trekker/guide
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabTrekker = document.getElementById('tabTrekker');
+            const tabGuide = document.getElementById('tabGuide');
+            const trekkerWrapper = document.getElementById('trekkerFormWrapper');
+            const guideWrapper = document.getElementById('guideFormWrapper');
+            function showTrekker() {
+                tabTrekker.classList.add('active');
+                tabGuide.classList.remove('active');
+                trekkerWrapper.style.display = 'block';
+                guideWrapper.style.display = 'none';
+            }
+            function showGuide() {
+                tabGuide.classList.add('active');
+                tabTrekker.classList.remove('active');
+                guideWrapper.style.display = 'block';
+                trekkerWrapper.style.display = 'none';
+            }
+            tabTrekker.addEventListener('click', showTrekker);
+            tabGuide.addEventListener('click', showGuide);
+            // Activate tab based on anchor (#guia or #trekker)
+            if (window.location.hash === '#guia') {
+                showGuide();
+            } else if (window.location.hash === '#trekker') {
+                showTrekker();
+            }
+        });
+    </script>
+</body>
+</html>

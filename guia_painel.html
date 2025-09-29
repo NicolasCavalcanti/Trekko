@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Guia – Trekko Brasil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="guide-panel-page">
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo"><i class="fas fa-mountain"></i> Trekko Brasil</a>
+            <nav id="navMenu" class="nav-menu">
+                <a href="trilhas.html" class="nav-link">Trilhas</a>
+                <a href="guias.html" class="nav-link">Guias</a>
+                <a href="expedicoes.html" class="nav-link">Expedições</a>
+                <a href="sobre.html" class="nav-link">Sobre</a>
+                <a href="blog.html" class="nav-link">Blog</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="global-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Busque trilhas, guias, parques..." autocomplete="off">
+                    <div id="searchSuggestions" class="suggestions"></div>
+                </div>
+                <div id="guideCTA" class="guide-cta">
+                    <a href="cadastrar_guia.html" class="btn btn-outline">Sou Guia</a>
+                </div>
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="btn btn-secondary">Entrar</button>
+                    <button id="registerBtn" class="btn btn-primary">Cadastrar-se</button>
+                </div>
+                <div id="userNav" class="user-nav">
+                    <button class="user-button"><i class="fas fa-user"></i> <span class="user-name"></span> <i class="fas fa-chevron-down"></i></button>
+                    <div class="user-menu"></div>
+                </div>
+                <button id="mobileMenuBtn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="modal-box">
+            <button id="loginClose" class="modal-close">&times;</button>
+            <h2>Entrar no Trekko</h2>
+            <form>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Senha" required>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            <p style="font-size:0.875rem;">Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+        </div>
+    </div>
+
+    <main class="container" style="padding-top:2rem;">
+        <h1 style="font-family:'Sora',sans-serif;color:var(--color-primary);margin-bottom:1rem;">Painel do Guia</h1>
+        <p style="font-size:0.95rem;color:var(--color-muted);margin-bottom:2rem;">Gerencie suas expedições, agenda, documentos e perfil.</p>
+        <div class="guide-panel-content" style="display:flex;flex-wrap:wrap;gap:2rem;">
+            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Resumo</h2>
+                <p>Visão geral de próximas expedições, reservas recentes, métricas e avaliações. Em construção.</p>
+            </div>
+            <div style="flex:2 1 400px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Minhas Expedições</h2>
+                <p>Gerencie e crie expedições aqui. Você poderá definir trilha, datas, preço e vagas. Em construção.</p>
+            </div>
+            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Agenda</h2>
+                <p>Configure sua disponibilidade e datas bloqueadas no calendário. Em construção.</p>
+            </div>
+            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Mensagens</h2>
+                <p>Central de comunicação com trekkers. Em construção.</p>
+            </div>
+            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Documentos & Verificações</h2>
+                <p>Envie e gerencie seus certificados, carteira de guia e CADASTUR. Em construção.</p>
+            </div>
+            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Perfil Público</h2>
+                <p>Edite suas fotos, bio, áreas de atuação e idiomas. Em construção.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4 class="footer-title">Explorar</h4>
+                <a href="trilhas.html" class="footer-link">Trilhas</a>
+                <a href="guias.html" class="footer-link">Guias</a>
+                <a href="expedicoes.html" class="footer-link">Expedições</a>
+                <a href="blog.html" class="footer-link">Blog</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Institucional</h4>
+                <a href="sobre.html" class="footer-link">Sobre</a>
+                <a href="#" class="footer-link">Contato</a>
+                <a href="#" class="footer-link">Imprensa</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Suporte</h4>
+                <a href="ajuda.html" class="footer-link">Ajuda / FAQ</a>
+                <a href="politicas/privacidade.html" class="footer-link">Política de Privacidade</a>
+                <a href="politicas/termos.html" class="footer-link">Termos de Uso</a>
+                <a href="politicas/cancelamento.html" class="footer-link">Política de Cancelamento</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Siga-nos</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
+    </footer>
+
+    <script src="data/trails.js"></script>
+    <script src="data/expeditions.js"></script>
+    <script src="data/guides.js"></script>
+    <script src="auth.js"></script>
+    <script src="scripts.js"></script>
+</body>
+</html>

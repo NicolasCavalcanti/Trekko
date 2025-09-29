@@ -1,0 +1,1525 @@
+/*
+ * Trekko Inspired Website JavaScript
+ *
+ * This file centralises the interactive behaviour for all pages in
+ * the static Trekko site. It detects which page is currently loaded
+ * based on the presence of specific elements and executes the
+ * appropriate logic. Features include:
+ *
+ * - Responsive mobile menu toggle
+ * - Login/register modal handling
+ * - Passing search filters from the homepage to the trilhas page
+ * - Filtering and rendering of sample trail and guide data
+ * - Simple modal implementation for trail details and guide contact
+ * - Animated counters on the about page using the Intersection Observer
+ */
+
+// Utility: mapping state codes to names for display purposes
+const STATE_NAMES = {
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia', CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo',
+  GO: 'Goiás', MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais', PA: 'Pará', PB: 'Paraíba',
+  PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí', RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul', RO: 'Rondônia',
+  RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo', SE: 'Sergipe', TO: 'Tocantins'
+};
+
+// Utility: slugify a string (remove accents, spaces and special characters, replace with hyphens).
+function slugify(str) {
+  return String(str || '')
+    .normalize('NFD')
+    .replace(/[^\p{L}\p{N}\s-]+/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * Compute slug properties for trails and guides loaded from the global datasets.
+ * The slug helps build SEO-friendly URLs. It uses state/city/name for trails
+ * and name plus id for guides. Only computed once per page load.
+ */
+function computeSlugs() {
+  // Trails slug: first state abbreviation + city + trail name
+  if (window.trailsData && Array.isArray(window.trailsData)) {
+    window.trailsData.forEach(t => {
+      if (!t.slug) {
+        const firstState = (t.state || '').split('/')[0].toLowerCase();
+        const citySlug = slugify(t.city || '');
+        const nameSlug = slugify(t.name || '');
+        t.slug = `${firstState}${citySlug ? '-' + citySlug : ''}-${nameSlug}`;
+      }
+    });
+  }
+  // Guides slug: name + last four characters of id to ensure uniqueness
+  if (window.guidesData && Array.isArray(window.guidesData)) {
+    window.guidesData.forEach(g => {
+      if (!g.slug) {
+        const nameSlug = slugify(g.name || g.nome_completo || '');
+        const idPart = String(g.id || '').slice(-4);
+        g.slug = `${nameSlug}${idPart ? '-' + idPart : ''}`;
+      }
+    });
+  }
+
+/**
+ * Normalises a single entry from the CADASTUR CSV into a guide object
+ * with standard property names. This allows us to display guide profiles
+ * consistently using either the internal guides dataset or the CADASTUR
+ * dataset. Note: This does not attach additional properties such as
+ * ratings or categories unless present in the raw entry.
+ * @param {Object} entry Raw CADASTUR entry
+ * @returns {Object} Normalised guide object
+ */
+function normalizeCadasturGuide(entry) {
+  const guide = {};
+  // Name
+  guide.name = entry.nome || entry.nome_completo || entry.name || '';
+  // Cadastur number
+  guide.cadastur = entry.numero_cadastur || entry.numero || entry.numero_cad || entry['nº cadastur'] || entry['número cadastur'] || '';
+  // UF/state
+  guide.uf = entry.uf || entry.estado || entry.state || '';
+  // City/municipality
+  guide.city = entry.municipio || entry.município || entry.cidade || entry.city || '';
+  // Languages
+  if (entry.idiomas) {
+    if (Array.isArray(entry.idiomas)) {
+      guide.languages = entry.idiomas;
+    } else {
+      guide.languages = String(entry.idiomas)
+        .split(/\||,|;/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+  } else {
+    guide.languages = [];
+  }
+  // Contacts: parse key:value pairs separated by | or comma
+  guide.contacts = [];
+  if (entry.contatos) {
+    const parts = String(entry.contatos).split(/\||,/);
+    parts.forEach(part => {
+      const [type, value] = part.split(/:|：/);
+      if (value) {
+        guide.contacts.push({ type: type.trim(), value: value.trim() });
+      }
+    });
+  }
+  // Photo
+  guide.photo = entry.foto || entry.foto_url || entry.image || entry.foto_perfil || '';
+  // Also assign image to photo so that our display logic can use a single
+  // field regardless of the source dataset. This helps avoid cases where
+  // the guide profile page checks guide.image and falls back to a generic
+  // placeholder even though a photo exists in the CADASTUR data.
+  guide.image = guide.photo;
+  // Bio/description
+  guide.bio = entry.bio || entry.descricao || entry.descrição || entry.description || '';
+  // Categories and segments if present (may be arrays or strings)
+  if (entry.categorias || entry.category) {
+    const cat = entry.categorias || entry.category;
+    guide.categorias = Array.isArray(cat) ? cat : String(cat).split(/\||,|;/).map(s => s.trim()).filter(Boolean);
+  }
+  if (entry.segmentos || entry.segment) {
+    const seg = entry.segmentos || entry.segment;
+    guide.segmentos = Array.isArray(seg) ? seg : String(seg).split(/\||,|;/).map(s => s.trim()).filter(Boolean);
+  }
+  // Driver flag
+  if (typeof entry.guia_motorista !== 'undefined') {
+    guide.guia_motorista = Boolean(entry.guia_motorista);
+  }
+  // Rating if available (rare in raw CSV)
+  if (typeof entry.rating !== 'undefined') {
+    guide.rating = entry.rating;
+  }
+  // Precomputed slug
+  guide.slug = entry.slug;
+  // Use cadastur number or slug as id fallback
+  guide.id = entry.id || guide.cadastur || guide.slug;
+  return guide;
+}
+  // CADASTUR data slug: use guide name + last 4 digits of Cadastur number
+  if (window.cadasturData && Array.isArray(window.cadasturData)) {
+    window.cadasturData.forEach(entry => {
+      if (!entry.slug) {
+        const nameSlug = slugify(entry.nome || entry.nome_completo || entry.name || '');
+        // find cadastur number if present
+        const cad = entry.numero_cadastur || entry.numero || entry.numero_cad || entry['nº cadastur'] || entry['número cadastur'] || '';
+        const idPart = cad ? String(cad).slice(-4) : '';
+        entry.slug = `${nameSlug}${idPart ? '-' + idPart : ''}`;
+      }
+    });
+  }
+}
+
+/**
+ * Setup the top navigation bar according to the current user session.
+ * Shows login/register buttons for anonymous users or a user dropdown for
+ * authenticated users. Also binds logout behaviour.
+ */
+async function setupNavigation() {
+  const navLoginButtons = document.querySelector('.auth-buttons');
+  const userNav = document.getElementById('userNav');
+  const guideCTA = document.getElementById('guideCTA');
+  try {
+    const session = await Auth.getSession();
+    if (!session) {
+      // Anonymous visitor
+      if (navLoginButtons) navLoginButtons.style.display = 'flex';
+      if (userNav) userNav.style.display = 'none';
+      if (guideCTA) guideCTA.style.display = 'block';
+    } else {
+      // Logged in user
+      if (navLoginButtons) navLoginButtons.style.display = 'none';
+      if (userNav) {
+        userNav.style.display = 'block';
+        // Hide or show CTA for guides: show for non-guide roles
+        if (guideCTA) guideCTA.style.display = (session.user.type === 'guide') ? 'none' : 'block';
+        const name = session.user.name || '';
+        const firstName = name.split(' ')[0];
+        const nameSpan = userNav.querySelector('.user-name');
+        if (nameSpan) nameSpan.textContent = firstName;
+        const menu = userNav.querySelector('.user-menu');
+        if (menu) {
+          let html = `<a href="conta.html">Minha Conta</a>`;
+          html += `<a href="conta.html#mensagens">Mensagens</a>`;
+          html += `<a href="conta.html#reservas">Minhas Reservas</a>`;
+          if (session.user.type === 'guide') {
+            html += `<a href="guia_painel.html">Painel do Guia</a>`;
+          }
+          if (session.user.type === 'admin') {
+            html += `<a href="admin.html">Admin</a>`;
+          }
+          html += `<a href="#" id="logoutLink">Sair</a>`;
+          menu.innerHTML = html;
+        }
+        // Bind logout
+        const logoutLink = userNav.querySelector('#logoutLink');
+        if (logoutLink) {
+          logoutLink.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            Auth.logout();
+            window.location.reload();
+          });
+        }
+        // Toggle menu on click
+        const userButton = userNav.querySelector('.user-button');
+        const menuBox = userNav.querySelector('.user-menu');
+        if (userButton && menuBox) {
+          userButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuBox.classList.toggle('open');
+          });
+          // Close menu when clicking outside
+          document.addEventListener('click', (e) => {
+            if (!userNav.contains(e.target)) {
+              menuBox.classList.remove('open');
+            }
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Falha ao configurar navegação:', err);
+  }
+}
+
+/**
+ * Configura a barra de busca global com autosuggest.
+ * Procura por trilhas, guias, estados e cidades. Ao selecionar
+ * um item, redireciona para a página correspondente com filtros.
+ */
+function setupGlobalSearch() {
+  const input = document.getElementById('globalSearchInput');
+  const suggestionsBox = document.getElementById('searchSuggestions');
+  if (!input || !suggestionsBox) return;
+  // Construir o conjunto de sugestões combinando trilhas, guias, estados e cidades
+  let suggestionList = [];
+  // Trails
+  if (Array.isArray(window.trailsData)) {
+    window.trailsData.forEach(t => suggestionList.push({ type: 'trail', id: t.id, name: t.name }));
+  }
+  // Guides
+  if (Array.isArray(window.guidesData)) {
+    window.guidesData.forEach(g => suggestionList.push({ type: 'guide', id: g.id, name: g.name }));
+  }
+  // States
+  const stateSet = new Set();
+  if (Array.isArray(window.trailsData)) {
+    window.trailsData.forEach(t => {
+      t.state.split('/').forEach(s => stateSet.add(s.trim()));
+    });
+  }
+  if (Array.isArray(window.guidesData)) {
+    window.guidesData.forEach(g => {
+      if (g.uf) stateSet.add(g.uf);
+    });
+  }
+  stateSet.forEach(s => suggestionList.push({ type: 'state', id: s, name: STATE_NAMES[s] || s }));
+  // Cities
+  const citySet = new Set();
+  if (Array.isArray(window.trailsData)) {
+    window.trailsData.forEach(t => citySet.add(t.city));
+  }
+  if (Array.isArray(window.guidesData)) {
+    window.guidesData.forEach(g => citySet.add(g.municipio));
+  }
+  citySet.forEach(c => suggestionList.push({ type: 'city', id: c, name: c }));
+  // Input event
+  input.addEventListener('input', () => {
+    const query = input.value.trim().toLowerCase();
+    suggestionsBox.innerHTML = '';
+    if (!query) {
+      suggestionsBox.classList.remove('open');
+      return;
+    }
+    const matches = suggestionList.filter(item => item.name.toLowerCase().includes(query)).slice(0, 5);
+    if (matches.length === 0) {
+      suggestionsBox.classList.remove('open');
+      return;
+    }
+    matches.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'suggestion-item';
+      const icon = document.createElement('i');
+      if (item.type === 'trail') icon.className = 'fas fa-mountain';
+      else if (item.type === 'guide') icon.className = 'fas fa-user';
+      else if (item.type === 'state' || item.type === 'city') icon.className = 'fas fa-map-marker-alt';
+      div.appendChild(icon);
+      const span = document.createElement('span');
+      span.textContent = item.name;
+      div.appendChild(span);
+      div.addEventListener('click', () => handleSuggestionSelect(item));
+      suggestionsBox.appendChild(div);
+    });
+    suggestionsBox.classList.add('open');
+  });
+  // Click outside to close
+  document.addEventListener('click', (e) => {
+    if (!suggestionsBox.contains(e.target) && e.target !== input) {
+      suggestionsBox.classList.remove('open');
+    }
+  });
+  // Enter key triggers generic search
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (q) {
+        try {
+          sessionStorage.setItem('trailFilters', JSON.stringify({ q }));
+          sessionStorage.setItem('guideFilters', JSON.stringify({ q }));
+        } catch (err) {
+          console.warn('Falha ao salvar filtros de busca global', err);
+        }
+        window.location.href = 'trilhas.html';
+      }
+    }
+  });
+  // Handler for suggestion selection
+  function handleSuggestionSelect(item) {
+    if (item.type === 'trail') {
+      // Go directly to trail page or filtered list
+      sessionStorage.setItem('trailFilters', JSON.stringify({ q: item.name }));
+      window.location.href = 'trilhas.html';
+    } else if (item.type === 'guide') {
+      sessionStorage.setItem('guideFilters', JSON.stringify({ q: item.name }));
+      window.location.href = 'guias.html';
+    } else if (item.type === 'state') {
+      sessionStorage.setItem('trailFilters', JSON.stringify({ uf: item.id }));
+      sessionStorage.setItem('guideFilters', JSON.stringify({ uf: item.id }));
+      window.location.href = 'trilhas.html';
+    } else if (item.type === 'city') {
+      sessionStorage.setItem('trailFilters', JSON.stringify({ q: item.name }));
+      sessionStorage.setItem('guideFilters', JSON.stringify({ q: item.name }));
+      window.location.href = 'trilhas.html';
+    }
+    suggestionsBox.classList.remove('open');
+  }
+}
+
+/**
+ * Inicializa a página inicial (home) adicionando carrossel de estados,
+ * seções de trilhas e guias em destaque e expedições próximas.
+ */
+function initHomePage() {
+  // States carousel container
+  const statesSection = document.querySelector('.states-carousel');
+  if (statesSection && Array.isArray(window.trailsData)) {
+    const carousel = document.createElement('div');
+    carousel.className = 'carousel-container';
+    // Calcular número de trilhas por UF
+    const counts = {};
+    window.trailsData.forEach(t => {
+      t.state.split('/').forEach(s => {
+        counts[s] = (counts[s] || 0) + 1;
+      });
+    });
+    Object.keys(counts).forEach(uf => {
+      const card = document.createElement('div');
+      card.className = 'state-card';
+      // No images specifically for estados: use first trail image or generic hero
+      let imgSrc = 'images/hero.jpg';
+      const trailForState = window.trailsData.find(t => t.state.includes(uf));
+      if (trailForState) imgSrc = trailForState.image;
+      card.innerHTML = `
+        <img src="${imgSrc}" alt="${STATE_NAMES[uf] || uf}">
+        <div class="state-content">
+          <div class="state-name">${STATE_NAMES[uf] || uf}</div>
+          <div class="state-count">${counts[uf]} trilha${counts[uf] > 1 ? 's' : ''}</div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        // Ao clicar, filtrar por estado
+        sessionStorage.setItem('trailFilters', JSON.stringify({ uf }));
+        window.location.href = 'trilhas.html';
+      });
+      carousel.appendChild(card);
+    });
+    statesSection.appendChild(carousel);
+  }
+  // Trending trails and guides
+  const trendingSection = document.querySelector('.trending-section .trending-grid');
+  if (trendingSection && Array.isArray(window.trailsData) && Array.isArray(window.guidesData)) {
+    // Top 3 trails by rating
+    // Top 3 trails by rating
+    const topTrails = [...window.trailsData]
+      .filter(t => typeof t.rating === 'number')
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 3);
+    topTrails.forEach(trail => {
+      // ensure slug exists
+      if (!trail.slug) {
+        const firstState = (trail.state || '').split('/')[0].toLowerCase();
+        const citySlug = slugify(trail.city || '');
+        const nameSlug = slugify(trail.name || '');
+        trail.slug = `${firstState}${citySlug ? '-' + citySlug : ''}-${nameSlug}`;
+      }
+      const card = document.createElement('div');
+      card.className = 'trending-card';
+      card.innerHTML = `
+        <img src="${trail.image}" alt="${trail.name}">
+        <div class="trending-content">
+          <div class="trending-title">${trail.name}</div>
+          <div class="trending-meta">${trail.state} · ${trail.distance} km · ${trail.difficulty}</div>
+          <div class="trending-rating"><i class="fas fa-star"></i> ${trail.rating}</div>
+          <button class="btn btn-secondary" data-slug="${trail.slug}" data-type="trail">Ver Detalhes</button>
+        </div>
+      `;
+      trendingSection.appendChild(card);
+    });
+    // Top 2 guides by rating
+    const sortedGuides = [...window.guidesData]
+      .filter(g => typeof g.rating === 'number')
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 2);
+    sortedGuides.forEach(guide => {
+      // ensure slug exists
+      if (!guide.slug) {
+        const nameSlug = slugify(guide.name || guide.nome_completo || '');
+        const idPart = String(guide.id || '').slice(-4);
+        guide.slug = `${nameSlug}${idPart ? '-' + idPart : ''}`;
+      }
+      const card = document.createElement('div');
+      card.className = 'trending-card';
+      card.innerHTML = `
+        <img src="${guide.image || 'images/guia1.png'}" alt="${guide.name}">
+        <div class="trending-content">
+          <div class="trending-title">${guide.name}</div>
+          <div class="trending-meta">${guide.uf} · ${guide.municipio}</div>
+          <div class="trending-rating"><i class="fas fa-star"></i> ${guide.rating}</div>
+          <button class="btn btn-secondary" data-slug="${guide.slug}" data-type="guide">Ver Perfil</button>
+        </div>
+      `;
+      trendingSection.appendChild(card);
+    });
+    trendingSection.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-slug]');
+      if (btn) {
+        const slug = btn.getAttribute('data-slug');
+        const type = btn.getAttribute('data-type');
+        if (type === 'trail') {
+          window.location.href = `trilha.html?slug=${encodeURIComponent(slug)}`;
+        } else if (type === 'guide') {
+          window.location.href = `guia.html?slug=${encodeURIComponent(slug)}`;
+        }
+      }
+    });
+  }
+  // Upcoming expeditions
+  const expSection = document.querySelector('.expeditions-section .expedition-grid');
+  if (expSection && Array.isArray(window.expeditionsData)) {
+    const upcoming = [...window.expeditionsData].sort((a, b) => new Date(a.startDate) - new Date(b.startDate)).slice(0, 3);
+    upcoming.forEach(exp => {
+      const spotsLeft = exp.maxPeople - exp.spotsTaken;
+      const card = document.createElement('div');
+      card.className = 'expedition-card';
+      // Find associated trail for image
+      const trail = window.trailsData.find(t => t.id === exp.trailId);
+      const imgSrc = trail ? trail.image : 'images/hero.jpg';
+      card.innerHTML = `
+        <img src="${imgSrc}" alt="${exp.title}" style="width:100%;height:160px;object-fit:cover;">
+        <div class="expedition-content">
+          <div class="expedition-title">${exp.title}</div>
+          <div class="expedition-meta">${exp.startDate.replace(/-/g, '/')} - ${exp.endDate.replace(/-/g, '/')} · ${exp.level}</div>
+          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
+          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
+          <button class="btn btn-secondary" data-exp-id="${exp.id}">Ver Expedição</button>
+        </div>
+      `;
+      expSection.appendChild(card);
+    });
+    expSection.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-exp-id]');
+      if (btn) {
+        const expId = btn.getAttribute('data-exp-id');
+        window.location.href = `expedicao.html?id=${expId}`;
+      }
+    });
+  }
+  // CTA segmented buttons
+  const ctaSegment = document.querySelector('.cta-segment');
+  if (ctaSegment) {
+    ctaSegment.innerHTML = '';
+    const trekkerCard = document.createElement('div');
+    trekkerCard.className = 'cta-card';
+    trekkerCard.innerHTML = `
+      <h3>Sou Trekker</h3>
+      <p>Crie seu perfil, descubra trilhas e reserve expedições incríveis.</p>
+      <a href="cadastro.html" class="btn btn-primary">Cadastrar-se</a>
+    `;
+    const guideCard = document.createElement('div');
+    guideCard.className = 'cta-card';
+    guideCard.innerHTML = `
+      <h3>Sou Guia</h3>
+      <p>Cadastre-se com seu número CADASTUR e publique suas expedições.</p>
+      <a href="cadastro.html" class="btn btn-secondary">Cadastrar Guia</a>
+    `;
+    ctaSegment.appendChild(trekkerCard);
+    ctaSegment.appendChild(guideCard);
+  }
+}
+
+/**
+ * Inicializa a página de listagem de expedições.
+ * Permite filtrar expedições por diversos critérios.
+ */
+function initExpeditionsPage() {
+  const container = document.getElementById('expeditionsContainer');
+  if (!container) return;
+  const title = document.querySelector('main h1');
+  // Define filters
+  const searchInput = document.getElementById('expSearchFilter');
+  const stateFilter = document.getElementById('expStateFilter');
+  const trailFilter = document.getElementById('expTrailFilter');
+  const levelFilter = document.getElementById('expLevelFilter');
+  const dateFilter = document.getElementById('expDateFilter');
+  const clearBtn = document.getElementById('clearExpFilters');
+  let list = Array.isArray(window.expeditionsData) ? [...window.expeditionsData] : [];
+  function applyFilters() {
+    let results = [...list];
+    const q = searchInput.value.trim().toLowerCase();
+    const uf = stateFilter.value;
+    const trailId = trailFilter.value;
+    const level = levelFilter.value;
+    const dateVal = dateFilter.value;
+    if (q) {
+      results = results.filter(exp => exp.title.toLowerCase().includes(q) || exp.trailName.toLowerCase().includes(q));
+    }
+    if (uf) {
+      results = results.filter(exp => exp.uf === uf);
+    }
+    if (trailId) {
+      results = results.filter(exp => exp.trailId === trailId);
+    }
+    if (level) {
+      results = results.filter(exp => exp.level === level);
+    }
+    if (dateVal) {
+      // Accepts date range as YYYY-MM-DD to YYYY-MM-DD
+      const [startRange, endRange] = dateVal.split(' - ');
+      if (startRange && endRange) {
+        const start = new Date(startRange);
+        const end = new Date(endRange);
+        results = results.filter(exp => {
+          const expStart = new Date(exp.startDate);
+          const expEnd = new Date(exp.endDate);
+          return expStart >= start && expEnd <= end;
+        });
+      }
+    }
+    renderExpeditions(results);
+  }
+  function renderExpeditions(list) {
+    container.innerHTML = '';
+    if (list.length === 0) {
+      const msg = document.createElement('p');
+      msg.textContent = 'Nenhuma expedição encontrada com os filtros selecionados.';
+      container.appendChild(msg);
+      return;
+    }
+    list.forEach(exp => {
+      const spotsLeft = exp.maxPeople - exp.spotsTaken;
+      const trail = window.trailsData.find(t => t.id === exp.trailId);
+      const card = document.createElement('div');
+      card.className = 'expedition-card';
+      const imgSrc = trail ? trail.image : 'images/hero.jpg';
+      card.innerHTML = `
+        <img src="${imgSrc}" alt="${exp.title}" style="width:100%;height:180px;object-fit:cover;">
+        <div class="expedition-content">
+          <div class="expedition-title">${exp.title}</div>
+          <div class="expedition-meta">${exp.startDate.replace(/-/g, '/')} - ${exp.endDate.replace(/-/g, '/')} · ${exp.level}</div>
+          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
+          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
+          <button class="btn btn-secondary" data-exp-id="${exp.id}">Ver Detalhes</button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+  // Populate trail options
+  if (trailFilter && Array.isArray(window.trailsData)) {
+    window.trailsData.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.id;
+      opt.textContent = t.name;
+      trailFilter.appendChild(opt);
+    });
+  }
+  // Populate state options
+  if (stateFilter) {
+    // Already has options from HTML; no action needed
+  }
+  // Listeners
+  [searchInput, stateFilter, trailFilter, levelFilter, dateFilter].forEach(el => {
+    if (el) {
+      el.addEventListener('input', applyFilters);
+      el.addEventListener('change', applyFilters);
+    }
+  });
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = '';
+      stateFilter.value = '';
+      trailFilter.value = '';
+      levelFilter.value = '';
+      dateFilter.value = '';
+      renderExpeditions(list);
+    });
+  }
+  // Initial render
+  renderExpeditions(list);
+  // Handle click on details
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-exp-id]');
+    if (btn) {
+      const expId = btn.getAttribute('data-exp-id');
+      window.location.href = `expedicao.html?id=${expId}`;
+    }
+  });
+}
+
+/**
+ * Inicializa a página de detalhes de expedição.
+ */
+function initExpeditionPage() {
+  const detailContainer = document.getElementById('expeditionDetail');
+  if (!detailContainer) return;
+  // Get query param
+  const params = new URLSearchParams(window.location.search);
+  const expId = params.get('id');
+  if (!expId || !Array.isArray(window.expeditionsData)) {
+    detailContainer.innerHTML = '<p>Expedição não encontrada.</p>';
+    return;
+  }
+  const exp = window.expeditionsData.find(e => e.id === expId);
+  if (!exp) {
+    detailContainer.innerHTML = '<p>Expedição não encontrada.</p>';
+    return;
+  }
+  const trail = window.trailsData.find(t => t.id === exp.trailId);
+  const guide = window.guidesData.find(g => g.id === String(exp.guideId) || g.id === exp.guideId);
+  const spotsLeft = exp.maxPeople - exp.spotsTaken;
+  // Build HTML
+  detailContainer.innerHTML = `
+    <h1 style="font-family:'Sora',sans-serif;color:var(--color-primary);margin-bottom:1rem;">${exp.title}</h1>
+    <div class="expedition-detail-grid" style="display:flex;flex-wrap:wrap;gap:2rem;">
+      <div style="flex:1 1 300px;">
+        <img src="${trail ? trail.image : 'images/hero.jpg'}" alt="${exp.title}" style="width:100%;border-radius:8px;">
+        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--color-muted);"><strong>Trilha:</strong> ${exp.trailName || (trail ? trail.name : '')}</p>
+        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Localização:</strong> ${exp.uf}${exp.municipio ? ' · ' + exp.municipio : ''}</p>
+        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Datas:</strong> ${exp.startDate.replace(/-/g,'/')} – ${exp.endDate.replace(/-/g,'/')}</p>
+        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Nível:</strong> ${exp.level}</p>
+        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Preço:</strong> R$ ${exp.price.toFixed(2)} por pessoa</p>
+        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Vagas restantes:</strong> ${spotsLeft}</p>
+        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Guia:</strong> ${exp.guideName || (guide ? guide.name : '')}</p>
+      </div>
+      <div style="flex:1 1 300px;">
+        <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Descrição</h3>
+        <p style="font-size:0.95rem;margin-bottom:1rem;">${exp.description}</p>
+        <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Sobre a Trilha</h3>
+        <p style="font-size:0.95rem;margin-bottom:1rem;">${trail ? trail.description : ''}</p>
+        <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Sobre o Guia</h3>
+        <p style="font-size:0.95rem;margin-bottom:1rem;">${guide ? (guide.description || 'Guia certificado CADASTUR.') : 'Guia não encontrado.'}</p>
+        <button id="reserveExpeditionBtn" class="btn btn-primary" style="margin-top:0.5rem;">Reservar agora</button>
+      </div>
+    </div>
+  `;
+  const reserveBtn = document.getElementById('reserveExpeditionBtn');
+  if (reserveBtn) {
+    reserveBtn.addEventListener('click', () => {
+      // For MVP, simulate a reservation
+      alert('Reserva iniciada! (Esta funcionalidade será implementada em uma fase posterior)');
+    });
+  }
+}
+
+/**
+ * Inicializa a página de detalhe de trilha (trilha.html).
+ * Lê o parâmetro ?slug=... para identificar a trilha e exibe informações
+ * completas: foto de capa, detalhes técnicos, descrição, expedições e guias relacionados.
+ */
+function initTrailPage() {
+  const container = document.getElementById('trailDetail');
+  if (!container) return;
+  // Ensure slugs computed
+  computeSlugs();
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+  let trail;
+  if (slug) {
+    trail = (Array.isArray(window.trailsData) ? window.trailsData.find(t => t.slug === slug) : null);
+  } else {
+    // fallback to id
+    const id = params.get('id');
+    trail = (Array.isArray(window.trailsData) ? window.trailsData.find(t => t.id === id) : null);
+  }
+  if (!trail) {
+    container.innerHTML = '<p>Trilha não encontrada.</p>';
+    return;
+  }
+  const diffLabel = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1) : '';
+  // Build breadcrumb
+  const breadcrumb = document.getElementById('breadcrumb');
+  if (breadcrumb) {
+    breadcrumb.innerHTML = '';
+    const parts = [];
+    parts.push({ text: 'Início', link: 'index.html' });
+    parts.push({ text: 'Trilhas', link: 'trilhas.html' });
+    if (trail.state) parts.push({ text: trail.state, link: `trilhas.html?uf=${trail.state}` });
+    if (trail.city) parts.push({ text: trail.city, link: `trilhas.html?q=${encodeURIComponent(trail.city)}` });
+    parts.push({ text: trail.name, link: null });
+    parts.forEach((p, idx) => {
+      const span = document.createElement('span');
+      span.className = 'breadcrumb-item';
+      if (p.link) {
+        const a = document.createElement('a');
+        a.href = p.link;
+        a.textContent = p.text;
+        span.appendChild(a);
+      } else {
+        const strong = document.createElement('strong');
+        strong.textContent = p.text;
+        span.appendChild(strong);
+      }
+      breadcrumb.appendChild(span);
+      if (idx < parts.length - 1) {
+        const sep = document.createElement('span');
+        sep.textContent = ' › ';
+        breadcrumb.appendChild(sep);
+      }
+    });
+  }
+  // Build content
+  let html = '';
+  html += `<h1 class="detail-title">${trail.name}</h1>`;
+  html += `<img src="${trail.image}" alt="${trail.name}" class="detail-image" />`;
+  html += `<div class="detail-info">
+    <p><strong>Estado:</strong> ${trail.state}</p>
+    ${trail.city ? `<p><strong>Cidade:</strong> ${trail.city}</p>` : ''}
+    <p><strong>Dificuldade:</strong> ${diffLabel}</p>
+    <p><strong>Distância:</strong> ${trail.distance} km</p>
+    ${trail.elevationGain ? `<p><strong>Altimetria:</strong> ${trail.elevationGain} m</p>` : ''}
+    ${trail.duration ? `<p><strong>Duração:</strong> ${trail.duration} h</p>` : ''}
+    <p><strong>Avaliação:</strong> ${trail.rating} / 5.0</p>
+    <p><strong>Pontos de água:</strong> ${trail.waterPoints ? 'Sim' : 'Não'}</p>
+    <p><strong>Pontos de camping:</strong> ${trail.campingPoints ? 'Sim' : 'Não'}</p>
+    <p><strong>Necessita guia:</strong> ${trail.requiresGuide ? 'Sim' : 'Não'}</p>
+    ${trail.entryFee && trail.entryFee > 0 ? `<p><strong>Taxa de entrada:</strong> R$ ${trail.entryFee.toFixed(2)}</p>` : ''}
+  </div>`;
+  html += `<div class="detail-description"><h3>Descrição</h3><p>${trail.description}</p></div>`;
+  // List upcoming expeditions for this trail
+  let relatedExps = [];
+  if (Array.isArray(window.expeditionsData)) {
+    relatedExps = window.expeditionsData.filter(exp => exp.trailId === trail.id);
+  }
+  if (relatedExps.length) {
+    html += '<div class="detail-expeditions"><h3>Expedições disponíveis</h3>';
+    html += '<div class="expedition-list">';
+    relatedExps.forEach(exp => {
+      const spotsLeft = exp.maxPeople - exp.spotsTaken;
+      html += `<div class="expedition-card">
+        <div class="expedition-content">
+          <div class="expedition-title">${exp.title}</div>
+          <div class="expedition-meta">${exp.startDate.replace(/-/g,'/')} - ${exp.endDate.replace(/-/g,'/')} · ${exp.level}</div>
+          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
+          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
+          <a href="expedicao.html?id=${exp.id}" class="btn btn-secondary">Ver Expedição</a>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+  // List guides by state and city (simple match)
+  let relatedGuides = [];
+  if (Array.isArray(window.guidesData)) {
+    relatedGuides = window.guidesData.filter(g => {
+      const matchState = g.uf && trail.state && trail.state.includes(g.uf);
+      const matchCity = g.municipio && trail.city && slugify(g.municipio) === slugify(trail.city);
+      return matchState || matchCity;
+    });
+  }
+  if (relatedGuides.length) {
+    html += '<div class="detail-guides"><h3>Guias que atuam aqui</h3>';
+    html += '<div class="guide-list">';
+    relatedGuides.forEach(g => {
+      html += `<div class="guide-card">
+        <div class="guide-card-content">
+          <div class="guide-card-name">${g.name}</div>
+          <div class="guide-card-meta">${g.uf} · ${g.municipio}</div>
+          <div class="guide-card-rating"><i class="fas fa-star"></i> ${g.rating}</div>
+          <a href="guia.html?slug=${g.slug}" class="btn btn-secondary">Ver Perfil</a>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+/**
+ * Inicializa a página de perfil do guia (guia.html).
+ * Usa ?slug= para localizar guia e mostra detalhes, bio, certificações e expedições.
+ */
+function initGuideProfilePage() {
+  const container = document.getElementById('guideProfile');
+  if (!container) return;
+  computeSlugs();
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+  let guide;
+  if (slug) {
+    // Try to find guide by slug in main guides dataset
+    if (Array.isArray(window.guidesData)) {
+      guide = window.guidesData.find(g => g.slug === slug);
+    }
+    // If not found, try CADASTUR dataset
+    if (!guide && Array.isArray(window.cadasturData)) {
+      // Attempt direct match on precomputed slug
+      const raw = window.cadasturData.find(entry => entry.slug === slug);
+      if (raw) {
+        guide = normalizeCadasturGuide(raw);
+      }
+      // Fallback: derive slug heuristically from name and last digits of Cadastur
+      if (!guide && slug) {
+        const parts = slug.split('-');
+        const idPart = parts.pop();
+        const namePart = parts.join('-');
+        // Helper to slugify names similar to our slugify() function
+        const slugifyName = (str) => {
+          return str
+            .toString()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+        };
+        for (const entry of window.cadasturData) {
+          if (guide) break;
+          const entryNameSlug = slugifyName(entry.nome || entry.nome_completo || entry.name || '');
+          const cad = String(entry.numero_cadastur || entry.numero || entry.numero_cad || entry['nº cadastur'] || entry['número cadastur'] || '');
+          if (entryNameSlug === namePart && cad.slice(-idPart.length) === idPart) {
+            guide = normalizeCadasturGuide(entry);
+          }
+        }
+      }
+    }
+  } else {
+    const id = params.get('id');
+    if (Array.isArray(window.guidesData)) {
+      guide = window.guidesData.find(g => String(g.id) === id);
+    }
+    if (!guide && Array.isArray(window.cadasturData)) {
+      // Search by cadastur number
+      const raw = window.cadasturData.find(entry => String(entry.numero_cadastur || entry.numero || entry.id) === String(id));
+      if (raw) {
+        guide = normalizeCadasturGuide(raw);
+      }
+    }
+  }
+  if (!guide) {
+    container.innerHTML = '<p>Guia não encontrado.</p>';
+    return;
+  }
+  // Breadcrumb
+  const breadcrumb = document.getElementById('breadcrumb');
+  if (breadcrumb) {
+    breadcrumb.innerHTML = '';
+    const parts = [];
+    parts.push({ text: 'Início', link: 'index.html' });
+    parts.push({ text: 'Guias', link: 'guias.html' });
+    if (guide.uf) parts.push({ text: guide.uf, link: `guias.html?uf=${guide.uf}` });
+    parts.push({ text: guide.name, link: null });
+    parts.forEach((p, idx) => {
+      const span = document.createElement('span');
+      span.className = 'breadcrumb-item';
+      if (p.link) {
+        const a = document.createElement('a');
+        a.href = p.link;
+        a.textContent = p.text;
+        span.appendChild(a);
+      } else {
+        const strong = document.createElement('strong');
+        strong.textContent = p.text;
+        span.appendChild(strong);
+      }
+      breadcrumb.appendChild(span);
+      if (idx < parts.length - 1) {
+        const sep = document.createElement('span');
+        sep.textContent = ' › ';
+        breadcrumb.appendChild(sep);
+      }
+    });
+  }
+  // Main details
+  let html = '';
+  html += `<h1 class="detail-title">${guide.name}</h1>`;
+  // Image or photo fallback
+  const imgSrc = guide.image || guide.photo || 'images/guia1.png';
+  if (imgSrc) {
+    html += `<img src="${imgSrc}" alt="${guide.name}" class="detail-image" />`;
+  }
+  html += `<div class="detail-info">
+    ${guide.cadastur ? `<p><strong>Nº Cadastur:</strong> ${guide.cadastur}</p>` : ''}
+    ${guide.uf ? `<p><strong>Estado:</strong> ${guide.uf}</p>` : ''}
+    ${guide.city || guide.municipio ? `<p><strong>Município:</strong> ${guide.city || guide.municipio}</p>` : ''}
+    ${(guide.languages && guide.languages.length) ? `<p><strong>Idiomas:</strong> ${guide.languages.join(', ')}</p>` : ''}
+    ${guide.categorias ? `<p><strong>Categoria:</strong> ${Array.isArray(guide.categorias) ? guide.categorias.join(', ') : guide.categorias}</p>` : (guide.category ? `<p><strong>Categoria:</strong> ${guide.category}</p>` : '')}
+    ${guide.segmentos ? `<p><strong>Segmento:</strong> ${Array.isArray(guide.segmentos) ? guide.segmentos.join(', ') : guide.segmentos}</p>` : (guide.segment ? `<p><strong>Segmento:</strong> ${guide.segment}</p>` : '')}
+    ${typeof guide.guia_motorista !== 'undefined' || typeof guide.driver !== 'undefined' ? `<p><strong>Guia Motorista:</strong> ${(guide.guia_motorista || guide.driver) ? 'Sim' : 'Não'}</p>` : ''}
+    ${guide.rating ? `<p><strong>Avaliação:</strong> ${guide.rating} / 5.0</p>` : ''}
+  </div>`;
+  html += `<div class="detail-description"><h3>Sobre o Guia</h3><p>${guide.bio || guide.descricao || guide.description || ''}</p></div>`;
+  // Contact info
+  html += `<div class="detail-contact">
+    <h3>Contato</h3>`;
+  if (guide.contacts && guide.contacts.length > 0) {
+    guide.contacts.forEach(({ type, value }) => {
+      html += `<p><strong>${type}:</strong> ${value}</p>`;
+    });
+  } else {
+    // Fallback to telephone/email fields if available
+    const phone = guide.telefone || guide.telefone_comercial;
+    const email = guide.email || guide.email_comercial;
+    const website = guide.website;
+    if (phone) html += `<p><strong>Telefone:</strong> ${phone}</p>`;
+    if (email) {
+      const masked = email.replace(/(.{3}).+(@.+)/, '$1***$2');
+      html += `<p><strong>E‑mail:</strong> ${masked}</p>`;
+    }
+    if (website) {
+      html += `<p><strong>Website:</strong> <a href="${website}" target="_blank" rel="noopener">${website}</a></p>`;
+    }
+    if (!phone && !email && !website) {
+      html += `<p>Contato não disponível.</p>`;
+    }
+  }
+  html += `</div>`;
+  // List expeditions for this guide
+  let guideExps = [];
+  if (Array.isArray(window.expeditionsData)) {
+    guideExps = window.expeditionsData.filter(exp => String(exp.guideId) === String(guide.id));
+  }
+  if (guideExps.length) {
+    html += '<div class="detail-expeditions"><h3>Expedições deste Guia</h3>';
+    html += '<div class="expedition-list">';
+    guideExps.forEach(exp => {
+      const spotsLeft = exp.maxPeople - exp.spotsTaken;
+      html += `<div class="expedition-card">
+        <div class="expedition-content">
+          <div class="expedition-title">${exp.title}</div>
+          <div class="expedition-meta">${exp.startDate.replace(/-/g,'/')} - ${exp.endDate.replace(/-/g,'/')} · ${exp.level}</div>
+          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
+          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
+          <a href="expedicao.html?id=${exp.id}" class="btn btn-secondary">Ver Expedição</a>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  } else {
+    // Show a message when there are no active expeditions for this guide
+    html += '<div class="detail-expeditions"><h3>Expedições deste Guia</h3><p>Nenhuma expedição disponível no momento.</p></div>';
+  }
+  container.innerHTML = html;
+}
+
+/**
+ * Inicializa a página de blog (blog.html).
+ * Exibe lista de posts com título, categoria e resumo.
+ */
+function initBlogPage() {
+  const container = document.getElementById('blogList');
+  if (!container) return;
+  if (!Array.isArray(window.blogData)) {
+    container.innerHTML = '<p>Blog sem conteúdos.</p>';
+    return;
+  }
+  let html = '';
+  window.blogData.forEach(post => {
+    html += `<div class="blog-card">
+      <img src="${post.image}" alt="${post.title}" class="blog-card-image" />
+      <div class="blog-card-content">
+        <div class="blog-card-category">${post.category}</div>
+        <h3 class="blog-card-title">${post.title}</h3>
+        <p class="blog-card-excerpt">${post.excerpt}</p>
+        <a href="blog_post.html?slug=${post.slug}" class="btn btn-secondary">Ler mais</a>
+      </div>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+/**
+ * Inicializa a página de post do blog (blog_post.html).
+ */
+function initBlogPostPage() {
+  const container = document.getElementById('blogPost');
+  if (!container) return;
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug');
+  if (!Array.isArray(window.blogData) || !slug) {
+    container.innerHTML = '<p>Post não encontrado.</p>';
+    return;
+  }
+  const post = window.blogData.find(p => p.slug === slug);
+  if (!post) {
+    container.innerHTML = '<p>Post não encontrado.</p>';
+    return;
+  }
+  // Breadcrumb
+  const breadcrumb = document.getElementById('breadcrumb');
+  if (breadcrumb) {
+    breadcrumb.innerHTML = '';
+    const parts = [];
+    parts.push({ text: 'Início', link: 'index.html' });
+    parts.push({ text: 'Blog', link: 'blog.html' });
+    if (post.category) parts.push({ text: post.category, link: 'blog.html' });
+    parts.push({ text: post.title, link: null });
+    parts.forEach((p, idx) => {
+      const span = document.createElement('span');
+      span.className = 'breadcrumb-item';
+      if (p.link) {
+        const a = document.createElement('a');
+        a.href = p.link;
+        a.textContent = p.text;
+        span.appendChild(a);
+      } else {
+        const strong = document.createElement('strong');
+        strong.textContent = p.text;
+        span.appendChild(strong);
+      }
+      breadcrumb.appendChild(span);
+      if (idx < parts.length - 1) {
+        const sep = document.createElement('span');
+        sep.textContent = ' › ';
+        breadcrumb.appendChild(sep);
+      }
+    });
+  }
+  let html = '';
+  html += `<h1 class="blog-post-title">${post.title}</h1>`;
+  html += `<div class="blog-post-meta">${post.date} · ${post.category}</div>`;
+  if (post.image) {
+    html += `<img src="${post.image}" alt="${post.title}" class="blog-post-image" />`;
+  }
+  html += `<div class="blog-post-content">${post.content}</div>`;
+  container.innerHTML = html;
+}
+  // Envolvemos a lógica de UI dentro de DOMContentLoaded para garantir
+  // que os elementos do DOM estejam presentes antes de manipulá‑los.
+  document.addEventListener('DOMContentLoaded', () => {
+  /* Mobile navigation toggle */
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const navMenu = document.getElementById('navMenu');
+  if (mobileMenuBtn && navMenu) {
+    mobileMenuBtn.addEventListener('click', () => {
+      navMenu.classList.toggle('open');
+    });
+  }
+
+  /* Login/Register modal */
+  const loginModal = document.getElementById('loginModal');
+  const loginBtn = document.getElementById('loginBtn');
+  const registerBtn = document.getElementById('registerBtn');
+  const loginClose = document.getElementById('loginClose');
+  if (loginModal) {
+    const openLogin = () => loginModal.classList.add('open');
+    const closeLogin = () => loginModal.classList.remove('open');
+    if (loginBtn) loginBtn.addEventListener('click', openLogin);
+    // Redirect to cadastro page instead of opening login when clicking register
+    if (registerBtn) registerBtn.addEventListener('click', () => {
+      window.location.href = 'cadastro.html';
+    });
+    if (loginClose) loginClose.addEventListener('click', closeLogin);
+    // Close modal when clicking outside content
+    loginModal.addEventListener('click', (e) => {
+      if (e.target === loginModal) closeLogin();
+    });
+    // Handle login form submission with Auth.login
+    const loginForm = loginModal.querySelector('form');
+    const loginResult = document.createElement('div');
+    loginResult.className = 'result-message';
+    if (loginForm && !loginForm.dataset.bound) {
+      loginForm.dataset.bound = 'true';
+      loginForm.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        // Remove previous result message
+        loginResult.textContent = '';
+        try {
+          const email = loginForm.querySelector('input[type="email"]').value.trim();
+          const password = loginForm.querySelector('input[type="password"]').value;
+          const res = await Auth.login(email, password);
+          loginResult.innerHTML = '<span class="success">Login bem‑sucedido!</span>';
+          loginForm.reset();
+          // Close modal after brief delay
+          setTimeout(() => {
+            closeLogin();
+            loginResult.innerHTML = '';
+          }, 1000);
+        } catch (err) {
+          loginResult.innerHTML = `<span class="error">${err.message}</span>`;
+        }
+      });
+      // Append result message below form if not already
+      if (!loginForm.nextSibling || !loginForm.nextSibling.classList || !loginForm.nextSibling.classList.contains('result-message')) {
+        loginForm.parentNode.insertBefore(loginResult, loginForm.nextSibling);
+      }
+    }
+  }
+
+  /* Homepage search */
+  const searchHomepageBtn = document.getElementById('searchHomepageBtn');
+  if (searchHomepageBtn) {
+    searchHomepageBtn.addEventListener('click', () => {
+      const q = (document.getElementById('searchInput') || {}).value || '';
+      const uf = (document.getElementById('estadoSelect') || {}).value || '';
+      const dif = (document.getElementById('dificuldadeSelect') || {}).value || '';
+      const dist = (document.getElementById('distanciaInput') || {}).value || '';
+      const filters = { q: q.trim(), uf, dif, dist };
+      try {
+        sessionStorage.setItem('trailFilters', JSON.stringify(filters));
+      } catch (err) {
+        console.error('Unable to store filters', err);
+      }
+      // Redirect to trilhas page
+      window.location.href = 'trilhas.html';
+    });
+  }
+
+  /* Trilhas page logic */
+  if (document.getElementById('trailsContainer')) {
+    // Dados de trilhas carregados a partir do dataset global (window.trailsData).
+    const trailsData = Array.isArray(window.trailsData)
+      ? window.trailsData.map(t => ({
+          id: t.id,
+          name: t.name,
+          state: t.state,
+          city: t.city || '',
+          difficulty: t.difficulty,
+          distance: t.distance,
+          elevationGain: t.elevationGain,
+          duration: t.duration,
+          waterPoints: t.waterPoints,
+          campingPoints: t.campingPoints,
+          requiresGuide: t.requiresGuide,
+          entryFee: typeof t.entryFee === 'number' ? t.entryFee : (t.entryFee || 0),
+          image: t.image,
+          description: t.description,
+          rating: t.rating
+        }))
+      : [];
+
+    const trailsContainer = document.getElementById('trailsContainer');
+    const nameInput = document.getElementById('trailNameFilter');
+    const stateSelect = document.getElementById('trailStateFilter');
+    const diffSelect = document.getElementById('trailDifficultyFilter');
+    const distInput = document.getElementById('trailDistanceFilter');
+    const clearBtn = document.getElementById('clearTrailFilters');
+
+    function createTrailCard(trail) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const difficultyLabel = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1) : '';
+      card.innerHTML = `
+        <div class="card-image" style="background-image: url('${trail.image}')"></div>
+        <div class="card-content">
+          <h3 class="card-title">${trail.name}</h3>
+          <div class="card-meta">${trail.state} · ${trail.distance} km · ${difficultyLabel}</div>
+          <p class="card-description">${trail.description.substring(0, 120)}...</p>
+          <div class="card-rating" style="font-size:0.85rem;color:var(--color-secondary);margin-top:0.25rem;"><i class="fas fa-star"></i> ${trail.rating}</div>
+          <div class="card-actions">
+            <button class="btn btn-secondary" data-id="${trail.id}">Detalhes</button>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    function renderTrails(list) {
+      trailsContainer.innerHTML = '';
+      if (list.length === 0) {
+        const emptyMsg = document.createElement('p');
+        emptyMsg.textContent = 'Nenhuma trilha encontrada com os filtros selecionados.';
+        trailsContainer.appendChild(emptyMsg);
+        return;
+      }
+      list.forEach(trail => {
+        trailsContainer.appendChild(createTrailCard(trail));
+      });
+    }
+
+    function applyTrailFilters() {
+      let results = [...trailsData];
+      const q = nameInput.value.trim().toLowerCase();
+      const uf = stateSelect.value;
+      const dif = diffSelect.value;
+      const dist = distInput.value;
+      if (q) {
+        results = results.filter(t => t.name.toLowerCase().includes(q));
+      }
+      if (uf) {
+        results = results.filter(t => t.state.toLowerCase().includes(uf.toLowerCase()));
+      }
+      if (dif) {
+        results = results.filter(t => t.difficulty === dif);
+      }
+      if (dist) {
+        const maxDist = parseFloat(dist);
+        if (!isNaN(maxDist)) {
+          results = results.filter(t => t.distance <= maxDist);
+        }
+      }
+      renderTrails(results);
+    }
+
+    // Event listeners for filter controls
+    [nameInput, stateSelect, diffSelect, distInput].forEach(el => {
+      if (el) {
+        el.addEventListener('input', applyTrailFilters);
+        el.addEventListener('change', applyTrailFilters);
+      }
+    });
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        nameInput.value = '';
+        stateSelect.value = '';
+        diffSelect.value = '';
+        distInput.value = '';
+        renderTrails(trailsData);
+      });
+    }
+
+    // Read filters from sessionStorage (coming from homepage)
+    try {
+      const storedFilters = JSON.parse(sessionStorage.getItem('trailFilters'));
+      if (storedFilters) {
+        if (storedFilters.q) nameInput.value = storedFilters.q;
+        if (storedFilters.uf) stateSelect.value = storedFilters.uf;
+        if (storedFilters.dif) diffSelect.value = storedFilters.dif;
+        if (storedFilters.dist) distInput.value = storedFilters.dist;
+        sessionStorage.removeItem('trailFilters');
+      }
+    } catch (err) {
+      console.warn('No stored filters or failed to parse');
+    }
+
+    // Render initial list
+    applyTrailFilters();
+
+    // Trail details modal
+    const detailsModal = document.getElementById('trailDetailsModal');
+    const detailsContent = document.getElementById('trailDetailsContent');
+    const detailsClose = document.getElementById('trailDetailsClose');
+    function openDetails(id) {
+      const trail = trailsData.find(t => t.id === id);
+      if (!trail) return;
+      if (detailsContent) {
+        const diffLabel = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1) : '';
+        detailsContent.innerHTML = `
+          <h2 style="margin-bottom:1rem;font-family:'Sora',sans-serif;">${trail.name}</h2>
+          <img src="${trail.image}" alt="${trail.name}" style="width:100%;border-radius:8px;margin-bottom:1rem;" />
+          <p style="margin-bottom:0.5rem;"><strong>Estado:</strong> ${trail.state}</p>
+          ${trail.city ? `<p style="margin-bottom:0.5rem;"><strong>Cidade:</strong> ${trail.city}</p>` : ''}
+          <p style="margin-bottom:0.5rem;"><strong>Dificuldade:</strong> ${diffLabel}</p>
+          <p style="margin-bottom:0.5rem;"><strong>Distância:</strong> ${trail.distance} km</p>
+          ${trail.elevationGain ? `<p style="margin-bottom:0.5rem;"><strong>Altimetria:</strong> ${trail.elevationGain} m</p>` : ''}
+          ${trail.duration ? `<p style="margin-bottom:0.5rem;"><strong>Duração:</strong> ${trail.duration} h</p>` : ''}
+          <p style="margin-bottom:0.5rem;"><strong>Avaliação:</strong> ${trail.rating} / 5.0</p>
+          <p style="margin-bottom:0.5rem;"><strong>Pontos de água:</strong> ${trail.waterPoints ? 'Sim' : 'Não'}</p>
+          <p style="margin-bottom:0.5rem;"><strong>Pontos de camping:</strong> ${trail.campingPoints ? 'Sim' : 'Não'}</p>
+          <p style="margin-bottom:0.5rem;"><strong>Necessita guia:</strong> ${trail.requiresGuide ? 'Sim' : 'Não'}</p>
+          ${trail.entryFee && trail.entryFee > 0 ? `<p style="margin-bottom:0.5rem;"><strong>Taxa de entrada:</strong> R$ ${trail.entryFee.toFixed(2)}</p>` : ''}
+          <p>${trail.description}</p>
+        `;
+      }
+      if (detailsModal) detailsModal.classList.add('open');
+    }
+    if (detailsClose) {
+      detailsClose.addEventListener('click', () => detailsModal.classList.remove('open'));
+    }
+    if (detailsModal) {
+      detailsModal.addEventListener('click', (e) => {
+        if (e.target === detailsModal) detailsModal.classList.remove('open');
+      });
+    }
+    // Delegate click events on cards for details
+    trailsContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-id]');
+      if (btn) {
+        const id = btn.getAttribute('data-id');
+        openDetails(id);
+      }
+    });
+  }
+
+  /* Guias page logic */
+  if (document.getElementById('guidesContainer')) {
+    // Data for guias will be loaded from an external JSON file.  
+    // The file `data/guides.json` contains an array of objects that mirror
+    // the fields defined in the Trekko database schema (nome_completo, uf,
+    // município, idiomas, categorias, segmentos, guia_motorista, telefone_comercial, email_comercial, etc.).
+    // We'll fetch that file asynchronously and then render the guides.
+    let guidesData = [];
+
+    async function loadGuides() {
+      try {
+        let rawData;
+        if (window.guidesData && Array.isArray(window.guidesData)) {
+          // If the data is already loaded via a script tag (data/guides.js), use it directly
+          rawData = window.guidesData;
+        } else {
+          // Otherwise fetch the JSON file via AJAX
+          const resp = await fetch('data/guides.json');
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          rawData = await resp.json();
+        }
+        // Normalise keys: for the UI we expect fields like name, languages, category, segment, municipio, uf and driver.
+        guidesData = rawData.map(item => ({
+          id: item.id ? String(item.id) : (item.nome_completo || '').toLowerCase().replace(/\s+/g, '-'),
+          name: item.nome_completo || item.name || '',
+          languages: Array.isArray(item.idiomas) ? item.idiomas : (typeof item.idiomas === 'string' ? item.idiomas.split(/\|/).map(s => s.trim()) : []),
+          category: Array.isArray(item.categorias) ? item.categorias.join(', ') : (item.categorias || item.category || ''),
+          segment: Array.isArray(item.segmentos) ? item.segmentos.join(', ') : (item.segmentos || item.segment || ''),
+          uf: item.uf || '',
+          municipio: item.município || item.municipio || '',
+          driver: !!item.guia_motorista,
+          image: item.image || '',
+          description: item.descricao || item.description || '',
+          telefone: item.telefone_comercial || '',
+          email: item.email_comercial || '',
+          website: item.website || ''
+        ,
+          rating: item.rating || 0
+        }));
+        renderGuides(guidesData);
+      } catch (err) {
+        console.error('Failed to load guides data', err);
+        renderGuides([]);
+      }
+    }
+
+    const guidesContainer = document.getElementById('guidesContainer');
+    const nameFilter = document.getElementById('guideNameFilter');
+    const stateFilter = document.getElementById('guideStateFilter');
+    const languageFilter = document.getElementById('guideLanguageFilter');
+    const driverFilter = document.getElementById('guideDriverFilter');
+    const clearGuideBtn = document.getElementById('clearGuideFilters');
+
+    function createGuideCard(guide) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-image" style="background-image: url('${guide.image}')"></div>
+        <div class="card-content">
+          <h3 class="card-title">${guide.name}</h3>
+          <div class="card-meta">${guide.uf} · ${guide.municipio}</div>
+          <p class="card-description">Idiomas: ${Array.isArray(guide.languages) ? guide.languages.join(', ') : guide.languages}<br>Categoria: ${guide.category}<br>Segmento: ${guide.segment}<br>Guia Motorista: ${guide.driver ? 'Sim' : 'Não'}</p>
+          <div class="card-rating" style="font-size:0.85rem;color:var(--color-secondary);margin-top:0.25rem;"><i class="fas fa-star"></i> ${guide.rating}</div>
+          <div class="card-actions">
+            <button class="btn btn-secondary" data-id="${guide.id}">Contato</button>
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    function renderGuides(list) {
+      guidesContainer.innerHTML = '';
+      if (list.length === 0) {
+        const msg = document.createElement('p');
+        msg.textContent = 'Nenhum guia encontrado com os filtros selecionados.';
+        guidesContainer.appendChild(msg);
+        return;
+      }
+      list.forEach(g => guidesContainer.appendChild(createGuideCard(g)));
+    }
+
+    function applyGuideFilters() {
+      let results = [...guidesData];
+      const q = nameFilter.value.trim().toLowerCase();
+      const uf = stateFilter.value;
+      const lang = languageFilter.value;
+      const driver = driverFilter.checked;
+      if (q) {
+        results = results.filter(g => g.name.toLowerCase().includes(q) || g.municipio.toLowerCase().includes(q));
+      }
+      if (uf) {
+        results = results.filter(g => g.uf === uf);
+      }
+      if (lang) {
+        results = results.filter(g => {
+          if (!g.languages) return false;
+          if (Array.isArray(g.languages)) {
+            return g.languages.map(l => l.toLowerCase()).includes(lang.toLowerCase());
+          }
+          // if languages stored as string separated by comma
+          return g.languages.toLowerCase().split(/[,|]/).map(s => s.trim()).includes(lang.toLowerCase());
+        });
+      }
+      if (driver) {
+        results = results.filter(g => g.driver === true);
+      }
+      renderGuides(results);
+    }
+
+    // Add listeners
+    [nameFilter, stateFilter, languageFilter, driverFilter].forEach(el => {
+      if (el) el.addEventListener('input', applyGuideFilters);
+      if (el) el.addEventListener('change', applyGuideFilters);
+    });
+    if (clearGuideBtn) {
+      clearGuideBtn.addEventListener('click', () => {
+        nameFilter.value = '';
+        stateFilter.value = '';
+        languageFilter.value = '';
+        driverFilter.checked = false;
+        renderGuides(guidesData);
+      });
+    }
+
+    // Load guides from external JSON and render them.  
+    // The call to loadGuides() will populate guidesData and then call renderGuides().
+    loadGuides();
+
+    // Guide contact modal
+    const guideModal = document.getElementById('guideDetailsModal');
+    const guideContent = document.getElementById('guideDetailsContent');
+    const guideClose = document.getElementById('guideDetailsClose');
+    function openGuideModal(id) {
+      const guide = guidesData.find(g => g.id === id);
+      if (!guide) return;
+      guideContent.innerHTML = `
+        <h2 style="margin-bottom:1rem;font-family:'Sora',sans-serif;">${guide.name}</h2>
+        ${guide.image ? `<img src="${guide.image}" alt="${guide.name}" style="width:100%;border-radius:8px;margin-bottom:1rem;" />` : ''}
+        <p><strong>Estado:</strong> ${guide.uf}</p>
+        <p><strong>Município:</strong> ${guide.municipio}</p>
+        <p><strong>Idiomas:</strong> ${Array.isArray(guide.languages) ? guide.languages.join(', ') : guide.languages}</p>
+        <p><strong>Categoria:</strong> ${guide.category}</p>
+        <p><strong>Segmento:</strong> ${guide.segment}</p>
+        <p><strong>Guia Motorista:</strong> ${guide.driver ? 'Sim' : 'Não'}</p>
+        <p><strong>Avaliação:</strong> ${guide.rating} / 5.0</p>
+        ${guide.description ? `<p style="margin-top:0.75rem;">${guide.description}</p>` : ''}
+        <hr style="margin:1rem 0;" />
+        <p><strong>Telefone:</strong> ${guide.telefone || '(não informado)'}<br><strong>Email:</strong> ${guide.email || '(não informado)'}</p>
+        ${guide.website ? `<p><strong>Website:</strong> <a href="${guide.website}" target="_blank" rel="noopener">${guide.website}</a></p>` : ''}
+      `;
+      guideModal.classList.add('open');
+    }
+    if (guideClose) guideClose.addEventListener('click', () => guideModal.classList.remove('open'));
+    if (guideModal) {
+      guideModal.addEventListener('click', (e) => {
+        if (e.target === guideModal) guideModal.classList.remove('open');
+      });
+    }
+    guidesContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-id]');
+      if (btn) {
+        const id = btn.getAttribute('data-id');
+        openGuideModal(id);
+      }
+    });
+  }
+
+  /* About page counters */
+  const counterElements = document.querySelectorAll('.counter');
+  if (counterElements.length > 0) {
+    const animateCounter = (el) => {
+      const target = parseInt(el.getAttribute('data-target'));
+      const duration = 2000;
+      let start = 0;
+      const startTime = performance.now();
+      function update(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.floor(progress * target);
+        el.textContent = current;
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          el.textContent = target;
+        }
+      }
+      requestAnimationFrame(update);
+    };
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animateCounter(entry.target);
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.6 });
+    counterElements.forEach(el => observer.observe(el));
+  }
+
+  // === Initialização de navegação e páginas ===
+  // Configura a barra de navegação (login/user) e a busca global
+  // Compute slug properties before any page initialisation
+  computeSlugs();
+  setupNavigation();
+  setupGlobalSearch();
+  // Inicializa páginas específicas com base nas classes do body
+  const bodyClasses = document.body.classList;
+  if (bodyClasses.contains('home-page')) {
+    initHomePage();
+  }
+  if (bodyClasses.contains('expeditions-page')) {
+    initExpeditionsPage();
+  }
+  if (bodyClasses.contains('expedition-page')) {
+    initExpeditionPage();
+  }
+  if (bodyClasses.contains('trail-page')) {
+    initTrailPage();
+  }
+  if (bodyClasses.contains('guide-page')) {
+    initGuideProfilePage();
+  }
+  if (bodyClasses.contains('blog-page')) {
+    initBlogPage();
+  }
+  if (bodyClasses.contains('post-page')) {
+    initBlogPostPage();
+  }
+  });

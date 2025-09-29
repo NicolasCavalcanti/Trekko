@@ -1,0 +1,105 @@
+// Auto‑generated data file for Trekko Brasil guides page.
+// This file attaches an array of guide objects to the global window object.
+// Each entry corresponds to um registro CADASTUR simplificado com campos essenciais.
+window.guidesData = [
+  {
+    id: 1,
+    nome_completo: "João Santos",
+    name: "João Santos",
+    uf: "MG",
+    município: "Belo Horizonte",
+    idiomas: ["Português", "Inglês"],
+    categorias: ["Guia Regional"],
+    segmentos: ["Ecoturismo", "Turismo de Aventura"],
+    guia_motorista: true,
+    município_de_atuação: ["Parque das Mangabeiras", "Serra do Cipó", "Ouro Preto"],
+    telefone_comercial: "(31) 99999‑1234",
+    email_comercial: "joao@example.com",
+    website: "www.joaosantos.com.br",
+    número_do_certificado: "MG123456",
+    validade_do_certificado: "2026-12-31 23:59:59",
+    descricao: "Especialista em trilhas e atrações históricas em Minas Gerais, combinando conhecimento local com atenção especial à segurança dos visitantes.",
+    image: "images/guia1.png"
+    ,rating: 4.9
+  },
+  {
+    id: 2,
+    nome_completo: "Ana Pereira",
+    name: "Ana Pereira",
+    uf: "RJ",
+    município: "Rio de Janeiro",
+    idiomas: ["Português", "Espanhol"],
+    categorias: ["Guia Regional", "Atrativo Cultural"],
+    segmentos: ["Turismo Cultural"],
+    guia_motorista: false,
+    município_de_atuação: ["Cristo Redentor", "Pão de Açúcar", "Centro Histórico"],
+    telefone_comercial: "(21) 98888‑4321",
+    email_comercial: "ana@example.com",
+    website: "www.anapereira.guia.br",
+    número_do_certificado: "RJ987654",
+    validade_do_certificado: "2025-11-30 23:59:59",
+    descricao: "Guia apaixonada por história e cultura carioca, conduzindo grupos por museus, igrejas e pontos turísticos icônicos.",
+    image: "images/guia2.png"
+    ,rating: 4.8
+  },
+  {
+    id: 3,
+    nome_completo: "Carlos Silva",
+    name: "Carlos Silva",
+    uf: "SP",
+    município: "São Paulo",
+    idiomas: ["Português", "Inglês", "Espanhol"],
+    categorias: ["Guia Nacional"],
+    segmentos: ["Turismo de Aventura", "Turismo Gastronômico"],
+    guia_motorista: true,
+    município_de_atuação: ["Serra da Cantareira", "Ilhabela", "Campos do Jordão"],
+    telefone_comercial: "(11) 97777‑7777",
+    email_comercial: "carlos@example.com",
+    website: "www.carlossilva.tur",
+    número_do_certificado: "SP345678",
+    validade_do_certificado: "2027-06-15 23:59:59",
+    descricao: "Com veículo próprio, Carlos combina aventuras ao ar livre com experiências gastronômicas e recomendações de restaurantes locais.",
+    image: "images/guia3.png"
+    ,rating: 4.7
+  },
+  {
+    id: 4,
+    nome_completo: "Mariana Oliveira",
+    name: "Mariana Oliveira",
+    uf: "PR",
+    município: "Curitiba",
+    idiomas: ["Português", "Inglês", "Francês"],
+    categorias: ["Guia Regional", "Atrativo Natural"],
+    segmentos: ["Ecoturismo", "Turismo Cultural"],
+    guia_motorista: false,
+    município_de_atuação: ["Parque Nacional do Iguaçu", "Centro Histórico de Curitiba", "Jardim Botânico"],
+    telefone_comercial: "(41) 96666‑8888",
+    email_comercial: "mariana@example.com",
+    website: "www.marianaoliveira.guia",
+    número_do_certificado: "PR654321",
+    validade_do_certificado: "2026-03-20 23:59:59",
+    descricao: "Experiência de mais de 10 anos guiando turistas em parques nacionais e pontos históricos do Paraná, com foco em ecoturismo sustentável.",
+    image: "images/guia1.png"
+    ,rating: 4.6
+  },
+  {
+    id: 5,
+    nome_completo: "Pedro Gomes",
+    name: "Pedro Gomes",
+    uf: "CE",
+    município: "Fortaleza",
+    idiomas: ["Português", "Espanhol"],
+    categorias: ["Guia Regional", "Atrativo Natural"],
+    segmentos: ["Turismo de Sol e Praia", "Turismo de Aventura"],
+    guia_motorista: true,
+    município_de_atuação: ["Jericoacoara", "Canoa Quebrada", "Beach Park"],
+    telefone_comercial: "(85) 95555‑2222",
+    email_comercial: "pedro@example.com",
+    website: "www.pedrogomes.guia.br",
+    número_do_certificado: "CE789012",
+    validade_do_certificado: "2025-08-10 23:59:59",
+    descricao: "Nativo do litoral cearense, Pedro oferece passeios em praias paradisíacas e aventuras de buggy nas dunas.",
+    image: "images/guia2.png"
+    ,rating: 4.5
+  }
+];

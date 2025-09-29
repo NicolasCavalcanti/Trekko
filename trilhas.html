@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trilhas – Trekko Brasil</title>
+    <meta name="description" content="Explore nossa seleção de trilhas pelo Brasil. Use filtros para encontrar trilhas por estado, dificuldade e distância.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="trails-page">
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-mountain"></i>
+                Trekko Brasil
+            </a>
+            <nav id="navMenu" class="nav-menu">
+                <a href="trilhas.html" class="nav-link active">Trilhas</a>
+                <a href="guias.html" class="nav-link">Guias</a>
+                <a href="expedicoes.html" class="nav-link">Expedições</a>
+                <a href="sobre.html" class="nav-link">Sobre</a>
+                <a href="blog.html" class="nav-link">Blog</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="global-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Busque trilhas, guias, parques..." autocomplete="off">
+                    <div id="searchSuggestions" class="suggestions"></div>
+                </div>
+                <div id="guideCTA" class="guide-cta">
+                    <a href="cadastrar_guia.html" class="btn btn-outline">Sou Guia</a>
+                </div>
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="btn btn-secondary">Entrar</button>
+                    <button id="registerBtn" class="btn btn-primary">Cadastrar-se</button>
+                </div>
+                <div id="userNav" class="user-nav">
+                    <button class="user-button"><i class="fas fa-user"></i> <span class="user-name"></span> <i class="fas fa-chevron-down"></i></button>
+                    <div class="user-menu"></div>
+                </div>
+                <button id="mobileMenuBtn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Modal (shared) -->
+    <div id="loginModal" class="login-modal">
+        <div class="modal-box">
+            <button id="loginClose" class="modal-close">&times;</button>
+            <h2>Entrar no Trekko</h2>
+            <form>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Senha" required>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            <p style="font-size:0.875rem;">Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+        </div>
+    </div>
+
+    <main class="container" style="padding-top:2rem;">
+        <h1 style="font-family:'Sora',sans-serif;font-size:2rem;color:var(--color-primary);margin-bottom:1rem;">Trilhas</h1>
+        <p style="margin-bottom:1.5rem;color:var(--color-muted);font-size:0.95rem;">Use os filtros abaixo para encontrar a trilha perfeita para você.</p>
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-field">
+                <label for="trailNameFilter">Nome ou Cidade</label>
+                <input type="text" id="trailNameFilter" placeholder="Pesquisar...">
+            </div>
+            <div class="filter-field">
+                <label for="trailStateFilter">Estado</label>
+                <select id="trailStateFilter">
+                    <option value="">Todos</option>
+                    <option value="AC">Acre</option>
+                    <option value="AL">Alagoas</option>
+                    <option value="AP">Amapá</option>
+                    <option value="AM">Amazonas</option>
+                    <option value="BA">Bahia</option>
+                    <option value="CE">Ceará</option>
+                    <option value="DF">Distrito Federal</option>
+                    <option value="ES">Espírito Santo</option>
+                    <option value="GO">Goiás</option>
+                    <option value="MA">Maranhão</option>
+                    <option value="MT">Mato Grosso</option>
+                    <option value="MS">Mato Grosso do Sul</option>
+                    <option value="MG">Minas Gerais</option>
+                    <option value="PA">Pará</option>
+                    <option value="PB">Paraíba</option>
+                    <option value="PR">Paraná</option>
+                    <option value="PE">Pernambuco</option>
+                    <option value="PI">Piauí</option>
+                    <option value="RJ">Rio de Janeiro</option>
+                    <option value="RN">Rio Grande do Norte</option>
+                    <option value="RS">Rio Grande do Sul</option>
+                    <option value="RO">Rondônia</option>
+                    <option value="RR">Roraima</option>
+                    <option value="SC">Santa Catarina</option>
+                    <option value="SP">São Paulo</option>
+                    <option value="SE">Sergipe</option>
+                    <option value="TO">Tocantins</option>
+                    <option value="SP/MG">SP/MG</option>
+                    <option value="MG/ES">MG/ES</option>
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="trailDifficultyFilter">Dificuldade</label>
+                <select id="trailDifficultyFilter">
+                    <option value="">Todas</option>
+                    <option value="facil">Fácil</option>
+                    <option value="moderada">Moderada</option>
+                    <option value="difícil">Difícil</option>
+                    <option value="extrema">Extrema</option>
+                </select>
+            </div>
+            <div class="filter-field">
+                <label for="trailDistanceFilter">Distância máxima (km)</label>
+                <input type="number" id="trailDistanceFilter" placeholder="Ex: 10">
+            </div>
+            <button id="clearTrailFilters" class="btn-clear">Limpar Filtros</button>
+        </div>
+
+        <!-- Trails Grid -->
+        <div id="trailsContainer" class="cards-grid"></div>
+    </main>
+
+    <!-- Trail Details Modal -->
+    <div id="trailDetailsModal" class="modal">
+        <div class="modal-content">
+            <button id="trailDetailsClose" class="modal-close">&times;</button>
+            <div id="trailDetailsContent"></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4 class="footer-title">Explorar</h4>
+                <a href="trilhas.html" class="footer-link">Trilhas</a>
+                <a href="guias.html" class="footer-link">Guias</a>
+                <a href="expedicoes.html" class="footer-link">Expedições</a>
+                <a href="blog.html" class="footer-link">Blog</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Institucional</h4>
+                <a href="sobre.html" class="footer-link">Sobre</a>
+                <a href="#" class="footer-link">Contato</a>
+                <a href="#" class="footer-link">Imprensa</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Suporte</h4>
+                <a href="ajuda.html" class="footer-link">Ajuda / FAQ</a>
+                <a href="politicas/privacidade.html" class="footer-link">Política de Privacidade</a>
+                <a href="politicas/termos.html" class="footer-link">Termos de Uso</a>
+                <a href="politicas/cancelamento.html" class="footer-link">Política de Cancelamento</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Siga-nos</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
+    </footer>
+
+    <!-- Carregar datasets globais antes dos scripts -->
+    <script src="data/trails.js"></script>
+    <script src="data/expeditions.js"></script>
+    <script src="data/guides.js"></script>
+    <script src="auth.js"></script>
+    <script src="scripts.js"></script>
+</body>
+</html>

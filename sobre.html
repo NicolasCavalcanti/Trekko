@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre – Trekko Brasil</title>
+    <meta name="description" content="Saiba mais sobre o Trekko Brasil, nossa missão, visão, valores e história. Descubra como conectamos pessoas à natureza e promovemos turismo sustentável.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="about-page">
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-mountain"></i>
+                Trekko Brasil
+            </a>
+            <nav id="navMenu" class="nav-menu">
+                <a href="trilhas.html" class="nav-link">Trilhas</a>
+                <a href="guias.html" class="nav-link">Guias</a>
+                <a href="expedicoes.html" class="nav-link">Expedições</a>
+                <a href="sobre.html" class="nav-link active">Sobre</a>
+                <a href="blog.html" class="nav-link">Blog</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="global-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Busque trilhas, guias, parques..." autocomplete="off">
+                    <div id="searchSuggestions" class="suggestions"></div>
+                </div>
+                <div id="guideCTA" class="guide-cta">
+                    <a href="cadastrar_guia.html" class="btn btn-outline">Sou Guia</a>
+                </div>
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="btn btn-secondary">Entrar</button>
+                    <button id="registerBtn" class="btn btn-primary">Cadastrar-se</button>
+                </div>
+                <div id="userNav" class="user-nav">
+                    <button class="user-button"><i class="fas fa-user"></i> <span class="user-name"></span> <i class="fas fa-chevron-down"></i></button>
+                    <div class="user-menu"></div>
+                </div>
+                <button id="mobileMenuBtn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="login-modal">
+        <div class="modal-box">
+            <button id="loginClose" class="modal-close">&times;</button>
+            <h2>Entrar no Trekko</h2>
+            <form>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Senha" required>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            <p style="font-size:0.875rem;">Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+        </div>
+    </div>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero" style="min-height:60vh;">
+            <div class="hero-background" style="background-image:url('images/hero-sobre.jpg');"></div>
+            <div class="hero-overlay" style="background:linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.6));"></div>
+            <div class="hero-content">
+                <h1 class="hero-title">Nossa História</h1>
+                <p class="hero-subtitle">Conheça o propósito que nos move e os valores que nos orientam.</p>
+            </div>
+        </section>
+
+        <!-- Mission Vision Values -->
+        <section class="container" style="padding-top:3rem;padding-bottom:3rem;">
+            <h2 style="text-align:center;font-family:'Sora',sans-serif;font-size:2rem;margin-bottom:2rem;color:var(--color-primary);">Missão, Visão e Valores</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-bullseye"></i></div>
+                    <h3 class="feature-title">Missão</h3>
+                    <p class="feature-text">Conectar pessoas à natureza através de trilhas seguras e experiências enriquecedoras, promovendo bem‑estar e consciência ambiental.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-eye"></i></div>
+                    <h3 class="feature-title">Visão</h3>
+                    <p class="feature-text">Ser a maior comunidade de trekking do Brasil, reconhecida pela qualidade dos nossos guias e pela paixão por explorar novos horizontes.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i class="fas fa-heart"></i></div>
+                    <h3 class="feature-title">Valores</h3>
+                    <p class="feature-text">Sustentabilidade, comunidade, aventura, segurança e autenticidade orientam todas as nossas ações.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline Section -->
+        <section style="background-color:var(--color-light);padding:3rem 0;">
+            <div class="container">
+                <h2 style="text-align:center;font-family:'Sora',sans-serif;font-size:2rem;margin-bottom:2rem;color:var(--color-primary);">Nossa Jornada</h2>
+                <div style="display:flex;flex-direction:column;gap:2rem;">
+                    <div style="display:flex;align-items:flex-start;gap:1.5rem;">
+                        <div style="font-size:2rem;color:var(--color-secondary);font-family:'Sora',sans-serif;min-width:80px;">2024</div>
+                        <div>
+                            <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;color:var(--color-primary);margin-bottom:0.5rem;">Fundação</h3>
+                            <p style="color:var(--color-muted);font-size:0.95rem;">Inspirados pelo amor às montanhas, criamos o Trekko para conectar aventureiros e guias de todo o Brasil.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:1.5rem;">
+                        <div style="font-size:2rem;color:var(--color-secondary);font-family:'Sora',sans-serif;min-width:80px;">2025</div>
+                        <div>
+                            <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;color:var(--color-primary);margin-bottom:0.5rem;">Crescimento</h3>
+                            <p style="color:var(--color-muted);font-size:0.95rem;">Lançamos nosso banco de dados com mais de 54 mil guias cadastrados em 27 estados do Brasil, ampliando nossa rede de serviços【30965070964556†L0-L9】.</p>
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:1.5rem;">
+                        <div style="font-size:2rem;color:var(--color-secondary);font-family:'Sora',sans-serif;min-width:80px;">Futuro</div>
+                        <div>
+                            <h3 style="font-family:'Sora',sans-serif;font-size:1.25rem;color:var(--color-primary);margin-bottom:0.5rem;">Horizontes</h3>
+                            <p style="color:var(--color-muted);font-size:0.95rem;">Continuaremos a inovar, promovendo turismo sustentável e integrando novas tecnologias para melhorar a experiência dos nossos usuários.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Counters Section -->
+        <section style="padding:3rem 0;background-color:#ffffff;">
+            <div class="container" style="text-align:center;">
+                <h2 style="font-family:'Sora',sans-serif;font-size:2rem;color:var(--color-primary);margin-bottom:2rem;">Nossa Comunidade</h2>
+                <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:2rem;">
+                    <div style="flex:1 1 200px;">
+                        <span class="counter" data-target="80" style="font-family:'Sora',sans-serif;font-size:2.5rem;color:var(--color-secondary);"></span>+
+                        <p style="color:var(--color-muted);font-size:0.95rem;">Trilhas cadastradas</p>
+                    </div>
+                    <div style="flex:1 1 200px;">
+                        <span class="counter" data-target="200" style="font-family:'Sora',sans-serif;font-size:2.5rem;color:var(--color-secondary);"></span>+
+                        <p style="color:var(--color-muted);font-size:0.95rem;">Guias certificados</p>
+                    </div>
+                    <div style="flex:1 1 200px;">
+                        <span class="counter" data-target="1000" style="font-family:'Sora',sans-serif;font-size:2.5rem;color:var(--color-secondary);"></span>+
+                        <p style="color:var(--color-muted);font-size:0.95rem;">Membros na comunidade</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section on about page -->
+        <section class="cta" style="background-image:url('images/cta-sobre.jpg');background-size:cover;background-position:center;">
+            <div class="container">
+                <h2 class="cta-title">Faça parte desta jornada</h2>
+                <p class="cta-text">Participe da comunidade Trekko e ajude a construir um futuro de aventuras sustentáveis.</p>
+                <a href="trilhas.html" class="btn btn-primary">Encontre uma trilha</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4 class="footer-title">Explorar</h4>
+                <a href="trilhas.html" class="footer-link">Trilhas</a>
+                <a href="guias.html" class="footer-link">Guias</a>
+                <a href="expedicoes.html" class="footer-link">Expedições</a>
+                <a href="blog.html" class="footer-link">Blog</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Institucional</h4>
+                <a href="sobre.html" class="footer-link">Sobre</a>
+                <a href="#" class="footer-link">Contato</a>
+                <a href="#" class="footer-link">Imprensa</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Suporte</h4>
+                <a href="ajuda.html" class="footer-link">Ajuda / FAQ</a>
+                <a href="politicas/privacidade.html" class="footer-link">Política de Privacidade</a>
+                <a href="politicas/termos.html" class="footer-link">Termos de Uso</a>
+                <a href="politicas/cancelamento.html" class="footer-link">Política de Cancelamento</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Siga-nos</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
+    </footer>
+
+    <!-- Carregar datasets globais antes dos scripts -->
+    <script src="data/trails.js"></script>
+    <script src="data/expeditions.js"></script>
+    <script src="data/guides.js"></script>
+    <script src="auth.js"></script>
+    <script src="scripts.js"></script>
+</body>
+</html>
