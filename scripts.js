@@ -682,119 +682,509 @@ function initExpeditionPage() {
 function initTrailPage() {
   const container = document.getElementById('trailDetail');
   if (!container) return;
-  // Ensure slugs computed
   computeSlugs();
   const params = new URLSearchParams(window.location.search);
-  const slug = params.get('slug');
-  let trail;
-  if (slug) {
-    trail = (Array.isArray(window.trailsData) ? window.trailsData.find(t => t.slug === slug) : null);
-  } else {
-    // fallback to id
-    const id = params.get('id');
-    trail = (Array.isArray(window.trailsData) ? window.trailsData.find(t => t.id === id) : null);
+  const slugParam = params.get('slug');
+  const idParam = params.get('id');
+  let trail = null;
+  if (slugParam && Array.isArray(window.trailsData)) {
+    trail = window.trailsData.find(t => t.slug === slugParam);
+  }
+  if (!trail && idParam && Array.isArray(window.trailsData)) {
+    trail = window.trailsData.find(t => t.id === idParam);
   }
   if (!trail) {
-    container.innerHTML = '<p>Trilha não encontrada.</p>';
+    container.innerHTML = '<p class="trail-not-found">Trilha não encontrada.</p>';
     return;
   }
-  const diffLabel = trail.difficulty ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1) : '';
-  // Build breadcrumb
+
+  document.title = `${trail.name} – Trekko Brasil`;
+
   const breadcrumb = document.getElementById('breadcrumb');
   if (breadcrumb) {
     breadcrumb.innerHTML = '';
-    const parts = [];
-    parts.push({ text: 'Início', link: 'index.html' });
-    parts.push({ text: 'Trilhas', link: 'trilhas.html' });
-    if (trail.state) parts.push({ text: trail.state, link: `trilhas.html?uf=${trail.state}` });
-    if (trail.city) parts.push({ text: trail.city, link: `trilhas.html?q=${encodeURIComponent(trail.city)}` });
-    parts.push({ text: trail.name, link: null });
-    parts.forEach((p, idx) => {
-      const span = document.createElement('span');
-      span.className = 'breadcrumb-item';
-      if (p.link) {
-        const a = document.createElement('a');
-        a.href = p.link;
-        a.textContent = p.text;
-        span.appendChild(a);
+    const home = document.createElement('a');
+    home.href = 'index.html';
+    home.textContent = 'Home';
+    breadcrumb.appendChild(home);
+
+    const separator = document.createElement('span');
+    separator.textContent = '›';
+    breadcrumb.appendChild(separator);
+
+    const trailsLink = document.createElement('a');
+    trailsLink.href = 'trilhas.html';
+    trailsLink.textContent = 'Trilhas';
+    breadcrumb.appendChild(trailsLink);
+
+    const separator2 = document.createElement('span');
+    separator2.textContent = '›';
+    breadcrumb.appendChild(separator2);
+
+    const current = document.createElement('strong');
+    current.textContent = trail.name;
+    breadcrumb.appendChild(current);
+  }
+
+  const normalizeDifficulty = (value) => {
+    if (!value) return '';
+    return value
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
+  const difficultyKey = normalizeDifficulty(trail.difficulty);
+  const difficultyLabels = {
+    facil: 'Fácil',
+    moderada: 'Moderada',
+    media: 'Moderada',
+    intermediaria: 'Moderada',
+    dificil: 'Difícil',
+    pesada: 'Difícil',
+    extrema: 'Extrema',
+    extremo: 'Extrema'
+  };
+  const difficultyClasses = {
+    facil: 'difficulty-easy',
+    moderada: 'difficulty-moderate',
+    media: 'difficulty-moderate',
+    intermediaria: 'difficulty-moderate',
+    dificil: 'difficulty-hard',
+    pesada: 'difficulty-hard',
+    extrema: 'difficulty-extreme',
+    extremo: 'difficulty-extreme'
+  };
+  const difficultyLabel = difficultyLabels[difficultyKey] || (trail.difficulty || 'Nível indefinido');
+  const difficultyClass = difficultyClasses[difficultyKey] || 'difficulty-moderate';
+
+  const gallery = Array.isArray(trail.gallery) && trail.gallery.length
+    ? trail.gallery.slice(0, 5)
+    : [trail.image];
+  const heroPrimaryLink = `guias.html?trail=${encodeURIComponent(trail.slug || trail.id || '')}`;
+  const heroSecondaryLink = `expedicoes.html?trail=${encodeURIComponent(trail.slug || trail.id || '')}`;
+  const locationSegments = [];
+  if (trail.park) locationSegments.push(trail.park);
+  const cityState = [trail.city, trail.state].filter(Boolean).join(' / ');
+  if (cityState) locationSegments.push(cityState);
+  const locationText = locationSegments.join(' – ');
+
+  const iconSvg = (name) => {
+    switch (name) {
+      case 'route':
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"/><path d="M6 8v10a2 2 0 0 0 2 2h8"/><circle cx="18" cy="18" r="2"/><path d="M18 16V6a2 2 0 0 0-2-2H8"/></svg>';
+      case 'mountain':
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m3 17 6-10 4 7 2-3 6 6"/><path d="M14 3 3 17h18"/></svg>';
+      case 'clock':
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+      case 'ticket':
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h3a3 3 0 1 1 6 0h5a2 2 0 0 0 2-2v-3a3 3 0 1 1 0-6V6a2 2 0 0 0-2-2h-3a3 3 0 0 1-6 0H5a2 2 0 0 0-2 2z"/></svg>';
+      case 'camping':
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 20 6-16 6 16"/><path d="M8 16h8"/><path d="M12 4v4"/></svg>';
+      case 'parking':
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v18"/><path d="M5 7h8a4 4 0 0 1 0 8H5"/></svg>';
+      default:
+        return '';
+    }
+  };
+
+  const formatCurrency = (value) => {
+    if (typeof value !== 'number' || Number.isNaN(value)) return '';
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  const formatDuration = (hours) => {
+    if (typeof hours !== 'number' || Number.isNaN(hours)) return '—';
+    const totalMinutes = Math.round(hours * 60);
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    return `${hrs}h${String(mins).padStart(2, '0')}min`;
+  };
+
+  const quickCards = [
+    {
+      title: 'Extensão',
+      value: typeof trail.distance === 'number' ? `${trail.distance.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km` : '—',
+      icon: iconSvg('route')
+    },
+    {
+      title: 'Ganho de Altitude',
+      value: typeof trail.elevationGain === 'number' ? `${trail.elevationGain.toLocaleString('pt-BR')} m` : '—',
+      icon: iconSvg('mountain')
+    },
+    {
+      title: 'Duração média',
+      value: formatDuration(trail.duration),
+      icon: iconSvg('clock')
+    },
+    {
+      title: 'Entrada paga',
+      value: trail.entryFee && trail.entryFee > 0 ? 'Sim' : 'Não',
+      icon: iconSvg('ticket'),
+      highlight: trail.entryFee && trail.entryFee > 0 ? formatCurrency(trail.entryFee) : 'Gratuita'
+    },
+    {
+      title: 'Camping',
+      value: trail.campingPoints ? 'Sim' : 'Não',
+      icon: iconSvg('camping'),
+      highlight: trail.campingPoints
+        ? (typeof trail.campingFee === 'number'
+          ? (trail.campingFee > 0 ? formatCurrency(trail.campingFee) : 'Gratuito')
+          : 'Sob consulta')
+        : 'Somente bate-volta'
+    },
+    {
+      title: 'Estacionamento',
+      value: trail.parkingAvailable ? 'Sim' : 'Não',
+      icon: iconSvg('parking'),
+      highlight: trail.parkingAvailable ? (trail.parkingFee ? formatCurrency(trail.parkingFee) : 'Gratuito') : 'Não disponível'
+    }
+  ];
+
+  const quickCardsHtml = quickCards
+    .map(card => `
+      <article class="quick-card">
+        <div class="quick-card__icon">${card.icon}</div>
+        <span class="quick-card__title">${card.title}</span>
+        <span class="quick-card__value">${card.value}</span>
+        ${card.highlight ? `<span class="quick-card__highlight">${card.highlight}</span>` : ''}
+      </article>
+    `)
+    .join('');
+
+  const descriptionText = trail.longDescription || trail.description || '';
+  const descriptionParagraphs = descriptionText
+    .split(/\n{2,}|\r?\n/)
+    .map(p => p.trim())
+    .filter(Boolean);
+  const descriptionHtml = descriptionParagraphs.map(p => `<p>${p}</p>`).join('');
+  const showReadMore = descriptionText.length > 420;
+
+  const infrastructureItems = [
+    {
+      icon: '💧',
+      label: 'Pontos de água',
+      text: trail.waterPoints ? 'Abastecimento disponível em trechos sinalizados.' : 'Leve toda a água necessária, não há pontos confiáveis no percurso.'
+    },
+    {
+      icon: '⛺',
+      label: 'Possui camping',
+      text: trail.campingPoints
+        ? `Camping autorizado. ${typeof trail.campingFee === 'number' ? (trail.campingFee > 0 ? `Diárias a ${formatCurrency(trail.campingFee)}.` : 'Gratuito para pernoite.') : 'Valores sob consulta.'}`
+        : 'Não há estrutura oficial de camping no percurso.'
+    },
+    {
+      icon: '🅿️',
+      label: 'Estacionamento',
+      text: trail.parkingAvailable ? (trail.parkingFee ? `Estacionamento no acesso por ${formatCurrency(trail.parkingFee)}.` : 'Estacionamento gratuito na portaria.') : 'Sem estacionamento oficial, organize transfer ou carona.'
+    },
+    {
+      icon: '🎫',
+      label: 'Entrada paga',
+      text: trail.entryFee && trail.entryFee > 0 ? `Ingresso obrigatório: ${formatCurrency(trail.entryFee)} por pessoa.` : 'Acesso livre, sem cobrança de ingresso.'
+    },
+    {
+      icon: '✈️',
+      label: 'Aeroporto mais próximo',
+      text: trail.airport ? `${trail.airport.name} – ${trail.airport.city} (${trail.airport.distanceKm} km)` : 'Consulte os aeroportos mais próximos.'
+    },
+    {
+      icon: '🚌',
+      label: 'Rodoviária mais próxima',
+      text: trail.busStation ? `${trail.busStation.name} – ${trail.busStation.city} (${trail.busStation.distanceKm} km)` : 'Verifique o acesso rodoviário mais conveniente.'
+    }
+  ];
+
+  const infrastructureHtml = infrastructureItems
+    .map(item => `
+      <div class="infra-item">
+        <span>${item.icon}</span>
+        <div>
+          <strong>${item.label}</strong>
+          <span>${item.text}</span>
+        </div>
+      </div>
+    `)
+    .join('');
+
+  const mapSection = trail.coordinates
+    ? `
+      <section class="trail-section">
+        <div class="trail-map">
+          <div class="trail-map__header">
+            <h3>Mapa interativo</h3>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${trail.coordinates.lat},${trail.coordinates.lng}" target="_blank" rel="noopener">Como chegar</a>
+          </div>
+          <iframe src="https://maps.google.com/maps?q=${trail.coordinates.lat},${trail.coordinates.lng}&z=12&output=embed" allowfullscreen loading="lazy" title="Mapa da trilha ${trail.name}"></iframe>
+        </div>
+      </section>
+    `
+    : '';
+
+  const reviews = Array.isArray(trail.reviews) ? trail.reviews : [];
+  const reviewCardsHtml = reviews.slice(0, 4).map(review => {
+    const initials = (review.user || 'Trekker')
+      .split(' ')
+      .filter(Boolean)
+      .map(part => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+    const avatarMarkup = review.avatar
+      ? `<span class="review-avatar"><img src="${review.avatar}" alt="${review.user}" loading="lazy"></span>`
+      : `<span class="review-avatar">${initials}</span>`;
+    return `
+      <article class="review-card">
+        <div class="review-card__header">
+          ${avatarMarkup}
+          <div>
+            <strong>${review.user || 'Viajante Trekko'}</strong>
+            <div class="review-card__meta">${review.date || ''} · ⭐ ${review.rating ? review.rating.toFixed(1).replace('.', ',') : '5,0'}</div>
+          </div>
+        </div>
+        <p>${review.text || ''}</p>
+      </article>
+    `;
+  }).join('');
+
+  const ratingAverage = typeof trail.rating === 'number'
+    ? trail.rating.toFixed(1).replace('.', ',')
+    : '—';
+  const ratingSubtitle = reviews.length
+    ? `Baseado em ${reviews.length} avaliações verificadas`
+    : 'Seja o primeiro a deixar sua avaliação';
+
+  const relatedExps = Array.isArray(window.expeditionsData)
+    ? window.expeditionsData.filter(exp => exp.trailId === trail.id)
+    : [];
+
+  const expeditionsSection = relatedExps.length
+    ? `
+      <section class="trail-section">
+        <h2 class="section-title">Expedições em destaque</h2>
+        <div class="trail-expeditions">
+          ${relatedExps.map(exp => {
+            const spotsLeft = exp.maxPeople - exp.spotsTaken;
+            return `
+              <article class="exp-card">
+                <h3>${exp.title}</h3>
+                <div class="exp-card__meta">${exp.startDate.replace(/-/g, '/')} – ${exp.endDate.replace(/-/g, '/')} · ${exp.level}</div>
+                <div class="exp-card__price">${formatCurrency(exp.price)}</div>
+                <div class="exp-card__meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
+                <a class="btn cta-secondary" href="expedicao.html?id=${exp.id}">Ver expedição</a>
+              </article>
+            `;
+          }).join('')}
+        </div>
+      </section>
+    `
+    : '';
+
+  const relatedGuides = Array.isArray(window.guidesData)
+    ? window.guidesData.filter(g => {
+        const matchState = g.uf && trail.state && trail.state.includes(g.uf);
+        const matchCity = g.municipio && trail.city && slugify(g.municipio) === slugify(trail.city);
+        return matchState || matchCity;
+      })
+    : [];
+
+  const guidesSection = relatedGuides.length
+    ? `
+      <section class="trail-section">
+        <h2 class="section-title">Guias que atuam aqui</h2>
+        <div class="trail-guides">
+          ${relatedGuides.map(guide => `
+            <article class="guide-card-modern">
+              <div class="guide-card-modern__name">${guide.name}</div>
+              <div class="guide-card-modern__meta">${guide.uf || ''} · ${guide.municipio || guide.city || ''}</div>
+              <div class="guide-card-modern__meta">⭐ ${guide.rating || '5.0'}</div>
+              <a class="btn cta-secondary" href="guia.html?slug=${guide.slug}">Ver perfil</a>
+            </article>
+          `).join('')}
+        </div>
+      </section>
+    `
+    : '';
+
+  const heroSlides = gallery
+    .map((image, index) => `
+      <div class="hero-slide${index === 0 ? ' is-active' : ''}" style="background-image:url('${image}')" role="img" aria-label="Paisagem da ${trail.name}"></div>
+    `)
+    .join('');
+
+  const heroControls = gallery.length > 1
+    ? `
+        <button class="hero-control prev" type="button" aria-label="Imagem anterior"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+        <button class="hero-control next" type="button" aria-label="Próxima imagem"><i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+      `
+    : '';
+
+  const heroSection = `
+    <section class="trail-hero">
+      <div class="hero-carousel">
+        ${heroSlides}
+        ${heroControls}
+      </div>
+      <div class="hero-overlay">
+        <span class="hero-location">${locationText || ''}</span>
+        <h1>${trail.name}</h1>
+        <div class="hero-meta">
+          <span class="difficulty-badge ${difficultyClass}">${difficultyLabel}</span>
+        </div>
+        <div class="hero-cta">
+          <a href="${heroPrimaryLink}" class="btn btn-primary" data-hero-primary>Reservar Guia</a>
+          <a href="${heroSecondaryLink}" class="btn btn-secondary">Organizar Expedição</a>
+        </div>
+      </div>
+    </section>
+  `;
+
+  const quickInfoSection = `
+    <section class="trail-section">
+      <h2 class="section-title">Informações rápidas</h2>
+      <div class="quick-grid">${quickCardsHtml}</div>
+    </section>
+  `;
+
+  const descriptionSection = `
+    <section class="trail-section">
+      <div class="trail-description">
+        <h2 class="section-title">Descrição detalhada</h2>
+        <div class="trail-description__content" data-description>${descriptionHtml}</div>
+        ${showReadMore ? '<div class="trail-description__fade"></div><button class="read-more-btn" type="button" data-read-more><span>Ler mais</span><i class="fas fa-chevron-down" aria-hidden="true"></i></button>' : ''}
+      </div>
+    </section>
+  `;
+
+  const infrastructureSection = `
+    <section class="trail-section">
+      <h2 class="section-title">Infraestrutura da trilha</h2>
+      <div class="trail-infrastructure">${infrastructureHtml}</div>
+    </section>
+  `;
+
+  const reviewsSection = `
+    <section class="trail-section" id="reviews">
+      <h2 class="section-title">Comentários e avaliações</h2>
+      <div class="trail-reviews">
+        <div class="review-summary">
+          <div class="review-summary__score">${ratingAverage}</div>
+          <div>
+            <p><strong>Nota média</strong></p>
+            <p class="trail-muted">${ratingSubtitle}</p>
+          </div>
+        </div>
+        ${reviews.length ? `<div class="review-cards">${reviewCardsHtml}</div>` : '<p class="trail-muted">Ainda não há comentários para esta trilha.</p>'}
+        <div class="review-actions">
+          <a href="#reviews" class="btn cta-secondary">Ver todos os comentários</a>
+          <a href="cadastro.html" class="btn cta-primary">Deixe sua avaliação</a>
+        </div>
+      </div>
+    </section>
+  `;
+
+  const finalCtaSection = `
+    <section class="trail-section" id="trailFinalCta">
+      <div class="trail-final-cta">
+        <h3>Pronto para explorar a ${trail.name}? Reserve com um guia certificado CADASTUR.</h3>
+        <a href="${heroPrimaryLink}" class="btn">Ver Guias Disponíveis</a>
+      </div>
+    </section>
+  `;
+
+  container.innerHTML = [
+    heroSection,
+    quickInfoSection,
+    descriptionSection,
+    infrastructureSection,
+    mapSection,
+    reviewsSection,
+    expeditionsSection,
+    guidesSection,
+    finalCtaSection
+  ].join('');
+
+  const readMoreButton = container.querySelector('[data-read-more]');
+  if (readMoreButton) {
+    const descriptionBox = container.querySelector('[data-description]');
+    const fade = container.querySelector('.trail-description__fade');
+    readMoreButton.addEventListener('click', () => {
+      const expanded = descriptionBox.classList.toggle('is-expanded');
+      if (fade) fade.style.display = expanded ? 'none' : '';
+      const label = readMoreButton.querySelector('span');
+      const icon = readMoreButton.querySelector('i');
+      if (label) label.textContent = expanded ? 'Ler menos' : 'Ler mais';
+      if (icon) {
+        icon.classList.toggle('fa-chevron-up', expanded);
+        icon.classList.toggle('fa-chevron-down', !expanded);
+      }
+    });
+  }
+
+  const slides = Array.from(container.querySelectorAll('.hero-slide'));
+  if (slides.length) {
+    let currentIndex = 0;
+    const prevBtn = container.querySelector('.hero-control.prev');
+    const nextBtn = container.querySelector('.hero-control.next');
+    const activateSlide = (index) => {
+      slides[currentIndex].classList.remove('is-active');
+      currentIndex = (index + slides.length) % slides.length;
+      slides[currentIndex].classList.add('is-active');
+    };
+    const autoAdvance = () => activateSlide(currentIndex + 1);
+    let autoTimer = slides.length > 1 ? setInterval(autoAdvance, 7000) : null;
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        activateSlide(currentIndex - 1);
+        if (autoTimer) {
+          clearInterval(autoTimer);
+          autoTimer = setInterval(autoAdvance, 7000);
+        }
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        autoAdvance();
+        if (autoTimer) {
+          clearInterval(autoTimer);
+          autoTimer = setInterval(autoAdvance, 7000);
+        }
+      });
+    }
+  }
+
+  const floatingCTA = document.getElementById('trailFloatingCTA');
+  if (floatingCTA) {
+    floatingCTA.innerHTML = `
+      <span>Pronto para explorar ${trail.name}?</span>
+      <button type="button">Ver guias disponíveis</button>
+    `;
+    const updateFloating = () => {
+      if (window.innerWidth <= 768) {
+        floatingCTA.classList.add('is-visible');
       } else {
-        const strong = document.createElement('strong');
-        strong.textContent = p.text;
-        span.appendChild(strong);
+        floatingCTA.classList.remove('is-visible');
       }
-      breadcrumb.appendChild(span);
-      if (idx < parts.length - 1) {
-        const sep = document.createElement('span');
-        sep.textContent = ' › ';
-        breadcrumb.appendChild(sep);
-      }
+    };
+    updateFloating();
+    window.addEventListener('resize', updateFloating);
+    const floatingBtn = floatingCTA.querySelector('button');
+    if (floatingBtn) {
+      floatingBtn.addEventListener('click', () => {
+        window.location.href = heroPrimaryLink;
+      });
+    }
+  }
+
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const navMenu = document.getElementById('navMenu');
+  if (mobileMenuBtn && navMenu) {
+    mobileMenuBtn.addEventListener('click', () => {
+      const isOpen = navMenu.classList.toggle('is-open');
+      mobileMenuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
   }
-  // Build content
-  let html = '';
-  html += `<h1 class="detail-title">${trail.name}</h1>`;
-  html += `<img src="${trail.image}" alt="${trail.name}" class="detail-image" />`;
-  html += `<div class="detail-info">
-    <p><strong>Estado:</strong> ${trail.state}</p>
-    ${trail.city ? `<p><strong>Cidade:</strong> ${trail.city}</p>` : ''}
-    <p><strong>Dificuldade:</strong> ${diffLabel}</p>
-    <p><strong>Distância:</strong> ${trail.distance} km</p>
-    ${trail.elevationGain ? `<p><strong>Altimetria:</strong> ${trail.elevationGain} m</p>` : ''}
-    ${trail.duration ? `<p><strong>Duração:</strong> ${trail.duration} h</p>` : ''}
-    <p><strong>Avaliação:</strong> ${trail.rating} / 5.0</p>
-    <p><strong>Pontos de água:</strong> ${trail.waterPoints ? 'Sim' : 'Não'}</p>
-    <p><strong>Pontos de camping:</strong> ${trail.campingPoints ? 'Sim' : 'Não'}</p>
-    <p><strong>Necessita guia:</strong> ${trail.requiresGuide ? 'Sim' : 'Não'}</p>
-    ${trail.entryFee && trail.entryFee > 0 ? `<p><strong>Taxa de entrada:</strong> R$ ${trail.entryFee.toFixed(2)}</p>` : ''}
-  </div>`;
-  html += `<div class="detail-description"><h3>Descrição</h3><p>${trail.description}</p></div>`;
-  // List upcoming expeditions for this trail
-  let relatedExps = [];
-  if (Array.isArray(window.expeditionsData)) {
-    relatedExps = window.expeditionsData.filter(exp => exp.trailId === trail.id);
-  }
-  if (relatedExps.length) {
-    html += '<div class="detail-expeditions"><h3>Expedições disponíveis</h3>';
-    html += '<div class="expedition-list">';
-    relatedExps.forEach(exp => {
-      const spotsLeft = exp.maxPeople - exp.spotsTaken;
-      html += `<div class="expedition-card">
-        <div class="expedition-content">
-          <div class="expedition-title">${exp.title}</div>
-          <div class="expedition-meta">${exp.startDate.replace(/-/g,'/')} - ${exp.endDate.replace(/-/g,'/')} · ${exp.level}</div>
-          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
-          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
-          <a href="expedicao.html?id=${exp.id}" class="btn btn-secondary">Ver Expedição</a>
-        </div>
-      </div>`;
-    });
-    html += '</div></div>';
-  }
-  // List guides by state and city (simple match)
-  let relatedGuides = [];
-  if (Array.isArray(window.guidesData)) {
-    relatedGuides = window.guidesData.filter(g => {
-      const matchState = g.uf && trail.state && trail.state.includes(g.uf);
-      const matchCity = g.municipio && trail.city && slugify(g.municipio) === slugify(trail.city);
-      return matchState || matchCity;
-    });
-  }
-  if (relatedGuides.length) {
-    html += '<div class="detail-guides"><h3>Guias que atuam aqui</h3>';
-    html += '<div class="guide-list">';
-    relatedGuides.forEach(g => {
-      html += `<div class="guide-card">
-        <div class="guide-card-content">
-          <div class="guide-card-name">${g.name}</div>
-          <div class="guide-card-meta">${g.uf} · ${g.municipio}</div>
-          <div class="guide-card-rating"><i class="fas fa-star"></i> ${g.rating}</div>
-          <a href="guia.html?slug=${g.slug}" class="btn btn-secondary">Ver Perfil</a>
-        </div>
-      </div>`;
-    });
-    html += '</div></div>';
-  }
-  container.innerHTML = html;
 }
 
 /**

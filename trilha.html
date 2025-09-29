@@ -9,45 +9,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/trilha.css">
 </head>
 <body class="trail-page">
-    <header>
-        <div class="nav-container">
-            <a href="index.html" class="logo"><i class="fas fa-mountain"></i>Trekko Brasil</a>
-            <nav id="navMenu" class="nav-menu">
-                <a href="trilhas.html" class="nav-link">Trilhas</a>
-                <a href="guias.html" class="nav-link">Guias</a>
-                <a href="expedicoes.html" class="nav-link">Expedições</a>
-                <a href="sobre.html" class="nav-link">Sobre</a>
-                <a href="blog.html" class="nav-link">Blog</a>
+    <header class="trail-header">
+        <div class="trail-header__inner">
+            <a href="index.html" class="trail-logo" aria-label="Página inicial Trekko">
+                <span aria-hidden="true">⛰️</span>
+                <span>Trekko Brasil</span>
+            </a>
+            <nav class="trail-nav" id="navMenu" aria-label="Menu principal">
+                <a href="trilhas.html" class="trail-nav__link">Explorar Trilhas</a>
+                <a href="guias.html" class="trail-nav__link">Guias</a>
             </nav>
-            <div class="nav-actions">
-                <div class="global-search">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="globalSearchInput" placeholder="Busque trilhas, guias, parques..." autocomplete="off">
-                    <div id="searchSuggestions" class="suggestions"></div>
-                </div>
-                <div id="guideCTA" class="guide-cta"><a href="cadastrar_guia.html" class="btn btn-outline">Sou Guia</a></div>
-                <div class="auth-buttons">
-                    <button id="loginBtn" class="btn btn-secondary">Entrar</button>
-                    <button id="registerBtn" class="btn btn-primary">Cadastrar-se</button>
-                </div>
-                <div id="userNav" class="user-nav">
-                    <button class="user-button"><i class="fas fa-user"></i> <span class="user-name"></span> <i class="fas fa-chevron-down"></i></button>
-                    <div class="user-menu"></div>
-                </div>
-                <button id="mobileMenuBtn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            <div class="trail-header__cta">
+                <a href="guias.html" class="btn cta-primary">Reservar Guia</a>
+                <a href="expedicoes.html" class="btn cta-secondary">Organizar Expedição</a>
             </div>
+            <button id="mobileMenuBtn" class="trail-header__mobile-btn" aria-label="Abrir menu" aria-expanded="false">
+                <i class="fas fa-bars" aria-hidden="true"></i>
+            </button>
         </div>
     </header>
-    <main>
-        <nav id="breadcrumb" class="breadcrumb"></nav>
-        <section class="trail-detail-section">
-            <div class="container">
-                <div id="trailDetail" class="trail-detail"></div>
-            </div>
-        </section>
+    <main class="trail-main">
+        <nav id="breadcrumb" class="trail-breadcrumb" aria-label="Você está aqui"></nav>
+        <div id="trailDetail" class="trail-detail"></div>
     </main>
+    <div id="trailFloatingCTA" class="trail-floating-cta" aria-live="polite"></div>
     <footer>
         <div class="footer-grid">
             <div>
