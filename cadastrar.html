@@ -243,10 +243,12 @@
                             .split(',')
                             .map(item => item.trim())
                             .filter(Boolean);
+                        const trekkerEmail = document.getElementById('trekkerEmail').value.trim();
+                        const trekkerPassword = document.getElementById('trekkerPassword').value;
                         const registration = await Auth.registerTrekker({
                             name: document.getElementById('trekkerName').value.trim(),
-                            email: document.getElementById('trekkerEmail').value.trim(),
-                            password: document.getElementById('trekkerPassword').value,
+                            email: trekkerEmail,
+                            password: trekkerPassword,
                             phone: document.getElementById('trekkerPhone').value.trim(),
                             state: document.getElementById('trekkerState').value.trim(),
                             city: document.getElementById('trekkerCity').value.trim(),
@@ -260,8 +262,11 @@
                                 console.warn('Falha ao verificar automaticamente o usuário', verificationError);
                             }
                         }
-                        trekkerForm.reset();
-                        resultMessage.innerHTML = '<span class="success">Cadastro realizado com sucesso! Você já pode acessar sua conta.</span>';
+                        await Auth.login(trekkerEmail, trekkerPassword);
+                        resultMessage.innerHTML = '<span class="success">Cadastro realizado com sucesso! Redirecionando para a página inicial...</span>';
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 800);
                     } catch (err) {
                         resultMessage.innerHTML = `<span class="error">${err.message || 'Não foi possível concluir o cadastro.'}</span>`;
                     } finally {
@@ -284,10 +289,12 @@
                             .split(',')
                             .map(item => item.trim())
                             .filter(Boolean);
+                        const guideEmail = document.getElementById('guideEmail').value.trim();
+                        const guidePassword = document.getElementById('guidePassword').value;
                         const registration = await Auth.registerGuide({
                             name: document.getElementById('guideName').value.trim(),
-                            email: document.getElementById('guideEmail').value.trim(),
-                            password: document.getElementById('guidePassword').value,
+                            email: guideEmail,
+                            password: guidePassword,
                             phone: document.getElementById('guidePhone').value.trim(),
                             cadastur: document.getElementById('guideCadastur').value.trim(),
                             state: '',
@@ -304,8 +311,11 @@
                                 console.warn('Falha ao verificar automaticamente o guia', verificationError);
                             }
                         }
-                        guideForm.reset();
-                        resultMessage.innerHTML = '<span class="success">Cadastro de guia realizado com sucesso! Você já pode acessar sua conta.</span>';
+                        await Auth.login(guideEmail, guidePassword);
+                        resultMessage.innerHTML = '<span class="success">Cadastro de guia realizado com sucesso! Redirecionando para a página inicial...</span>';
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 800);
                     } catch (err) {
                         resultMessage.innerHTML = `<span class="error">${err.message || 'Não foi possível concluir o cadastro.'}</span>`;
                     } finally {
