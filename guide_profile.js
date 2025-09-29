@@ -1,165 +1,140 @@
-/*
- * Guide profile page script for Trekko Brasil
- *
- * This script is responsible for populating the guia.html page with
- * information about a single guide based on the CADASTUR dataset. It
- * parses the query parameters for a slug or cadastur number, searches
- * through the window.cadasturData array for a matching entry, and then
- * builds the profile details including photo, name, Cadastur number,
- * location, languages, bio and contact information. If no guide is
- * found, it displays a fallback message. This script operates
- * independently of the larger scripts.js logic to ensure the profile
- * page always renders correctly even when the main scripts are
- * modified.
- */
+/* guide_profile.js – Perfil do Guia via CADASTUR */
 
-// Use the load event instead of DOMContentLoaded because guia.html loads this
-// script at the end of the document. If DOMContentLoaded has already fired
-// before this script is parsed, a listener on DOMContentLoaded would never
-// trigger. The load event guarantees the code runs once resources are
-// finished loading.
-window.addEventListener('load', () => {
-  // Only run on the guia profile page (avoid interference on other pages)
-  const container = document.getElementById('guideProfile');
+(function () {
+  const container = document.getElementById('guide-detail');
   if (!container) return;
-  // Clear any existing content before populating the profile
-  container.innerHTML = '';
 
-  // Helper: slugify a string (remove accents, special characters, lower case)
-  function slugify(str) {
-    return String(str || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+  const slugify = (s) =>
+    (s || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
+      .replace(/(^-|-$)/g, '');
 
-  // Normalise a raw CADASTUR entry into a guide object with standard fields
-  function normaliseCadastur(entry) {
-    const guide = {};
-    guide.name = entry.nome || entry.nome_completo || entry.name || '';
-    guide.cadastur = entry.numero_cadastur || entry.numero || entry.numero_cad || entry['nº cadastur'] || entry['número cadastur'] || '';
-    guide.uf = entry.uf || entry.estado || entry.state || '';
-    guide.city = entry.municipio || entry.município || entry.cidade || entry.city || '';
-    guide.languages = [];
-    if (entry.idiomas) {
-      if (Array.isArray(entry.idiomas)) {
-        guide.languages = entry.idiomas;
-      } else {
-        guide.languages = String(entry.idiomas)
-          .split(/\||,|;/)
-          .map(s => s.trim())
-          .filter(Boolean);
+  const parseContacts = (s) => {
+    if (!s) return {};
+    let wpp = (/whats(app)?:\s*([^|]+)/i.exec(s) || [])[2];
+    let ig  = (/insta(gram)?:\s*([^|]+)/i.exec(s) || [])[2];
+    let em  = (/mail|e-?mail:\s*([^|]+)/i.exec(s) || [])[2];
+    return {
+      whatsapp: wpp ? wpp.trim() : '',
+      instagram: ig ? ig.trim().replace(/^@/, '') : '',
+      email: em ? em.trim() : ''
+    };
+  };
+
+  const norm = (row) => {
+    const get = (...keys) => {
+      for (const k of keys) {
+        const v = row[k]; if (v != null && String(v).trim() !== '') return String(v).trim();
       }
-    }
-    guide.contacts = [];
-    if (entry.contatos) {
-      const parts = String(entry.contatos).split(/\||,/);
-      parts.forEach(part => {
-        const [type, value] = part.split(/[:：]/);
-        if (value) {
-          guide.contacts.push({ type: type.trim(), value: value.trim() });
+      return '';
+    };
+    const name = get('nome','nome_completo','name');
+    const cad  = get('numero_cadastur','cadastur','n_cadastur','número_cadastur');
+    const uf   = get('uf','estado','estado_uf');
+    const city = get('municipio','cidade','city');
+    const bio  = get('bio','descricao','descrição','mini_bio','sobre');
+    const langs= get('idiomas','languages');
+    const photo= get('foto','foto_url','image','foto_perfil');
+    const contacts = parseContacts(get('contatos','contact','contato','contacts'));
+
+    return {
+      id: cad || slugify(name),
+      name, cadastur: cad, uf, city, bio,
+      languages: langs ? langs.split('|').map(s=>s.trim()).filter(Boolean) : [],
+      photo: photo || 'images/placeholder_guide.png',
+      contacts,
+      slug: `${slugify(name)}-${(cad || '').slice(-4)}`
+    };
+  };
+
+  async function loadData() {
+    if (window.__USE_CSV__) {
+      try {
+        const resp = await fetch('data/cadastur.csv', { cache: 'no-store' });
+        if (resp.ok) {
+          const text = await resp.text();
+          const [header, ...lines] = text.trim().split(/\r?\n/);
+          const cols = header.split(',').map(h=>h.trim());
+          return lines.map(line => {
+            const parts = line.split(',');
+            const obj = {};
+            cols.forEach((c,i)=>obj[c]=parts[i]);
+            return obj;
+          }).map(norm);
         }
-      });
+      } catch(_) {}
     }
-    guide.photo = entry.foto || entry.foto_url || entry.image || entry.foto_perfil || '';
-    guide.image = guide.photo;
-    guide.bio = entry.bio || entry.descricao || entry.descrição || entry.description || '';
-    return guide;
+    return (Array.isArray(window.cadasturData) ? window.cadasturData.map(norm) : []);
   }
 
-  // Extract query params
-  const params = new URLSearchParams(window.location.search);
-  const slugParam = params.get('slug');
-  const idParam = params.get('id');
+  function render(guide) {
+    const langs = guide.languages.length ? `<p><i class="fas fa-language"></i> ${guide.languages.join(', ')}</p>` : '';
+    const contacts = guide.contacts;
+    const contactsHtml = `
+      <ul class="contact-list">
+        ${contacts.whatsapp ? `<li><i class="fab fa-whatsapp"></i> ${contacts.whatsapp}</li>` : ''}
+        ${contacts.instagram ? `<li><i class="fab fa-instagram"></i> @${contacts.instagram}</li>` : ''}
+        ${contacts.email ? `<li><i class="far fa-envelope"></i> ${contacts.email}</li>` : ''}
+        ${(!contacts.whatsapp && !contacts.instagram && !contacts.email) ? '<li>Contatos não informados.</li>' : ''}
+      </ul>
+    `;
 
-  // Find matching guide in the CADASTUR dataset
-  function findGuide() {
-    if (!Array.isArray(window.cadasturData)) return null;
-    // Compute slug for each entry on the fly
-    let entryFound = null;
-    if (slugParam) {
-      // Try direct match based on precomputed slug if exists
-      entryFound = window.cadasturData.find(entry => entry.slug === slugParam);
-      if (!entryFound) {
-        // Fallback: parse slug into name slug and last digits of cadastur
-        const parts = slugParam.split('-');
-        const idPart = parts.pop();
-        const namePart = parts.join('-');
-        window.cadasturData.forEach(entry => {
-          if (entryFound) return;
-          const entryNameSlug = slugify(entry.nome || entry.nome_completo || entry.name || '');
-          const cad = String(entry.numero_cadastur || entry.numero || entry.numero_cad || entry['nº cadastur'] || entry['número cadastur'] || '');
-          if (entryNameSlug === namePart && cad.slice(-idPart.length) === idPart) {
-            entryFound = entry;
-          }
-        });
+    container.innerHTML = `
+      <div class="guide-hero">
+        <img src="${guide.photo}" alt="${guide.name}">
+        <div class="guide-hero-overlay">
+          <h1>${guide.name}</h1>
+          <p><i class="fas fa-certificate" style="color:var(--color-secondary);"></i> ${guide.cadastur || 'Sem Cadastur'}</p>
+          <p><i class="fas fa-map-marker-alt"></i> ${guide.uf || '-'} · ${guide.city || '-'}</p>
+        </div>
+      </div>
+
+      <div class="guide-detail-section">
+        <div class="guide-detail-left">
+          <h2>Sobre</h2>
+          <p>${guide.bio || 'Sem descrição.'}</p>
+          ${langs}
+          <h3>Contato</h3>
+          ${contactsHtml}
+        </div>
+        <div class="guide-detail-right">
+          <h2>Expedições</h2>
+          <div id="guide-exps"></div>
+        </div>
+      </div>
+    `;
+
+    // expedições (opcional: quando sua base real estiver pronta)
+    const expsDiv = document.getElementById('guide-exps');
+    expsDiv.innerHTML = `<p>Nenhuma expedição disponível no momento.</p>`;
+  }
+
+  window.addEventListener('load', async () => {
+    const data = await loadData();
+    const url = new URL(location.href);
+    const viaCad = url.searchParams.get('cadastur');
+    const viaSlug= url.searchParams.get('slug');
+
+    let guide = null;
+
+    if (viaCad) {
+      guide = data.find(g => (g.cadastur||'').toUpperCase() === viaCad.toUpperCase());
+    }
+    if (!guide && viaSlug) {
+      guide = data.find(g => g.slug === viaSlug);
+      if (!guide) {
+        const base = viaSlug.replace(/-\d{3,4}$/, '');
+        const suffix = (viaSlug.match(/-(\d{3,4})$/)||[])[1] || '';
+        guide = data.find(g => slugify(g.name) === base && (g.cadastur||'').endsWith(suffix));
       }
     }
-    // If not found by slug, try by id or cadastur
-    if (!entryFound && idParam) {
-      entryFound = window.cadasturData.find(entry => {
-        const cad = String(entry.numero_cadastur || entry.numero || entry.numero_cad || '');
-        return cad === idParam || String(entry.id) === idParam;
-      });
+
+    if (!guide) {
+      container.innerHTML = '<p>Guia não encontrado.</p>';
+      return;
     }
-    return entryFound;
-  }
-
-  const rawGuide = findGuide();
-  if (!rawGuide) {
-    container.innerHTML = '<p>Guia não encontrado.</p>';
-    return;
-  }
-  const guide = normaliseCadastur(rawGuide);
-
-  // Build HTML for profile
-  let html = '';
-  html += `<h1 class="detail-title">${guide.name}</h1>`;
-  const imgSrc = guide.image || 'images/guia1.png';
-  html += `<img src="${imgSrc}" alt="${guide.name}" class="detail-image" />`;
-  html += '<div class="detail-info">';
-  if (guide.cadastur) html += `<p><strong>Nº Cadastur:</strong> ${guide.cadastur}</p>`;
-  if (guide.uf) html += `<p><strong>Estado:</strong> ${guide.uf}</p>`;
-  if (guide.city) html += `<p><strong>Município:</strong> ${guide.city}</p>`;
-  if (guide.languages && guide.languages.length) html += `<p><strong>Idiomas:</strong> ${guide.languages.join(', ')}</p>`;
-  html += '</div>';
-  html += `<div class="detail-description"><h3>Sobre o Guia</h3><p>${guide.bio}</p></div>`;
-  html += '<div class="detail-contact"><h3>Contato</h3>';
-  if (guide.contacts && guide.contacts.length) {
-    guide.contacts.forEach(({ type, value }) => {
-      html += `<p><strong>${type}:</strong> ${value}</p>`;
-    });
-  } else {
-    html += '<p>Contato não disponível.</p>';
-  }
-  html += '</div>';
-  // Expeditions section
-  let guideExps = [];
-  if (Array.isArray(window.expeditionsData) && guide.cadastur) {
-    // Match guide id or cadastur with expedition.guideId
-    guideExps = window.expeditionsData.filter(exp => {
-      return String(exp.guideId) === String(guide.cadastur) || String(exp.guideId) === String(rawGuide.id);
-    });
-  }
-  if (guideExps.length) {
-    html += '<div class="detail-expeditions"><h3>Expedições deste Guia</h3><div class="expedition-list">';
-    guideExps.forEach(exp => {
-      const spotsLeft = exp.maxPeople - exp.spotsTaken;
-      html += `<div class="expedition-card">
-        <div class="expedition-content">
-          <div class="expedition-title">${exp.title || ''}</div>
-          <div class="expedition-meta">${(exp.startDate || '').replace(/-/g,'/')} - ${(exp.endDate || '').replace(/-/g,'/')} · ${exp.level || ''}</div>
-          <div class="expedition-price">R$ ${exp.price ? exp.price.toFixed(2) : ''} por pessoa</div>
-          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
-          <a href="expedicao.html?id=${exp.id}" class="btn btn-secondary">Ver Expedição</a>
-        </div>
-      </div>`;
-    });
-    html += '</div></div>';
-  } else {
-    html += '<div class="detail-expeditions"><h3>Expedições deste Guia</h3><p>Nenhuma expedição disponível no momento.</p></div>';
-  }
-  container.innerHTML = html;
-});
+    render(guide);
+  });
+})();

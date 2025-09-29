@@ -10,9 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
 </head>
-<!-- Removed guide-page class to prevent scripts.js from initializing the profile via initGuideProfilePage().
-     The guide profile is now rendered by guide_profile.js using CADASTUR data. -->
-<body>
+<body class="guide-profile-page">
     <header>
         <div class="nav-container">
             <a href="index.html" class="logo"><i class="fas fa-mountain"></i>Trekko Brasil</a>
@@ -43,10 +41,9 @@
         </div>
     </header>
     <main>
-        <nav id="breadcrumb" class="breadcrumb"></nav>
-        <section class="guide-detail-section">
+        <section class="guide-detail-wrapper">
             <div class="container">
-                <div id="guideProfile" class="guide-detail"></div>
+                <div id="guide-detail"></div>
             </div>
         </section>
     </main>
@@ -83,16 +80,16 @@
         </div>
         <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
     </footer>
-    <script src="data/trails.js"></script>
-    <script src="data/expeditions.js"></script>
-    <!-- CADASTUR dataset for guides -->
-    <script src="data/cadastur.js"></script>
-    <!-- Legacy guides dataset (still used for some features) -->
-    <script src="data/guides.js"></script>
-    <script src="data/blog.js"></script>
     <script src="auth.js"></script>
     <script src="scripts.js"></script>
-    <!-- Load dedicated guide profile script after the global scripts -->
+
+    <!-- Fonte oficial (CSV preferido + fallback JS) -->
+    <script>
+      window.__USE_CSV__ = true; // igual à listagem
+    </script>
+    <script src="data/cadastur.js"></script>
+
+    <!-- Script dedicado ao perfil (usa somente CADASTUR) -->
     <script src="guide_profile.js"></script>
 </body>
 </html>
