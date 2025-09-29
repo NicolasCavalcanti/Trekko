@@ -17,10 +17,12 @@ window.guidesData = [
     email_comercial: "joao@example.com",
     website: "www.joaosantos.com.br",
     número_do_certificado: "MG123456",
+    cadastur: "MG123456",
     validade_do_certificado: "2026-12-31 23:59:59",
+    trilhas_guiadas: ["pico-bandeira", "marins-itaguare", "pico-cristal"],
     descricao: "Especialista em trilhas e atrações históricas em Minas Gerais, combinando conhecimento local com atenção especial à segurança dos visitantes.",
-    image: "images/guia1.png"
-    ,rating: 4.9
+    image: "images/guia1.png",
+    rating: 4.9
   },
   {
     id: 2,
@@ -37,10 +39,12 @@ window.guidesData = [
     email_comercial: "ana@example.com",
     website: "www.anapereira.guia.br",
     número_do_certificado: "RJ987654",
+    cadastur: "RJ987654",
     validade_do_certificado: "2025-11-30 23:59:59",
+    trilhas_guiadas: ["pedra-bonita"],
     descricao: "Guia apaixonada por história e cultura carioca, conduzindo grupos por museus, igrejas e pontos turísticos icônicos.",
-    image: "images/guia2.png"
-    ,rating: 4.8
+    image: "images/guia2.png",
+    rating: 4.8
   },
   {
     id: 3,
@@ -57,10 +61,12 @@ window.guidesData = [
     email_comercial: "carlos@example.com",
     website: "www.carlossilva.tur",
     número_do_certificado: "SP345678",
+    cadastur: "SP345678",
     validade_do_certificado: "2027-06-15 23:59:59",
+    trilhas_guiadas: ["cachoeira-tabuleiro", "marins-itaguare"],
     descricao: "Com veículo próprio, Carlos combina aventuras ao ar livre com experiências gastronômicas e recomendações de restaurantes locais.",
-    image: "images/guia3.png"
-    ,rating: 4.7
+    image: "images/guia3.png",
+    rating: 4.7
   },
   {
     id: 4,
@@ -77,10 +83,12 @@ window.guidesData = [
     email_comercial: "mariana@example.com",
     website: "www.marianaoliveira.guia",
     número_do_certificado: "PR654321",
+    cadastur: "PR654321",
     validade_do_certificado: "2026-03-20 23:59:59",
+    trilhas_guiadas: ["pico-neblina"],
     descricao: "Experiência de mais de 10 anos guiando turistas em parques nacionais e pontos históricos do Paraná, com foco em ecoturismo sustentável.",
-    image: "images/guia1.png"
-    ,rating: 4.6
+    image: "images/guia1.png",
+    rating: 4.6
   },
   {
     id: 5,
@@ -97,9 +105,11 @@ window.guidesData = [
     email_comercial: "pedro@example.com",
     website: "www.pedrogomes.guia.br",
     número_do_certificado: "CE789012",
+    cadastur: "CE789012",
     validade_do_certificado: "2025-08-10 23:59:59",
+    trilhas_guiadas: ["pico-neblina"],
     descricao: "Nativo do litoral cearense, Pedro oferece passeios em praias paradisíacas e aventuras de buggy nas dunas.",
-    image: "images/guia2.png"
-    ,rating: 4.5
+    image: "images/guia2.png",
+    rating: 4.5
   }
 ];

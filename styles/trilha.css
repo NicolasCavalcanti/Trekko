@@ -538,12 +538,43 @@ body.trail-page main {
   margin: 0;
 }
 
-.trail-final-cta .btn {
+.trail-final-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex: 1 1 200px;
+}
+
+.trail-final-cta__actions .btn {
   background: #fff;
   color: var(--trekko-blue);
   border-radius: 999px;
   padding: 0.85rem 1.8rem;
   font-weight: 700;
+}
+
+.trail-final-cta__actions .btn.btn-secondary {
+  background: transparent;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+}
+
+.trail-final-cta__actions .btn.btn-secondary:hover,
+.trail-final-cta__actions .btn.btn-secondary:focus-visible {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+}
+
+.trail-guides__actions {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.trail-guides__actions .btn {
+  min-width: 220px;
 }
 
 .trail-floating-cta {
