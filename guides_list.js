@@ -72,24 +72,16 @@
 
   // ---- Carregar dados: CSV (preferência) ou JS (fallback) ----
   async function loadData() {
-    // Tentar CSV?
-    if (window.__USE_CSV__) {
+    // Preferir o CSV oficial quando disponível
+    if (window.__USE_CSV__ && window.CadasturUtils) {
       try {
-        const resp = await fetch('data/cadastur.csv', { cache: 'no-store' });
-        if (resp.ok) {
-          const text = await resp.text();
-          const [header, ...lines] = text.trim().split(/\r?\n/);
-          const cols = header.split(',').map(h=>h.trim());
-          const rows = lines.map(line => {
-            // parser leve (atenção: CSV simples — se seu CSV tem vírgulas entre aspas, troque por PapaParse)
-            const parts = line.split(','); 
-            const obj = {};
-            cols.forEach((c,i)=>obj[c]=parts[i]);
-            return obj;
-          });
-          return rows.map(normalize);
+        const raw = await window.CadasturUtils.fetchCadasturData('data/CADASTUR.csv');
+        if (Array.isArray(raw) && raw.length) {
+          return raw.map(normalize);
         }
-      } catch (_) { /* ignora e cai no fallback */ }
+      } catch (_) {
+        // ignora e cai no fallback em caso de erro
+      }
     }
     // Fallback: usar dataset JS embutido (window.cadasturData)
     if (Array.isArray(window.cadasturData)) return window.cadasturData.map(normalize);
