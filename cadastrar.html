@@ -207,6 +207,110 @@
             } else if (window.location.hash === '#trekker') {
                 showTrekker();
             }
+
+            const trekkerForm = document.getElementById('trekkerForm');
+            const guideForm = document.getElementById('guideForm');
+
+            function ensureResultMessage(form) {
+                let result = form.parentElement.querySelector('.result-message');
+                if (!result) {
+                    result = document.createElement('div');
+                    result.className = 'result-message';
+                    form.parentElement.appendChild(result);
+                }
+                return result;
+            }
+
+            function toggleSubmitting(button, isSubmitting, defaultText) {
+                if (!button) return;
+                button.disabled = isSubmitting;
+                button.textContent = isSubmitting ? 'Cadastrando...' : defaultText;
+            }
+
+            if (trekkerForm) {
+                const submitBtn = trekkerForm.querySelector('button[type="submit"]');
+                const defaultText = submitBtn ? submitBtn.textContent : '';
+                trekkerForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const resultMessage = ensureResultMessage(trekkerForm);
+                    resultMessage.innerHTML = '';
+                    toggleSubmitting(submitBtn, true, defaultText);
+                    try {
+                        const preferencesRaw = document.getElementById('trekkerPreferences').value || '';
+                        const preferences = preferencesRaw
+                            .split(',')
+                            .map(item => item.trim())
+                            .filter(Boolean);
+                        const registration = await Auth.registerTrekker({
+                            name: document.getElementById('trekkerName').value.trim(),
+                            email: document.getElementById('trekkerEmail').value.trim(),
+                            password: document.getElementById('trekkerPassword').value,
+                            phone: document.getElementById('trekkerPhone').value.trim(),
+                            state: document.getElementById('trekkerState').value.trim(),
+                            city: document.getElementById('trekkerCity').value.trim(),
+                            preferences,
+                            termsAccepted: document.getElementById('trekkerTerms').checked
+                        });
+                        if (registration && registration.verificationToken) {
+                            try {
+                                Auth.verifyEmail(registration.verificationToken);
+                            } catch (verificationError) {
+                                console.warn('Falha ao verificar automaticamente o usuário', verificationError);
+                            }
+                        }
+                        trekkerForm.reset();
+                        resultMessage.innerHTML = '<span class="success">Cadastro realizado com sucesso! Você já pode acessar sua conta.</span>';
+                    } catch (err) {
+                        resultMessage.innerHTML = `<span class="error">${err.message || 'Não foi possível concluir o cadastro.'}</span>`;
+                    } finally {
+                        toggleSubmitting(submitBtn, false, defaultText);
+                    }
+                });
+            }
+
+            if (guideForm) {
+                const submitBtn = guideForm.querySelector('button[type="submit"]');
+                const defaultText = submitBtn ? submitBtn.textContent : '';
+                guideForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const resultMessage = ensureResultMessage(guideForm);
+                    resultMessage.innerHTML = '';
+                    toggleSubmitting(submitBtn, true, defaultText);
+                    try {
+                        const parksRaw = document.getElementById('guideLocation').value || '';
+                        const parks = parksRaw
+                            .split(',')
+                            .map(item => item.trim())
+                            .filter(Boolean);
+                        const registration = await Auth.registerGuide({
+                            name: document.getElementById('guideName').value.trim(),
+                            email: document.getElementById('guideEmail').value.trim(),
+                            password: document.getElementById('guidePassword').value,
+                            phone: document.getElementById('guidePhone').value.trim(),
+                            cadastur: document.getElementById('guideCadastur').value.trim(),
+                            state: '',
+                            city: '',
+                            parks,
+                            description: document.getElementById('guideBio').value.trim(),
+                            photos: [],
+                            termsAccepted: document.getElementById('guideTerms').checked
+                        }, window.cadasturData || null);
+                        if (registration && registration.verificationToken) {
+                            try {
+                                Auth.verifyEmail(registration.verificationToken);
+                            } catch (verificationError) {
+                                console.warn('Falha ao verificar automaticamente o guia', verificationError);
+                            }
+                        }
+                        guideForm.reset();
+                        resultMessage.innerHTML = '<span class="success">Cadastro de guia realizado com sucesso! Você já pode acessar sua conta.</span>';
+                    } catch (err) {
+                        resultMessage.innerHTML = `<span class="error">${err.message || 'Não foi possível concluir o cadastro.'}</span>`;
+                    } finally {
+                        toggleSubmitting(submitBtn, false, defaultText);
+                    }
+                });
+            }
         });
     </script>
 </body>
