@@ -6,6 +6,10 @@ import {
   GuideQueryParams
 } from '../../../lib/cadastur'
 import { checkRateLimit } from '../../../lib/rateLimit'
+import { createHash } from 'crypto'
+
+const buildEtag = (payload: unknown) =>
+  `W/"${createHash('sha256').update(JSON.stringify(payload)).digest('base64')}"`
 
 const cacheControl = 'public, max-age=60, s-maxage=60, stale-while-revalidate=30'
 
@@ -41,8 +45,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / (options.pageSize || DEFAULT_PAGE_SIZE))
 
-    res.setHeader('Cache-Control', cacheControl)
-
     const responseItems = items.map((guide) => ({
       id: guide.id,
       cadastur: guide.cadastur,
@@ -55,6 +57,24 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       bio: guide.bio
     }))
 
+    const responsePayload = {
+      items: responseItems,
+      page: options.page,
+      pageSize: options.pageSize,
+      totalItems,
+      totalPages
+    }
+
+    const etag = buildEtag(responsePayload)
+    if (req.headers['if-none-match'] === etag) {
+      res.setHeader('Cache-Control', cacheControl)
+      res.setHeader('ETag', etag)
+      return res.status(304).end()
+    }
+
+    res.setHeader('Cache-Control', cacheControl)
+    res.setHeader('ETag', etag)
+
     const duration = Date.now() - start
     console.info('[api/guias] query', {
       filters: options.where,
@@ -65,13 +85,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       durationMs: duration
     })
 
-    return res.status(200).json({
-      items: responseItems,
-      page: options.page,
-      pageSize: options.pageSize,
-      totalItems,
-      totalPages
-    })
+    return res.status(200).json(responsePayload)
   } catch (error) {
     console.error('[api/guias] error', error)
     return res.status(500).json({ error: 'Internal server error' })
