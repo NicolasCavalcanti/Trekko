@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next build && next export"
+    "export": "next build && next export",
+    "test": "tsc -p tsconfig.tests.json && node tests/dist/tests/cadastur.test.js"
   },
   "dependencies": {
     "next": "14.2.6",
