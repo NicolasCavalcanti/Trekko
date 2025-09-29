@@ -171,6 +171,20 @@ header {
   gap: 1rem;
 }
 
+.guide-cta .user-profile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  font-size: 1.125rem;
+}
+
+.guide-cta .user-profile-icon i {
+  pointer-events: none;
+}
+
 .mobile-menu-btn {
   display: none;
   font-size: 1.5rem;
