@@ -4,6 +4,8 @@
   const container = document.getElementById('guide-detail');
   if (!container) return;
 
+  const CADASTUR_CSV_URL = 'data/CADASTUR.csv';
+
   const slugify = (s) =>
     (s || '')
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -50,23 +52,20 @@
   };
 
   async function loadData() {
-    if (window.__USE_CSV__) {
+    if (window.__USE_CSV__ && window.CadasturUtils) {
       try {
-        const resp = await fetch('data/cadastur.csv', { cache: 'no-store' });
-        if (resp.ok) {
-          const text = await resp.text();
-          const [header, ...lines] = text.trim().split(/\r?\n/);
-          const cols = header.split(',').map(h=>h.trim());
-          return lines.map(line => {
-            const parts = line.split(',');
-            const obj = {};
-            cols.forEach((c,i)=>obj[c]=parts[i]);
-            return obj;
-          }).map(norm);
+        const rawCsv = await window.CadasturUtils.fetchCadasturData(CADASTUR_CSV_URL);
+        if (Array.isArray(rawCsv) && rawCsv.length) {
+          return rawCsv.map(norm);
         }
-      } catch(_) {}
+      } catch (error) {
+        console.warn('Não foi possível carregar CADASTUR.csv', error);
+      }
     }
-    return (Array.isArray(window.cadasturData) ? window.cadasturData.map(norm) : []);
+    if (Array.isArray(window.cadasturData)) {
+      return window.cadasturData.map(norm);
+    }
+    return [];
   }
 
   function render(guide) {

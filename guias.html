@@ -421,8 +421,10 @@
   </footer>
   <script src="auth.js"></script>
   <script src="scripts.js"></script>
+  <script src="cadastur-utils.js"></script>
   <script>
     const API_BASE = '/api/guias';
+    const CADASTUR_CSV_URL = 'data/CADASTUR.csv';
     const FALLBACK_DATA_URL = 'data/guides.json';
     const pageSize = 30;
     const placeholders = Array.from({ length: 6 });
@@ -430,6 +432,7 @@
     const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', usage: 'sort' });
     let fallbackDataset = null;
     let triedFallback = false;
+    let triedCadasturCsv = false;
 
     const refs = {
       form: document.getElementById('filtersForm'),
@@ -541,7 +544,31 @@
     }
 
     async function ensureFallbackData() {
-      if (fallbackDataset || triedFallback) {
+      if (fallbackDataset) {
+        return fallbackDataset;
+      }
+
+      if (!triedCadasturCsv && window.CadasturUtils) {
+        triedCadasturCsv = true;
+        try {
+          const rawCsv = await window.CadasturUtils.fetchCadasturData(CADASTUR_CSV_URL);
+          if (Array.isArray(rawCsv)) {
+            const mapped = rawCsv.map(normalizeFallbackGuide).filter(Boolean);
+            if (mapped.length) {
+              fallbackDataset = mapped;
+              return fallbackDataset;
+            }
+          }
+        } catch (csvError) {
+          console.warn('Não foi possível carregar CADASTUR.csv', csvError);
+        }
+      }
+
+      if (fallbackDataset) {
+        return fallbackDataset;
+      }
+
+      if (triedFallback) {
         return fallbackDataset;
       }
 
