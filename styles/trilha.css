@@ -1,0 +1,724 @@
+:root {
+  --trekko-green: #2d6a4f;
+  --trekko-sand: #e7d9c0;
+  --trekko-blue: #1e3a5f;
+  --trekko-brown: #7c4b2a;
+  --trekko-cream: #f5ede1;
+  --trekko-text: #142021;
+  --trekko-muted: #51606a;
+  --trekko-radius-xl: 1.5rem;
+  --trekko-radius-2xl: 2rem;
+}
+
+body.trail-page {
+  font-family: 'Sora', 'Inter', sans-serif;
+  background: var(--trekko-sand);
+  color: var(--trekko-text);
+}
+
+body.trail-page main {
+  padding-top: calc(var(--nav-height, 4.5rem) + 1rem);
+}
+
+.trail-header {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: rgba(231, 217, 192, 0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(20, 32, 33, 0.08);
+}
+
+.trail-header__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.75rem 5vw;
+}
+
+.trail-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--trekko-green);
+}
+
+.trail-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.trail-nav__link {
+  font-weight: 600;
+  color: var(--trekko-muted);
+}
+
+.trail-nav__link:hover,
+.trail-nav__link:focus {
+  color: var(--trekko-green);
+}
+
+.trail-header__cta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn.cta-primary {
+  background: var(--trekko-blue);
+  color: #fff;
+  padding: 0.65rem 1.4rem;
+  border-radius: 999px;
+  box-shadow: 0 12px 24px rgba(30, 58, 95, 0.25);
+}
+
+.btn.cta-primary:hover {
+  background: #274b7a;
+}
+
+.btn.cta-secondary {
+  background: transparent;
+  color: var(--trekko-blue);
+  border: 1.5px solid var(--trekko-blue);
+  border-radius: 999px;
+  padding: 0.6rem 1.4rem;
+}
+
+.btn.cta-secondary:hover {
+  background: rgba(30, 58, 95, 0.08);
+}
+
+.trail-header__mobile-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--trekko-blue);
+}
+
+.trail-breadcrumb {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.75rem 5vw 1.5rem;
+  font-size: 0.9rem;
+  color: var(--trekko-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trail-breadcrumb a {
+  color: var(--trekko-blue);
+  font-weight: 600;
+}
+
+.trail-hero {
+  position: relative;
+  min-height: 72vh;
+  max-height: 92vh;
+  overflow: hidden;
+  border-radius: 0 0 var(--trekko-radius-2xl) var(--trekko-radius-2xl);
+  margin: 0 0 3rem;
+}
+
+.hero-carousel {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.hero-slide.is-active {
+  opacity: 1;
+}
+
+.hero-control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(30, 58, 95, 0.55);
+  color: #fff;
+  border: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.hero-control:hover {
+  background: rgba(30, 58, 95, 0.75);
+}
+
+.hero-control.prev {
+  left: 1.5rem;
+}
+
+.hero-control.next {
+  right: 1.5rem;
+}
+
+.hero-overlay {
+  position: relative;
+  z-index: 2;
+  width: min(520px, 90vw);
+  margin: 0;
+  background: rgba(20, 32, 33, 0.6);
+  color: #fff;
+  padding: 2rem;
+  border-radius: 0 var(--trekko-radius-2xl) 0 0;
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  top: 55%;
+  left: 5vw;
+  transform: translateY(-50%);
+}
+
+.hero-overlay h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.1;
+}
+
+.hero-location {
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.difficulty-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(45, 106, 79, 0.2);
+  color: #fff;
+}
+
+.difficulty-easy {
+  background: rgba(76, 175, 80, 0.9);
+}
+
+.difficulty-moderate {
+  background: rgba(242, 162, 84, 0.9);
+}
+
+.difficulty-hard {
+  background: rgba(215, 85, 65, 0.9);
+}
+
+.difficulty-extreme {
+  background: rgba(153, 27, 27, 0.92);
+}
+
+.hero-cta {
+  display: flex;
+  gap: 1rem;
+}
+
+.hero-cta .btn {
+  border-radius: 999px;
+  padding: 0.75rem 1.8rem;
+  font-weight: 600;
+}
+
+.hero-cta .btn-primary {
+  background: var(--trekko-blue);
+  color: #fff;
+}
+
+.hero-cta .btn-primary:hover {
+  background: #274b7a;
+}
+
+.hero-cta .btn-secondary {
+  background: transparent;
+  border: 1.5px solid #fff;
+  color: #fff;
+}
+
+.hero-cta .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.trail-section {
+  max-width: 1200px;
+  margin: 0 auto 3rem;
+  padding: 0 5vw;
+}
+
+.section-title {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--trekko-blue);
+  margin-bottom: 1.5rem;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.quick-card {
+  background: var(--trekko-cream);
+  border-radius: var(--trekko-radius-xl);
+  padding: 1.75rem;
+  box-shadow: 0 20px 35px rgba(20, 32, 33, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quick-card__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 1rem;
+  background: rgba(45, 106, 79, 0.12);
+  display: grid;
+  place-items: center;
+  color: var(--trekko-brown);
+}
+
+.quick-card__icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.quick-card__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--trekko-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.quick-card__value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--trekko-blue);
+}
+
+.quick-card__highlight {
+  color: var(--trekko-brown);
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.trail-description {
+  background: #fff;
+  border-radius: var(--trekko-radius-xl);
+  padding: 2rem;
+  box-shadow: 0 18px 30px rgba(20, 32, 33, 0.1);
+  position: relative;
+}
+
+.trail-description p {
+  margin-bottom: 1rem;
+  color: var(--trekko-text);
+}
+
+.trail-description__content {
+  max-height: 7.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.trail-description__content.is-expanded {
+  max-height: none;
+}
+
+.trail-description__fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff);
+  pointer-events: none;
+}
+
+.trail-muted {
+  color: var(--trekko-muted);
+}
+
+.read-more-btn {
+  background: transparent;
+  border: none;
+  color: var(--trekko-blue);
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trail-infrastructure {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.infra-item {
+  background: #fff;
+  border-radius: var(--trekko-radius-xl);
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  box-shadow: 0 12px 24px rgba(20, 32, 33, 0.08);
+}
+
+.infra-item span:first-child {
+  font-size: 1.5rem;
+}
+
+.infra-item strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--trekko-blue);
+}
+
+.trail-map {
+  background: #fff;
+  border-radius: var(--trekko-radius-xl);
+  overflow: hidden;
+  box-shadow: 0 18px 34px rgba(20, 32, 33, 0.12);
+}
+
+.trail-map iframe {
+  width: 100%;
+  min-height: 360px;
+  border: 0;
+}
+
+.trail-map__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+.trail-map__header h3 {
+  font-size: 1.25rem;
+  color: var(--trekko-blue);
+}
+
+.trail-map__header a {
+  color: var(--trekko-blue);
+  font-weight: 600;
+}
+
+.trail-reviews {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.review-summary {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.review-summary__score {
+  background: var(--trekko-blue);
+  color: #fff;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 1.25rem;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 12px 28px rgba(30, 58, 95, 0.35);
+}
+
+.review-card {
+  background: #fff;
+  border-radius: var(--trekko-radius-xl);
+  padding: 1.5rem;
+  box-shadow: 0 15px 28px rgba(20, 32, 33, 0.08);
+}
+
+.review-card__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-avatar {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--trekko-cream);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: var(--trekko-blue);
+}
+
+.review-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.review-card__meta {
+  font-size: 0.85rem;
+  color: var(--trekko-muted);
+}
+
+.review-card p {
+  color: var(--trekko-text);
+}
+
+.review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.review-actions .btn {
+  border-radius: 999px;
+}
+
+.review-cards {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.trail-final-cta {
+  background: var(--trekko-blue);
+  color: #fff;
+  border-radius: var(--trekko-radius-2xl);
+  padding: 2rem 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 20px 45px rgba(30, 58, 95, 0.35);
+}
+
+.trail-final-cta h3 {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  flex: 1;
+  margin: 0;
+}
+
+.trail-final-cta .btn {
+  background: #fff;
+  color: var(--trekko-blue);
+  border-radius: 999px;
+  padding: 0.85rem 1.8rem;
+  font-weight: 700;
+}
+
+.trail-floating-cta {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100% - 2rem));
+  background: var(--trekko-blue);
+  color: #fff;
+  border-radius: var(--trekko-radius-xl);
+  padding: 1rem 1.25rem;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: 0 20px 45px rgba(30, 58, 95, 0.4);
+}
+
+.trail-floating-cta.is-visible {
+  display: flex;
+}
+
+.trail-floating-cta button {
+  background: #fff;
+  color: var(--trekko-blue);
+  border: none;
+  border-radius: 999px;
+  padding: 0.65rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.trail-not-found {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--trekko-blue);
+  font-weight: 600;
+}
+
+.trail-expeditions,
+.trail-guides {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.exp-card,
+.guide-card-modern {
+  background: #fff;
+  border-radius: var(--trekko-radius-xl);
+  padding: 1.75rem;
+  box-shadow: 0 18px 30px rgba(20, 32, 33, 0.1);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.exp-card__meta,
+.guide-card-modern__meta {
+  color: var(--trekko-muted);
+  font-size: 0.95rem;
+}
+
+.exp-card__price {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--trekko-blue);
+}
+
+.guide-card-modern__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--trekko-blue);
+}
+
+@media (max-width: 1024px) {
+  .quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trail-header__cta {
+    display: none;
+  }
+
+  .trail-header__mobile-btn {
+    display: inline-flex;
+  }
+
+  .trail-nav {
+    position: absolute;
+    top: 100%;
+    right: 1.5rem;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 16px 30px rgba(20, 32, 33, 0.2);
+    padding: 1rem 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    transform-origin: top right;
+    transform: scale(0.9);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .trail-nav.is-open {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+
+  .trail-header__inner {
+    position: relative;
+  }
+
+  .hero-overlay {
+    width: calc(100% - 10vw);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: var(--trekko-radius-xl);
+    text-align: center;
+    align-items: center;
+  }
+
+  .hero-meta {
+    justify-content: center;
+  }
+
+  .hero-cta {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .trail-section {
+    padding: 0 1.25rem;
+  }
+
+  .quick-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+    scroll-snap-type: x mandatory;
+  }
+
+  .quick-card {
+    min-width: 75%;
+    scroll-snap-align: start;
+  }
+
+  .trail-description__content {
+    max-height: 11rem;
+  }
+
+  .trail-floating-cta {
+    display: flex;
+  }
+
+  .trail-breadcrumb {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .hero-control {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .trail-floating-cta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trail-floating-cta button {
+    width: 100%;
+  }
+}
