@@ -120,6 +120,35 @@
       gap: 1.5rem;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
+    .guides-context {
+      margin: 1.5rem 0 0;
+    }
+    .guides-context[hidden] {
+      display: none;
+    }
+    .guides-context .context-card {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      background: rgba(26, 77, 46, 0.08);
+      color: var(--color-primary);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+    }
+    .guides-context .context-card button {
+      background: none;
+      border: none;
+      color: var(--color-secondary);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .guides-context .context-card button:hover,
+    .guides-context .context-card button:focus-visible {
+      color: #d98f42;
+    }
     .guide-card {
       background: #fff;
       border-radius: 18px;
@@ -380,6 +409,8 @@
           </div>
         </div>
 
+        <div id="trailContext" class="guides-context" hidden></div>
+
         <div id="guidesState" aria-live="polite"></div>
         <div class="guides-grid" id="guidesGrid" aria-live="polite" aria-busy="true"></div>
         <nav class="pagination" id="pagination" aria-label="Paginação de guias"></nav>
@@ -419,6 +450,7 @@
     </div>
     <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
   </footer>
+  <script src="data/trails.js"></script>
   <script src="auth.js"></script>
   <script src="scripts.js"></script>
   <script src="cadastur-utils.js"></script>
@@ -445,6 +477,7 @@
       grid: document.getElementById('guidesGrid'),
       pagination: document.getElementById('pagination'),
       state: document.getElementById('guidesState'),
+      context: document.getElementById('trailContext'),
       clear: document.getElementById('clearFilters'),
       reload: document.getElementById('reloadButton')
     };
@@ -458,11 +491,42 @@
         municipio: '',
         nome: '',
         cadastur: '',
-        sort: 'nome_asc'
+        sort: 'nome_asc',
+        trail: ''
       },
       loading: false,
       error: ''
     };
+
+    if (typeof computeSlugs === 'function') {
+      computeSlugs();
+    }
+
+    const trailMetadataMap = (() => {
+      const map = new Map();
+      if (Array.isArray(window.trailsData)) {
+        window.trailsData.forEach((trail) => {
+          const cadList = Array.isArray(trail.guideCadastur)
+            ? trail.guideCadastur.map((value) => String(value).toUpperCase()).filter(Boolean)
+            : [];
+          const meta = {
+            id: trail.id || '',
+            slug: trail.slug || '',
+            name: trail.name || '',
+            cadastur: cadList
+          };
+          [meta.id, meta.slug]
+            .filter(Boolean)
+            .forEach((key) => map.set(String(key).toLowerCase(), meta));
+        });
+      }
+      return map;
+    })();
+
+    function getTrailMeta(value) {
+      if (!value) return null;
+      return trailMetadataMap.get(String(value).toLowerCase()) || null;
+    }
 
     function toTitleCase(value) {
       if (!value) return '';
@@ -620,6 +684,16 @@
         filtered = filtered.filter((guide) => guide.cadastur.toLocaleLowerCase('pt-BR') === cadFilter);
       }
 
+      if (state.filters.trail) {
+        const meta = getTrailMeta(state.filters.trail);
+        if (meta && Array.isArray(meta.cadastur) && meta.cadastur.length) {
+          const cadSet = new Set(meta.cadastur.map((value) => value.toLowerCase()));
+          filtered = filtered.filter((guide) => guide.cadastur && cadSet.has(guide.cadastur.toLowerCase()));
+        } else {
+          filtered = [];
+        }
+      }
+
       const sortKey = state.filters.sort || 'nome_asc';
       const sorters = {
         nome_asc: (a, b) => collator.compare(a.nome_completo, b.nome_completo),
@@ -676,6 +750,7 @@
       state.filters.nome = params.get('nome') || '';
       state.filters.cadastur = params.get('cadastur') || '';
       state.filters.sort = params.get('sort') || 'nome_asc';
+      state.filters.trail = params.get('trail') || '';
     }
 
     function syncForm() {
@@ -692,10 +767,38 @@
       if (state.filters.nome) params.set('nome', state.filters.nome);
       if (state.filters.cadastur) params.set('cadastur', state.filters.cadastur);
       if (state.filters.sort && state.filters.sort !== 'nome_asc') params.set('sort', state.filters.sort);
+      if (state.filters.trail) params.set('trail', state.filters.trail);
       if (state.page > 1) params.set('page', String(state.page));
       const search = params.toString();
       const newUrl = `${window.location.pathname}${search ? `?${search}` : ''}`;
       window.history.replaceState({}, '', newUrl);
+    }
+
+    function renderTrailContext() {
+      if (!refs.context) return;
+      if (!state.filters.trail) {
+        refs.context.innerHTML = '';
+        refs.context.hidden = true;
+        return;
+      }
+      const meta = getTrailMeta(state.filters.trail);
+      const trailName = meta?.name || 'esta trilha';
+      refs.context.hidden = false;
+      refs.context.innerHTML = `
+        <div class="context-card">
+          <span>Filtrando por guias que atuam na trilha <strong>${trailName}</strong></span>
+          <button type="button" id="clearTrailFilter">Remover filtro</button>
+        </div>
+      `;
+      const clearTrail = document.getElementById('clearTrailFilter');
+      if (clearTrail) {
+        clearTrail.addEventListener('click', () => {
+          state.filters.trail = '';
+          updateURL();
+          renderTrailContext();
+          fetchGuides();
+        });
+      }
     }
 
     function showSkeleton() {
@@ -720,9 +823,15 @@
     function renderGuides(items) {
       refs.grid.setAttribute('aria-busy', 'false');
       refs.grid.innerHTML = '';
+      renderTrailContext();
 
       if (!items.length) {
-        refs.state.innerHTML = '<div class="guides-empty" role="status"><h3>Nenhum guia encontrado</h3><p>Ajuste os filtros ou tente outra combinação para localizar guias credenciados.</p></div>';
+        const meta = state.filters.trail ? getTrailMeta(state.filters.trail) : null;
+        if (meta) {
+          refs.state.innerHTML = `<div class="guides-empty" role="status"><h3>Nenhum guia encontrado</h3><p>Ainda não temos guias cadastrados que confirmaram atuação na trilha ${meta.name || 'selecionada'}.</p></div>`;
+        } else {
+          refs.state.innerHTML = '<div class="guides-empty" role="status"><h3>Nenhum guia encontrado</h3><p>Ajuste os filtros ou tente outra combinação para localizar guias credenciados.</p></div>';
+        }
         refs.state.setAttribute('role', 'status');
         refs.pagination.innerHTML = '';
         refs.counters.textContent = 'Nenhum guia para os filtros selecionados.';
@@ -880,6 +989,7 @@
       if (state.filters.municipio) params.set('municipio', state.filters.municipio);
       if (state.filters.nome) params.set('nome', state.filters.nome);
       if (state.filters.cadastur) params.set('cadastur', state.filters.cadastur);
+      if (state.filters.trail) params.set('trail', state.filters.trail);
 
       try {
         const response = await fetch(`${API_BASE}?${params.toString()}`, {
@@ -891,9 +1001,22 @@
           throw new Error('Não foi possível carregar os guias agora.');
         }
         const data = await response.json();
-        state.totalItems = data.totalItems || 0;
-        state.totalPages = Math.max(data.totalPages || 1, 1);
-        renderGuides(Array.isArray(data.items) ? data.items : []);
+        let items = Array.isArray(data.items) ? data.items : [];
+        if (state.filters.trail) {
+          const meta = getTrailMeta(state.filters.trail);
+          if (meta && Array.isArray(meta.cadastur) && meta.cadastur.length) {
+            const cadSet = new Set(meta.cadastur.map((value) => value.toLowerCase()));
+            items = items.filter((guide) => guide.cadastur && cadSet.has(guide.cadastur.toLowerCase()));
+          } else {
+            items = [];
+          }
+          state.totalItems = items.length;
+          state.totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+        } else {
+          state.totalItems = data.totalItems || 0;
+          state.totalPages = Math.max(data.totalPages || 1, 1);
+        }
+        renderGuides(items);
       } catch (error) {
         console.error(error);
         const servedFromFallback = await tryFallbackGuides();
@@ -901,6 +1024,7 @@
           state.error = error.message || 'Erro inesperado.';
           refs.grid.setAttribute('aria-busy', 'false');
           refs.grid.innerHTML = '';
+          renderTrailContext();
           refs.counters.textContent = 'Não foi possível carregar os guias.';
           refs.state.innerHTML = `<div class="guides-error" role="alert"><h3>Erro ao carregar guias</h3><p>${state.error}</p><button class="btn btn-outline" type="button" id="retryButton">Tentar novamente</button></div>`;
           refs.state.setAttribute('role', 'alert');
@@ -936,6 +1060,7 @@
       state.filters.nome = '';
       state.filters.cadastur = '';
       state.filters.sort = 'nome_asc';
+      state.filters.trail = '';
       state.page = 1;
       refs.uf.value = '';
       refs.nome.value = '';
@@ -943,6 +1068,7 @@
       refs.sort.value = 'nome_asc';
       fetchMunicipios('', { preserveSelection: false });
       updateURL();
+      renderTrailContext();
       fetchGuides();
     });
 
@@ -968,6 +1094,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
       parseQuery();
       syncForm();
+      renderTrailContext();
       await fetchUFs();
       if (state.filters.uf) {
         await fetchMunicipios(state.filters.uf, { preserveSelection: true });

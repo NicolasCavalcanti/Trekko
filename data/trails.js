@@ -20,6 +20,8 @@ window.trailsData = [
     entryFee: 0,
     image: 'images/pico-bandeira.jpg',
     gallery: ['images/pico-bandeira.jpg'],
+    guideIds: ['1', '3'],
+    guideCadastur: ['MG123456', 'SP345678'],
     longDescription:
       'Uma das travessias mais emblemáticas do país, a subida ao Pico da Bandeira conduz o trekker por florestas de araucárias, campos de altitude e cumes graníticos que parecem tocar o céu. A jornada exige planejamento e preparo físico, mas recompensa com nasceres do sol inesquecíveis e o encontro com a cultura local de Alto Caparaó.',
     description:
@@ -77,6 +79,8 @@ window.trailsData = [
     entryFee: 0,
     image: 'images/pedra-bonita.jpg',
     gallery: ['images/pedra-bonita.jpg'],
+    guideIds: ['2'],
+    guideCadastur: ['RJ987654'],
     longDescription:
       'Ideal para quem busca uma experiência inesquecível sem grandes dificuldades técnicas, a trilha da Pedra Bonita percorre a Mata Atlântica carioca com trechos sombreados e mirantes naturais. No topo, o visual de 360° abraça o litoral do Rio e a Pedra da Gávea, tornando-se perfeito para um nascer do sol em alto estilo.',
     description:
@@ -134,6 +138,8 @@ window.trailsData = [
     entryFee: 30,
     image: 'images/cachoeira-tabuleiro.jpg',
     gallery: ['images/cachoeira-tabuleiro.jpg'],
+    guideIds: ['3'],
+    guideCadastur: ['SP345678'],
     longDescription:
       'Caminhada clássica do Espinhaço, a trilha do Tabuleiro combina travessia por lajedos, rios cristalinos e a visão hipnótica da maior queda d’água de Minas Gerais. O percurso é moderado e alterna subidas com trechos planos, perfeito para quem quer uma aventura completa em um único dia.',
     description:
@@ -191,6 +197,8 @@ window.trailsData = [
     entryFee: 0,
     image: 'images/marins-itaguare.jpg',
     gallery: ['images/marins-itaguare.jpg'],
+    guideIds: ['1', '3'],
+    guideCadastur: ['MG123456', 'SP345678'],
     longDescription:
       'Uma travessia lendária entre Minas Gerais e São Paulo, a Marins-Itaguaré exige navegação precisa, travessia de lajes inclinadas e acampamentos selvagens. Ideal para montanhistas experientes que buscam desafios técnicos, paisagens de altitude e noites estreladas a mais de 2.000 metros.',
     description:
@@ -248,6 +256,8 @@ window.trailsData = [
     entryFee: 0,
     image: 'images/pico-cristal.jpg',
     gallery: ['images/pico-cristal.jpg'],
+    guideIds: ['1'],
+    guideCadastur: ['MG123456'],
     longDescription:
       'O Pico do Cristal é a segunda montanha mais alta do Parque Nacional do Caparaó. A trilha segue pelo Vale Encantado e exige atenção nas lajes inclinadas próximas ao cume. Ideal para trekkers que já conhecem o Pico da Bandeira e buscam uma alternativa menos movimentada.',
     description:
@@ -305,6 +315,8 @@ window.trailsData = [
     entryFee: 100,
     image: 'images/pico-neblina.jpg',
     gallery: ['images/pico-neblina.jpg'],
+    guideIds: ['4', '5'],
+    guideCadastur: ['PR654321', 'CE789012'],
     longDescription:
       'Localizado no coração da Amazônia e dentro de território Yanomami, o Pico da Neblina é a montanha mais alta do Brasil e um símbolo de respeito à floresta. A expedição exige autorização oficial, guia especializado e espírito de equipe, recompensando com uma imersão profunda na cultura indígena e na biodiversidade da região.',
     description:
