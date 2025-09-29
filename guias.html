@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guias CADASTUR | Trekko Brasil</title>
+  <meta name="description" content="Descubra guias CADASTUR em todo o Brasil. Filtre por estado, município, nome ou número Cadastur e encontre especialistas para sua próxima expedição.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-M93+77MFLJbK5x4zYkZ4fU6Y4ZCkxzgv2Fne5+5ZTCDJMmzNw2K6Jqq/RSB+BeIVlY5Pja/qvpDMAYA9Yg3K0w==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .guides-hero {
+      background: linear-gradient(135deg, rgba(26, 77, 46, 0.92), rgba(88, 167, 84, 0.82)), url('images/hero.jpg') center/cover no-repeat;
+      color: #fff;
+      padding: 6rem 0 4rem;
+    }
+    .guides-hero .container {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+    .guides-hero h1 {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(2.2rem, 4vw, 3rem);
+      margin-bottom: 1rem;
+    }
+    .guides-hero p {
+      max-width: 620px;
+      font-size: 1.1rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .guides-section {
+      padding: 0 0 4rem;
+      background: var(--color-light);
+    }
+    .filters-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 1.75rem;
+      box-shadow: 0 10px 25px rgba(15, 37, 25, 0.12);
+      margin-top: -3rem;
+      position: relative;
+      z-index: 2;
+    }
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+    }
+    .filters-grid label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--color-dark);
+    }
+    .filters-grid input,
+    .filters-grid select {
+      width: 100%;
+      padding: 0.75rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .filters-grid input:focus,
+    .filters-grid select:focus {
+      outline: none;
+      border-color: var(--color-secondary);
+      box-shadow: 0 0 0 3px rgba(242, 161, 84, 0.25);
+    }
+    .filters-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .filters-actions button[type="submit"],
+    .filters-actions button[type="reset"] {
+      flex: 1 1 180px;
+    }
+    .filters-actions .btn-link {
+      background: none;
+      border: none;
+      color: var(--color-muted);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .guides-header {
+      margin: 2.5rem 0 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .guides-header h2 {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(1.5rem, 2.5vw, 2rem);
+    }
+    .guides-count {
+      color: var(--color-muted);
+      font-weight: 500;
+    }
+    .guides-grid {
+      display: grid;
+      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    .guide-card {
+      background: #fff;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 12px 28px rgba(12, 28, 21, 0.1);
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .guide-card .photo-wrapper {
+      position: relative;
+      padding-top: 68%;
+      overflow: hidden;
+    }
+    .guide-card img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .guide-card:hover img {
+      transform: scale(1.05);
+    }
+    .guide-card .guide-body {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      flex: 1;
+    }
+    .guide-card .guide-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    .guide-card .guide-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1.25rem;
+      color: var(--color-muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .guide-card .guide-meta i {
+      color: var(--color-secondary);
+    }
+    .guide-card .guide-bio {
+      color: var(--color-dark);
+      font-size: 0.97rem;
+    }
+    .guide-card .guide-actions {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .guide-card .contact-links {
+      display: flex;
+      gap: 0.65rem;
+    }
+    .guide-card .contact-links a {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(26, 77, 46, 0.08);
+      color: var(--color-primary);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .guide-card .contact-links a:hover,
+    .guide-card .contact-links a:focus-visible {
+      background: var(--color-primary);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+    .guide-card .cta-link {
+      margin-left: auto;
+      font-weight: 600;
+      color: var(--color-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .guide-card .cta-link:hover {
+      color: #d98f42;
+    }
+    .skeleton-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: 0 12px 28px rgba(12, 28, 21, 0.07);
+      display: grid;
+      gap: 0.9rem;
+      animation: shimmer 1.8s infinite linear;
+      background-image: linear-gradient(90deg, rgba(220, 220, 220, 0.2) 25%, rgba(200, 200, 200, 0.35) 37%, rgba(220, 220, 220, 0.2) 63%);
+      background-size: 400% 100%;
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .guides-empty,
+    .guides-error {
+      padding: 3rem;
+      text-align: center;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 28px rgba(12, 28, 21, 0.08);
+      margin-top: 2rem;
+    }
+    .guides-empty p,
+    .guides-error p {
+      max-width: 420px;
+      margin: 0.5rem auto 1.5rem;
+      color: var(--color-muted);
+    }
+    .pagination {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+    }
+    .pagination button {
+      min-width: 42px;
+      padding: 0.55rem 0.95rem;
+      border-radius: 10px;
+      border: 1px solid rgba(26, 77, 46, 0.18);
+      background: #fff;
+      color: var(--color-primary);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+    .pagination button[disabled] {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+    .pagination button.active,
+    .pagination button:hover:not([disabled]),
+    .pagination button:focus-visible {
+      background: var(--color-primary);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 768px) {
+      .filters-card {
+        margin-top: -2.2rem;
+        padding: 1.25rem;
+      }
+      .guides-header {
+        margin-top: 2rem;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body class="guides-page">
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="logo"><i class="fas fa-mountain" aria-hidden="true"></i>Trekko Brasil</a>
+      <nav id="navMenu" class="nav-menu" aria-label="Menu principal">
+        <a href="trilhas.html" class="nav-link">Trilhas</a>
+        <a href="guias.html" class="nav-link active" aria-current="page">Guias</a>
+        <a href="expedicoes.html" class="nav-link">Expedições</a>
+        <a href="sobre.html" class="nav-link">Sobre</a>
+        <a href="blog.html" class="nav-link">Blog</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="global-search">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <label class="sr-only" for="globalSearchInput">Buscar no site</label>
+          <input type="text" id="globalSearchInput" placeholder="Busque trilhas, guias, parques..." autocomplete="off">
+          <div id="searchSuggestions" class="suggestions" role="listbox"></div>
+        </div>
+        <div id="guideCTA" class="guide-cta"><a href="cadastrar_guia.html" class="btn btn-outline">Sou Guia</a></div>
+        <div class="auth-buttons">
+          <button id="loginBtn" class="btn btn-secondary">Entrar</button>
+          <button id="registerBtn" class="btn btn-primary">Cadastrar-se</button>
+        </div>
+        <div id="userNav" class="user-nav" hidden>
+          <button class="user-button"><i class="fas fa-user" aria-hidden="true"></i> <span class="user-name"></span> <i class="fas fa-chevron-down" aria-hidden="true"></i></button>
+          <div class="user-menu"></div>
+        </div>
+        <button id="mobileMenuBtn" class="mobile-menu-btn" aria-expanded="false" aria-controls="navMenu"><i class="fas fa-bars" aria-hidden="true"></i><span class="sr-only">Abrir menu</span></button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <section class="guides-hero">
+      <div class="container">
+        <h1>Guias CADASTUR verificados</h1>
+        <p>Encontre especialistas certificados para conduzir sua próxima aventura pelo Brasil. Filtre por estado, município ou cadastre-se para reservar expedições com um clique.</p>
+      </div>
+    </section>
+    <section class="guides-section" aria-labelledby="guidesTitle">
+      <div class="container">
+        <form id="filtersForm" class="filters-card" novalidate>
+          <div class="filters-grid">
+            <div>
+              <label for="filterUF">Estado (UF)</label>
+              <select id="filterUF" name="uf" aria-describedby="ufHint">
+                <option value="">Todos os estados</option>
+              </select>
+              <p id="ufHint" class="sr-only">Selecione um estado para habilitar os municípios disponíveis.</p>
+            </div>
+            <div>
+              <label for="filterMunicipio">Município</label>
+              <select id="filterMunicipio" name="municipio" disabled>
+                <option value="">Selecione um estado primeiro</option>
+              </select>
+            </div>
+            <div>
+              <label for="filterNome">Nome do guia</label>
+              <input id="filterNome" name="nome" type="text" placeholder="Ex.: Ana Silva" autocomplete="off">
+            </div>
+            <div>
+              <label for="filterCadastur">Nº Cadastur</label>
+              <input id="filterCadastur" name="cadastur" type="text" placeholder="Ex.: 26.123.456" autocomplete="off">
+            </div>
+            <div>
+              <label for="sortSelect">Ordenar por</label>
+              <select id="sortSelect" name="sort">
+                <option value="nome_asc">Nome (A-Z)</option>
+                <option value="nome_desc">Nome (Z-A)</option>
+                <option value="municipio_asc">Município (A-Z)</option>
+                <option value="uf_asc">UF (A-Z)</option>
+              </select>
+            </div>
+          </div>
+          <div class="filters-actions">
+            <button type="submit" class="btn btn-solid"><i class="fas fa-filter" aria-hidden="true"></i>Aplicar filtros</button>
+            <button type="reset" id="clearFilters" class="btn btn-outline"><i class="fas fa-eraser" aria-hidden="true"></i>Limpar</button>
+            <button type="button" id="reloadButton" class="btn-link" hidden>Tentar novamente</button>
+          </div>
+        </form>
+
+        <div class="guides-header">
+          <div>
+            <h2 id="guidesTitle">Guias disponíveis</h2>
+            <p class="guides-count" aria-live="polite" id="guidesCounters">Carregando guias…</p>
+          </div>
+          <div class="guides-refresh" hidden>
+            <span class="badge">Atualizado agora</span>
+          </div>
+        </div>
+
+        <div id="guidesState" aria-live="polite"></div>
+        <div class="guides-grid" id="guidesGrid" aria-live="polite" aria-busy="true"></div>
+        <nav class="pagination" id="pagination" aria-label="Paginação de guias"></nav>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="footer-grid">
+      <div>
+        <h4 class="footer-title">Explorar</h4>
+        <a href="trilhas.html" class="footer-link">Trilhas</a>
+        <a href="guias.html" class="footer-link">Guias</a>
+        <a href="expedicoes.html" class="footer-link">Expedições</a>
+        <a href="blog.html" class="footer-link">Blog</a>
+      </div>
+      <div>
+        <h4 class="footer-title">Institucional</h4>
+        <a href="sobre.html" class="footer-link">Sobre</a>
+        <a href="contact.html" class="footer-link">Contato</a>
+        <a href="#" class="footer-link">Imprensa</a>
+      </div>
+      <div>
+        <h4 class="footer-title">Suporte</h4>
+        <a href="ajuda.html" class="footer-link">Ajuda / FAQ</a>
+        <a href="politicas/privacidade.html" class="footer-link">Política de Privacidade</a>
+        <a href="politicas/termos.html" class="footer-link">Termos de Uso</a>
+        <a href="politicas/cancelamento.html" class="footer-link">Política de Cancelamento</a>
+      </div>
+      <div>
+        <h4 class="footer-title">Siga-nos</h4>
+        <div class="social-icons">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
+  </footer>
+  <script src="auth.js"></script>
+  <script src="scripts.js"></script>
+  <script>
+    const API_BASE = '/api/guias';
+    const pageSize = 30;
+    const placeholders = Array.from({ length: 6 });
+
+    const refs = {
+      form: document.getElementById('filtersForm'),
+      uf: document.getElementById('filterUF'),
+      municipio: document.getElementById('filterMunicipio'),
+      nome: document.getElementById('filterNome'),
+      cadastur: document.getElementById('filterCadastur'),
+      sort: document.getElementById('sortSelect'),
+      counters: document.getElementById('guidesCounters'),
+      grid: document.getElementById('guidesGrid'),
+      pagination: document.getElementById('pagination'),
+      state: document.getElementById('guidesState'),
+      clear: document.getElementById('clearFilters'),
+      reload: document.getElementById('reloadButton')
+    };
+
+    const state = {
+      page: 1,
+      totalPages: 1,
+      totalItems: 0,
+      filters: {
+        uf: '',
+        municipio: '',
+        nome: '',
+        cadastur: '',
+        sort: 'nome_asc'
+      },
+      loading: false,
+      error: ''
+    };
+
+    function parseQuery() {
+      const params = new URLSearchParams(window.location.search);
+      state.page = Math.max(parseInt(params.get('page') || '1', 10) || 1, 1);
+      state.filters.uf = params.get('uf') || '';
+      state.filters.municipio = params.get('municipio') || '';
+      state.filters.nome = params.get('nome') || '';
+      state.filters.cadastur = params.get('cadastur') || '';
+      state.filters.sort = params.get('sort') || 'nome_asc';
+    }
+
+    function syncForm() {
+      refs.uf.value = state.filters.uf;
+      refs.nome.value = state.filters.nome;
+      refs.cadastur.value = state.filters.cadastur;
+      refs.sort.value = state.filters.sort;
+    }
+
+    function updateURL() {
+      const params = new URLSearchParams();
+      if (state.filters.uf) params.set('uf', state.filters.uf);
+      if (state.filters.municipio) params.set('municipio', state.filters.municipio);
+      if (state.filters.nome) params.set('nome', state.filters.nome);
+      if (state.filters.cadastur) params.set('cadastur', state.filters.cadastur);
+      if (state.filters.sort && state.filters.sort !== 'nome_asc') params.set('sort', state.filters.sort);
+      if (state.page > 1) params.set('page', String(state.page));
+      const search = params.toString();
+      const newUrl = `${window.location.pathname}${search ? `?${search}` : ''}`;
+      window.history.replaceState({}, '', newUrl);
+    }
+
+    function showSkeleton() {
+      refs.grid.innerHTML = '';
+      refs.grid.setAttribute('aria-busy', 'true');
+      placeholders.forEach(() => {
+        const sk = document.createElement('div');
+        sk.className = 'skeleton-card';
+        sk.innerHTML = '<div style="height: 180px; border-radius: 12px; background: rgba(255,255,255,0.2);"></div>' +
+          '<div style="height: 18px; width: 60%; border-radius: 8px; background: rgba(255,255,255,0.2);"></div>' +
+          '<div style="height: 14px; width: 40%; border-radius: 8px; background: rgba(255,255,255,0.2);"></div>' +
+          '<div style="height: 12px; width: 80%; border-radius: 8px; background: rgba(255,255,255,0.2);"></div>';
+        refs.grid.appendChild(sk);
+      });
+    }
+
+    function clearStateMessage() {
+      refs.state.innerHTML = '';
+      refs.state.removeAttribute('role');
+    }
+
+    function renderGuides(items) {
+      refs.grid.setAttribute('aria-busy', 'false');
+      refs.grid.innerHTML = '';
+
+      if (!items.length) {
+        refs.state.innerHTML = '<div class="guides-empty" role="status"><h3>Nenhum guia encontrado</h3><p>Ajuste os filtros ou tente outra combinação para localizar guias credenciados.</p></div>';
+        refs.state.setAttribute('role', 'status');
+        refs.pagination.innerHTML = '';
+        refs.counters.textContent = 'Nenhum guia para os filtros selecionados.';
+        return;
+      }
+
+      clearStateMessage();
+
+      refs.counters.textContent = `Exibindo ${items.length} de ${state.totalItems} guias (página ${state.page} de ${state.totalPages})`;
+
+      items.forEach((guide) => {
+        const card = document.createElement('article');
+        card.className = 'guide-card';
+        card.innerHTML = `
+          <div class="photo-wrapper">
+            <img src="${guide.foto_url || 'images/placeholder_guide.png'}" alt="Retrato de ${guide.nome_completo}" loading="lazy" onerror="this.src='images/placeholder_guide.png'; this.onerror=null;">
+          </div>
+          <div class="guide-body">
+            <h3 class="guide-name"><a href="guia.html?cadastur=${encodeURIComponent(guide.cadastur)}">${guide.nome_completo}</a></h3>
+            <div class="guide-meta">
+              <span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> ${guide.municipio} / ${guide.uf}</span>
+              <span data-cadastur="${guide.cadastur}"><i class="fas fa-id-card" aria-hidden="true"></i> ${guide.cadastur}</span>
+            </div>
+            ${guide.bio ? `<p class="guide-bio">${guide.bio.length > 220 ? guide.bio.slice(0, 220) + '…' : guide.bio}</p>` : ''}
+            <div class="guide-actions">
+              <div class="contact-links">
+                ${guide.whatsapp ? `<a href="https://wa.me/${guide.whatsapp.replace(/[^0-9+]/g, '')}" target="_blank" rel="noopener" aria-label="Conversar com ${guide.nome_completo} no WhatsApp"><i class="fab fa-whatsapp"></i></a>` : ''}
+                ${guide.instagram ? `<a href="https://instagram.com/${guide.instagram.replace(/^@/, '')}" target="_blank" rel="noopener" aria-label="Ver Instagram de ${guide.nome_completo}"><i class="fab fa-instagram"></i></a>` : ''}
+              </div>
+              <a class="cta-link" href="guia.html?cadastur=${encodeURIComponent(guide.cadastur)}">Ver perfil <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+          </div>
+        `;
+        refs.grid.appendChild(card);
+      });
+
+      renderPagination();
+    }
+
+    function renderPagination() {
+      refs.pagination.innerHTML = '';
+      if (state.totalPages <= 1) return;
+
+      const createButton = (label, page, options = {}) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = label;
+        btn.disabled = options.disabled || false;
+        if (options.active) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          if (page === state.page || btn.disabled) return;
+          state.page = page;
+          updateURL();
+          fetchGuides();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        refs.pagination.appendChild(btn);
+      };
+
+      createButton('« Primeira', 1, { disabled: state.page === 1 });
+      createButton('‹ Anterior', Math.max(1, state.page - 1), { disabled: state.page === 1 });
+
+      const windowPages = new Set([1, state.page - 1, state.page, state.page + 1, state.totalPages]);
+      const pages = Array.from(windowPages).filter((p) => p >= 1 && p <= state.totalPages).sort((a, b) => a - b);
+      let previous = 0;
+      pages.forEach((pageNumber) => {
+        if (pageNumber - previous > 1) {
+          const dots = document.createElement('span');
+          dots.textContent = '…';
+          dots.setAttribute('aria-hidden', 'true');
+          refs.pagination.appendChild(dots);
+        }
+        createButton(String(pageNumber), pageNumber, { active: pageNumber === state.page });
+        previous = pageNumber;
+      });
+
+      createButton('Próxima ›', Math.min(state.totalPages, state.page + 1), { disabled: state.page === state.totalPages });
+      createButton('Última »', state.totalPages, { disabled: state.page === state.totalPages });
+    }
+
+    async function fetchUFs() {
+      try {
+        const response = await fetch(`${API_BASE}/ufs`, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) throw new Error('Erro ao carregar estados');
+        const data = await response.json();
+        const options = ['<option value="">Todos os estados</option>'].concat(
+          (data || []).map((uf) => `<option value="${uf}">${uf}</option>`)
+        );
+        refs.uf.innerHTML = options.join('');
+        if (state.filters.uf) refs.uf.value = state.filters.uf;
+      } catch (error) {
+        console.error(error);
+        refs.uf.innerHTML = '<option value="">Erro ao carregar</option>';
+      }
+    }
+
+    async function fetchMunicipios(uf, { preserveSelection = true } = {}) {
+      if (!uf) {
+        refs.municipio.innerHTML = '<option value="">Selecione um estado primeiro</option>';
+        refs.municipio.disabled = true;
+        if (!preserveSelection) state.filters.municipio = '';
+        return;
+      }
+      refs.municipio.disabled = false;
+      refs.municipio.innerHTML = '<option value="">Carregando…</option>';
+      try {
+        const response = await fetch(`${API_BASE}/municipios?uf=${encodeURIComponent(uf)}`, { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) throw new Error('Erro ao carregar municípios');
+        const data = await response.json();
+        const options = ['<option value="">Todos os municípios</option>'].concat(
+          (data || []).map((city) => `<option value="${city}">${city}</option>`)
+        );
+        refs.municipio.innerHTML = options.join('');
+        if (preserveSelection && state.filters.municipio) {
+          refs.municipio.value = state.filters.municipio;
+        }
+      } catch (error) {
+        console.error(error);
+        refs.municipio.innerHTML = '<option value="">Erro ao carregar</option>';
+      }
+    }
+
+    async function fetchGuides() {
+      state.loading = true;
+      state.error = '';
+      refs.reload.hidden = true;
+      showSkeleton();
+      clearStateMessage();
+
+      const params = new URLSearchParams();
+      params.set('page', String(state.page));
+      params.set('pageSize', String(pageSize));
+      params.set('sort', state.filters.sort || 'nome_asc');
+      if (state.filters.uf) params.set('uf', state.filters.uf);
+      if (state.filters.municipio) params.set('municipio', state.filters.municipio);
+      if (state.filters.nome) params.set('nome', state.filters.nome);
+      if (state.filters.cadastur) params.set('cadastur', state.filters.cadastur);
+
+      try {
+        const response = await fetch(`${API_BASE}?${params.toString()}`, {
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        if (!response.ok) {
+          throw new Error('Não foi possível carregar os guias agora.');
+        }
+        const data = await response.json();
+        state.totalItems = data.totalItems || 0;
+        state.totalPages = Math.max(data.totalPages || 1, 1);
+        renderGuides(Array.isArray(data.items) ? data.items : []);
+      } catch (error) {
+        console.error(error);
+        state.error = error.message || 'Erro inesperado.';
+        refs.grid.setAttribute('aria-busy', 'false');
+        refs.grid.innerHTML = '';
+        refs.counters.textContent = 'Não foi possível carregar os guias.';
+        refs.state.innerHTML = `<div class="guides-error" role="alert"><h3>Erro ao carregar guias</h3><p>${state.error}</p><button class="btn btn-outline" type="button" id="retryButton">Tentar novamente</button></div>`;
+        refs.state.setAttribute('role', 'alert');
+        const retry = document.getElementById('retryButton');
+        if (retry) {
+          retry.addEventListener('click', () => {
+            refs.state.innerHTML = '';
+            fetchGuides();
+          });
+        }
+        refs.pagination.innerHTML = '';
+      } finally {
+        state.loading = false;
+      }
+    }
+
+    refs.form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      state.filters.uf = refs.uf.value;
+      state.filters.municipio = refs.municipio.disabled ? '' : refs.municipio.value;
+      state.filters.nome = refs.nome.value.trim();
+      state.filters.cadastur = refs.cadastur.value.trim();
+      state.filters.sort = refs.sort.value;
+      state.page = 1;
+      updateURL();
+      fetchGuides();
+    });
+
+    refs.clear.addEventListener('click', () => {
+      state.filters.uf = '';
+      state.filters.municipio = '';
+      state.filters.nome = '';
+      state.filters.cadastur = '';
+      state.filters.sort = 'nome_asc';
+      state.page = 1;
+      refs.uf.value = '';
+      refs.nome.value = '';
+      refs.cadastur.value = '';
+      refs.sort.value = 'nome_asc';
+      fetchMunicipios('', { preserveSelection: false });
+      updateURL();
+      fetchGuides();
+    });
+
+    refs.uf.addEventListener('change', async () => {
+      state.filters.uf = refs.uf.value;
+      state.filters.municipio = '';
+      state.page = 1;
+      await fetchMunicipios(state.filters.uf, { preserveSelection: false });
+    });
+
+    refs.municipio.addEventListener('change', () => {
+      if (refs.municipio.disabled) return;
+      state.filters.municipio = refs.municipio.value;
+    });
+
+    refs.sort.addEventListener('change', () => {
+      state.filters.sort = refs.sort.value;
+      state.page = 1;
+      updateURL();
+      fetchGuides();
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      parseQuery();
+      syncForm();
+      await fetchUFs();
+      if (state.filters.uf) {
+        await fetchMunicipios(state.filters.uf, { preserveSelection: true });
+      } else {
+        fetchMunicipios('', { preserveSelection: false });
+      }
+      if (state.filters.municipio) {
+        refs.municipio.value = state.filters.municipio;
+      }
+      updateURL();
+      fetchGuides();
+    });
+  </script>
+</body>
+</html>
