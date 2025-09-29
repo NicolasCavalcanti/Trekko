@@ -26,25 +26,26 @@ enum UserRole {
 }
 
 model Guide {
-  id          Int                 @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
   name        String
   email       String
   phone       String?
-  cadastur    String              @unique
+  cadastur    String            @unique
   uf          String?
   city        String?
   validity    DateTime?
   specialties String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   imports     GuideImportItem[]
+  User        User[]
 }
 
 model GuideImport {
-  id        Int           @id @default(autoincrement())
-  status    ImportStatus  @default(PENDING)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id        Int               @id @default(autoincrement())
+  status    ImportStatus      @default(PENDING)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
   items     GuideImportItem[]
 }
 
@@ -79,4 +80,23 @@ enum ImportItemStatus {
   VALID
   ERROR
   IMPORTED
+}
+
+model CadasturGuide {
+  id           Int      @id @default(autoincrement())
+  cadastur     String   @unique @db.VarChar(32)
+  nomeCompleto String   @map("nome_completo") @db.VarChar(180)
+  uf           String   @db.Char(2)
+  municipio    String   @db.VarChar(120)
+  whatsapp     String?  @db.VarChar(32)
+  instagram    String?  @db.VarChar(120)
+  fotoUrl      String?  @map("foto_url")
+  bio          String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@index([uf], map: "idx_guias_uf")
+  @@index([municipio], map: "idx_guias_municipio")
+  @@index([nomeCompleto], map: "idx_guias_nome")
+  @@map("guias")
 }
