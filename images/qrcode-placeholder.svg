@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">QR Code ilustrativo</title>
+  <desc id="desc">Ilustração simples representando um código QR.</desc>
+  <rect width="120" height="120" fill="#f1f5f9" rx="12"/>
+  <rect x="12" y="12" width="32" height="32" fill="#1a4d2e" rx="4"/>
+  <rect x="76" y="12" width="32" height="32" fill="#1a4d2e" rx="4"/>
+  <rect x="12" y="76" width="32" height="32" fill="#1a4d2e" rx="4"/>
+  <rect x="44" y="44" width="16" height="16" fill="#1a4d2e"/>
+  <rect x="68" y="52" width="12" height="12" fill="#1a4d2e"/>
+  <rect x="52" y="76" width="20" height="20" fill="#1a4d2e"/>
+  <rect x="88" y="76" width="20" height="12" fill="#1a4d2e"/>
+</svg>

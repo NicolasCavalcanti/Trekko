@@ -59,32 +59,427 @@
         </div>
     </div>
 
-    <main class="container" style="padding-top:2rem;">
-        <h1 style="font-family:'Sora',sans-serif;color:var(--color-primary);margin-bottom:1rem;">Minha Conta</h1>
-        <p style="font-size:0.95rem;color:var(--color-muted);margin-bottom:2rem;">Área do usuário com informações de perfil, reservas e preferências.</p>
-        <div class="account-content" style="display:flex;flex-wrap:wrap;gap:2rem;">
-            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Perfil</h2>
-                <p>Aqui serão exibidos seus dados pessoais, foto de perfil, WhatsApp, cidade/estado e preferências.</p>
+    <main class="container profile-container" id="profileRoot">
+        <div class="profile-intro">
+            <div class="profile-avatar" aria-live="polite">
+                <img id="profileAvatar" src="images/guia1.png" alt="Foto de perfil de Ana Monteiro" loading="lazy">
+                <button class="btn btn-secondary change-photo" id="changePhotoBtn" type="button">
+                    <i class="fas fa-camera"></i>
+                    Trocar foto
+                </button>
+                <button class="btn btn-outline remove-photo" id="removePhotoBtn" type="button">Remover</button>
+                <input type="file" id="avatarInput" accept="image/jpeg,image/png" hidden>
+                <p class="photo-guidelines">JPG ou PNG até 5MB. O corte é ajustado em proporção quadrada.</p>
             </div>
-            <div style="flex:2 1 400px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Minhas Reservas</h2>
-                <p>Lista de expedições reservadas, com status, detalhes e botão para enviar mensagem ao guia.</p>
-            </div>
-            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Avaliações</h2>
-                <p>Após participar de expedições você poderá avaliar trilhas e guias aqui.</p>
-            </div>
-            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Mensagens</h2>
-                <p>Caixa de entrada para conversar com guias. Em construção.</p>
-            </div>
-            <div style="flex:1 1 300px;background:#fff;border-radius:8px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
-                <h2 style="font-size:1.3rem;margin-bottom:1rem;color:var(--color-primary);">Segurança</h2>
-                <p>Gerencie seu email, senha e sessões ativas.</p>
+            <div class="profile-summary">
+                <div class="profile-summary-header">
+                    <h1 class="profile-name">Ana Monteiro</h1>
+                    <div class="profile-badges">
+                        <span class="badge badge-guide" data-badge="guide">Guia CADASTUR</span>
+                        <span class="badge badge-verified" data-badge="verified">Verificado</span>
+                    </div>
+                </div>
+                <p class="profile-location"><i class="fas fa-location-dot"></i> Petrópolis, RJ · Brasil</p>
+                <p class="profile-member-since">Membro desde março/2021</p>
+                <p class="profile-bio" id="profileBioText">Guia apaixonada por expedições na Serra dos Órgãos, com foco em experiências seguras e sustentáveis.</p>
+                <div class="profile-actions">
+                    <button class="btn btn-secondary" id="copyProfileLink" type="button">
+                        <i class="fas fa-link"></i>
+                        Copiar link público
+                    </button>
+                    <button class="btn btn-outline" id="viewPublicProfile" type="button">
+                        Ver perfil público
+                    </button>
+                </div>
             </div>
         </div>
+
+        <nav class="profile-tabs" aria-label="Seções do perfil" role="tablist">
+            <button class="tab-button active" id="tab-personal-tab" data-tab="personal" role="tab" aria-controls="tab-personal" aria-selected="true">Informações pessoais</button>
+            <button class="tab-button" id="tab-preferences-tab" data-tab="preferences" role="tab" aria-controls="tab-preferences" aria-selected="false">Preferências</button>
+            <button class="tab-button" id="tab-history-tab" data-tab="history" role="tab" aria-controls="tab-history" aria-selected="false">Histórico</button>
+            <button class="tab-button" id="tab-security-tab" data-tab="security" role="tab" aria-controls="tab-security" aria-selected="false">Segurança</button>
+            <button class="tab-button" id="tab-guide-tab" data-tab="guide" data-visible-for="guide" role="tab" aria-controls="tab-guide" aria-selected="false">Perfil de Guia</button>
+        </nav>
+
+        <section class="tab-panel" id="tab-personal" role="tabpanel" aria-labelledby="tab-personal-tab">
+            <header class="panel-header">
+                <div>
+                    <h2>Informações pessoais</h2>
+                    <p>Gerencie seus dados básicos. Documento e e-mail exigem fluxos de verificação dedicados.</p>
+                </div>
+                <div class="panel-actions">
+                    <button class="btn btn-secondary" id="editPersonalBtn" type="button">Editar</button>
+                    <div class="edit-actions" id="personalEditActions" hidden>
+                        <button class="btn btn-primary" id="savePersonalBtn" type="button">Salvar</button>
+                        <button class="btn btn-outline" id="cancelPersonalBtn" type="button">Cancelar</button>
+                    </div>
+                </div>
+            </header>
+            <form id="personalForm" class="form-grid" novalidate>
+                <div class="form-field">
+                    <label for="fullName">Nome completo</label>
+                    <input type="text" id="fullName" name="fullName" value="Ana Clara Monteiro" disabled required>
+                    <p class="field-hint">Informe ao menos nome e sobrenome.</p>
+                    <p class="field-error" data-error-for="fullName"></p>
+                </div>
+                <div class="form-field">
+                    <label for="birthDate">Data de nascimento</label>
+                    <input type="date" id="birthDate" name="birthDate" value="1991-05-18" disabled required>
+                    <p class="field-error" data-error-for="birthDate"></p>
+                </div>
+                <div class="form-field">
+                    <label for="gender">Gênero <span class="optional">(opcional)</span></label>
+                    <select id="gender" name="gender" disabled>
+                        <option value="">Selecione</option>
+                        <option value="feminino" selected>Feminino</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="nao-informar">Prefiro não informar</option>
+                        <option value="outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="document">Documento</label>
+                    <input type="text" id="document" value="CPF · 123.456.789-10" disabled aria-disabled="true">
+                    <p class="field-hint">Verificado em 12/04/2024.</p>
+                </div>
+                <div class="form-field">
+                    <label for="email">E-mail</label>
+                    <div class="input-with-action">
+                        <input type="email" id="email" value="ana.monteiro@trekko.com" disabled aria-disabled="true">
+                        <button class="btn btn-outline" id="changeEmailBtn" type="button">Alterar e-mail</button>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label for="phone">Telefone / WhatsApp</label>
+                    <input type="tel" id="phone" name="phone" value="+55 21 99876-5432" disabled required>
+                    <p class="field-hint">Formato internacional: +55 21 90000-0000</p>
+                    <p class="field-error" data-error-for="phone"></p>
+                </div>
+                <div class="form-field">
+                    <label for="country">País</label>
+                    <select id="country" name="country" disabled required>
+                        <option value="BR" selected>Brasil</option>
+                        <option value="AR">Argentina</option>
+                        <option value="CL">Chile</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="state">Estado</label>
+                    <select id="state" name="state" disabled required>
+                        <option value="RJ" selected>Rio de Janeiro</option>
+                        <option value="SP">São Paulo</option>
+                        <option value="MG">Minas Gerais</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="city">Cidade</label>
+                    <select id="city" name="city" disabled required>
+                        <option value="petropolis" selected>Petrópolis</option>
+                        <option value="teresopolis">Teresópolis</option>
+                        <option value="rio">Rio de Janeiro</option>
+                    </select>
+                </div>
+                <div class="form-field full-width">
+                    <label for="bio">Bio</label>
+                    <textarea id="bio" name="bio" maxlength="240" rows="3" disabled>Guia apaixonada por expedições na Serra dos Órgãos, com foco em experiências seguras e sustentáveis.</textarea>
+                    <div class="field-meta"><span id="bioCounter">98</span>/240</div>
+                    <p class="field-error" data-error-for="bio"></p>
+                </div>
+            </form>
+        </section>
+
+        <section class="tab-panel hidden" id="tab-preferences" role="tabpanel" aria-hidden="true" aria-labelledby="tab-preferences-tab">
+            <header class="panel-header">
+                <div>
+                    <h2>Preferências</h2>
+                    <p>Personalize idioma, notificações e visibilidade pública.</p>
+                </div>
+                <div class="panel-actions">
+                    <button class="btn btn-primary" id="savePreferencesBtn" type="button">Salvar preferências</button>
+                </div>
+            </header>
+            <form id="preferencesForm" class="form-grid" novalidate>
+                <fieldset class="form-field">
+                    <legend>Idioma padrão</legend>
+                    <select id="language" name="language">
+                        <option value="pt-BR" selected>Português (Brasil)</option>
+                        <option value="en-US">Inglês (EUA)</option>
+                        <option value="es-ES">Espanhol</option>
+                    </select>
+                </fieldset>
+                <fieldset class="form-field">
+                    <legend>Notificações</legend>
+                    <label class="toggle">
+                        <input type="checkbox" name="notificationsEmail" checked>
+                        <span>E-mail</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" name="notificationsWhatsApp" checked>
+                        <span>WhatsApp</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" name="notificationsPush">
+                        <span>Push / App</span>
+                    </label>
+                </fieldset>
+                <fieldset class="form-field full-width">
+                    <legend>Interesses</legend>
+                    <div class="chip-group" role="group" aria-label="Interesses">
+                        <label class="chip">
+                            <input type="checkbox" name="interests" value="trekking" checked>
+                            <span>Trekking</span>
+                        </label>
+                        <label class="chip">
+                            <input type="checkbox" name="interests" value="montanhismo" checked>
+                            <span>Montanhismo</span>
+                        </label>
+                        <label class="chip">
+                            <input type="checkbox" name="interests" value="camping">
+                            <span>Camping</span>
+                        </label>
+                        <label class="chip">
+                            <input type="checkbox" name="interests" value="canicross">
+                            <span>Canicross</span>
+                        </label>
+                        <label class="chip">
+                            <input type="checkbox" name="interests" value="observacao-fauna">
+                            <span>Observação de fauna</span>
+                        </label>
+                    </div>
+                </fieldset>
+                <fieldset class="form-field full-width">
+                    <legend>Privacidade</legend>
+                    <label class="toggle">
+                        <input type="checkbox" name="publicName" checked>
+                        <span>Mostrar nome público</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" name="publicLocation" checked>
+                        <span>Mostrar cidade / estado</span>
+                    </label>
+                </fieldset>
+            </form>
+        </section>
+
+        <section class="tab-panel hidden" id="tab-history" role="tabpanel" aria-hidden="true" aria-labelledby="tab-history-tab">
+            <header class="panel-header">
+                <div>
+                    <h2>Histórico</h2>
+                    <p>Trilhas realizadas, reservas e avaliações feitas.</p>
+                </div>
+            </header>
+            <div class="history-grid">
+                <article class="card">
+                    <header class="card-header">
+                        <h3>Trilhas realizadas</h3>
+                        <button class="btn btn-outline" id="exploreTrailsBtn" type="button">Explorar trilhas</button>
+                    </header>
+                    <ul class="history-list" id="trailsHistory" aria-live="polite"></ul>
+                    <footer class="card-footer">
+                        <button class="btn btn-secondary" id="loadMoreTrails" type="button">Carregar mais</button>
+                    </footer>
+                </article>
+                <article class="card">
+                    <header class="card-header">
+                        <h3>Reservas de expedições</h3>
+                        <div class="history-filters">
+                            <label for="reservationFilter" class="sr-only">Filtrar reservas</label>
+                            <select id="reservationFilter" name="reservationFilter">
+                                <option value="all">Todas</option>
+                                <option value="active" selected>Ativas</option>
+                                <option value="completed">Concluídas</option>
+                                <option value="cancelled">Canceladas</option>
+                                <option value="pending">Em análise</option>
+                            </select>
+                        </div>
+                    </header>
+                    <ul class="history-list" id="reservationsHistory" aria-live="polite"></ul>
+                    <footer class="card-footer">
+                        <button class="btn btn-secondary" id="loadMoreReservations" type="button">Carregar mais</button>
+                    </footer>
+                </article>
+            </div>
+        </section>
+
+        <section class="tab-panel hidden" id="tab-security" role="tabpanel" aria-hidden="true" aria-labelledby="tab-security-tab">
+            <header class="panel-header">
+                <div>
+                    <h2>Segurança</h2>
+                    <p>Atualize senha, configure autenticação em duas etapas e controle sessões ativas.</p>
+                </div>
+            </header>
+            <div class="security-grid">
+                <article class="card">
+                    <header class="card-header">
+                        <h3>Alterar senha</h3>
+                    </header>
+                    <form id="passwordForm" class="form-grid" novalidate>
+                        <div class="form-field full-width">
+                            <label for="currentPassword">Senha atual</label>
+                            <input type="password" id="currentPassword" name="currentPassword" required>
+                        </div>
+                        <div class="form-field full-width">
+                            <label for="newPassword">Nova senha</label>
+                            <input type="password" id="newPassword" name="newPassword" required>
+                            <p class="field-hint">Mínimo 8 caracteres, 1 letra maiúscula e 1 número.</p>
+                            <p class="field-error" data-error-for="newPassword"></p>
+                        </div>
+                        <div class="form-field full-width">
+                            <label for="confirmPassword">Confirmar nova senha</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required>
+                            <p class="field-error" data-error-for="confirmPassword"></p>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Atualizar senha</button>
+                    </form>
+                </article>
+                <article class="card">
+                    <header class="card-header">
+                        <h3>Autenticação em duas etapas (2FA)</h3>
+                        <span class="status-chip status-chip--success" id="twoFaStatus">Ativa</span>
+                    </header>
+                    <div class="card-body">
+                        <p>Fortaleça sua segurança solicitando um código temporário a cada login.</p>
+                        <button class="btn btn-secondary" id="toggleTwoFa" type="button">Desativar 2FA</button>
+                        <section class="twofa-setup" id="twoFaSetup" hidden>
+                            <img src="images/qrcode-placeholder.svg" alt="QR Code para configurar 2FA" class="twofa-qr">
+                            <p class="field-hint">Escaneie com seu app autenticador e insira o código para concluir.</p>
+                            <div class="backup-codes">
+                                <h4>Códigos de backup</h4>
+                                <ul>
+                                    <li>9X4L-PT3A</li>
+                                    <li>H2VA-1L9Q</li>
+                                    <li>AB7M-K3XZ</li>
+                                </ul>
+                            </div>
+                        </section>
+                    </div>
+                </article>
+                <article class="card">
+                    <header class="card-header">
+                        <h3>Sessões ativas</h3>
+                        <button class="btn btn-outline" id="closeAllSessions" type="button">Encerrar todas</button>
+                    </header>
+                    <ul class="session-list" id="sessionsList">
+                        <li>
+                            <div>
+                                <strong>Chrome · MacOS</strong>
+                                <span>Último acesso há 2 horas · IP 201.35.21.9</span>
+                            </div>
+                            <button class="btn btn-secondary session-close" type="button">Encerrar</button>
+                        </li>
+                        <li>
+                            <div>
+                                <strong>Safari · iOS</strong>
+                                <span>Último acesso ontem às 19h12 · IP 177.98.33.5</span>
+                            </div>
+                            <button class="btn btn-secondary session-close" type="button">Encerrar</button>
+                        </li>
+                    </ul>
+                </article>
+                <article class="card danger-zone">
+                    <header class="card-header">
+                        <h3>Encerrar conta</h3>
+                    </header>
+                    <div class="card-body">
+                        <p>Ao encerrar sua conta você perderá dados não obrigatórios e não poderá participar de expedições futuras. Algumas informações serão retidas conforme legislação.</p>
+                        <button class="btn btn-secondary" id="closeAccountBtn" type="button">Iniciar encerramento</button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="tab-panel hidden" id="tab-guide" role="tabpanel" aria-hidden="true" aria-labelledby="tab-guide-tab">
+            <header class="panel-header">
+                <div>
+                    <h2>Perfil de Guia</h2>
+                    <p>Gerencie informações específicas do seu registro CADASTUR e expedições.</p>
+                </div>
+            </header>
+            <div class="guide-banner" id="cadasturBanner" role="status">
+                <i class="fas fa-circle-exclamation"></i>
+                <span>Seu CADASTUR expirou em 12/02/2025. Atualize para manter seu perfil visível.</span>
+                <button class="btn btn-outline" id="renewCadastur" type="button">Atualizar/renovar</button>
+            </div>
+            <article class="card">
+                <header class="card-header">
+                    <h3>Registro CADASTUR</h3>
+                    <div class="status-group">
+                        <span class="status-chip status-chip--warning" id="cadasturStatus">Expirado</span>
+                        <span class="status-date">Última verificação em 12/02/2025 às 08:14</span>
+                    </div>
+                </header>
+                <dl class="data-list">
+                    <div>
+                        <dt>Número</dt>
+                        <dd>19.765.432/0001-22</dd>
+                    </div>
+                    <div>
+                        <dt>Status</dt>
+                        <dd>Expirado</dd>
+                    </div>
+                </dl>
+                <div class="card-footer">
+                    <button class="btn btn-secondary" id="validateCadastur" type="button">Validar agora</button>
+                </div>
+            </article>
+            <article class="card">
+                <header class="card-header">
+                    <h3>Atuação</h3>
+                </header>
+                <div class="card-body">
+                    <div class="tag-list" aria-label="Estados e municípios">
+                        <span class="tag">RJ · Petrópolis</span>
+                        <span class="tag">RJ · Teresópolis</span>
+                        <span class="tag">MG · Aiuruoca</span>
+                    </div>
+                    <div class="tag-list" aria-label="Idiomas">
+                        <span class="tag">Português</span>
+                        <span class="tag">Inglês</span>
+                        <span class="tag">Espanhol</span>
+                    </div>
+                    <div class="guide-links">
+                        <a href="https://instagram.com/trekko.guia" target="_blank" rel="noopener" class="link-pill"><i class="fab fa-instagram"></i> Instagram</a>
+                        <a href="https://trekko.com.br/ana" target="_blank" rel="noopener" class="link-pill"><i class="fas fa-globe"></i> Site</a>
+                        <a href="https://wa.me/5521998765432" target="_blank" rel="noopener" class="link-pill"><i class="fab fa-whatsapp"></i> WhatsApp comercial</a>
+                    </div>
+                </div>
+            </article>
+            <article class="card">
+                <header class="card-header">
+                    <h3>Expedições</h3>
+                    <button class="btn btn-secondary" id="manageExpeditions" type="button">Gerenciar expedições</button>
+                </header>
+                <ul class="expedition-list" id="upcomingExpeditions"></ul>
+                <footer class="card-footer">
+                    <button class="btn btn-outline" id="viewAllExpeditions" type="button">Ver todas</button>
+                </footer>
+            </article>
+            <article class="card">
+                <header class="card-header">
+                    <h3>Avaliações recebidas</h3>
+                    <div class="rating-summary">
+                        <strong id="ratingAverage">4.8</strong>
+                        <span id="ratingCount">(86 avaliações)</span>
+                    </div>
+                </header>
+                <ul class="review-list" id="guideReviews" aria-live="polite"></ul>
+            </article>
+        </section>
     </main>
+
+    <div class="toast-container" role="region" aria-live="assertive" aria-atomic="true"></div>
+
+    <dialog id="confirmDialog">
+        <form method="dialog">
+            <h2 id="confirmDialogTitle">Confirmar ação</h2>
+            <p id="confirmDialogMessage"></p>
+            <div class="dialog-actions">
+                <button value="cancel" class="btn btn-outline" type="submit">Cancelar</button>
+                <button value="confirm" class="btn btn-primary" type="submit">Confirmar</button>
+            </div>
+        </form>
+    </dialog>
 
     <footer>
         <div class="footer-grid">
@@ -120,6 +515,766 @@
         <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
     </footer>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const isGuide = true;
+            const profileRoot = document.getElementById('profileRoot');
+            const toastContainer = document.querySelector('.toast-container');
+            const confirmDialog = document.getElementById('confirmDialog');
+            const confirmButtons = confirmDialog.querySelectorAll('button');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            const guideTabButton = document.querySelector('[data-tab="guide"]');
+            const profileAvatar = document.getElementById('profileAvatar');
+            const avatarInput = document.getElementById('avatarInput');
+            const changePhotoBtn = document.getElementById('changePhotoBtn');
+            const removePhotoBtn = document.getElementById('removePhotoBtn');
+            const copyProfileLink = document.getElementById('copyProfileLink');
+            const viewPublicProfile = document.getElementById('viewPublicProfile');
+            const personalForm = document.getElementById('personalForm');
+            const editPersonalBtn = document.getElementById('editPersonalBtn');
+            const personalEditActions = document.getElementById('personalEditActions');
+            const savePersonalBtn = document.getElementById('savePersonalBtn');
+            const cancelPersonalBtn = document.getElementById('cancelPersonalBtn');
+            const profileName = document.querySelector('.profile-name');
+            const profileLocation = document.querySelector('.profile-location');
+            const profileBioText = document.getElementById('profileBioText');
+            const bioField = document.getElementById('bio');
+            const bioCounter = document.getElementById('bioCounter');
+            const preferencesForm = document.getElementById('preferencesForm');
+            const savePreferencesBtn = document.getElementById('savePreferencesBtn');
+            const reservationFilter = document.getElementById('reservationFilter');
+            const trailsHistoryEl = document.getElementById('trailsHistory');
+            const reservationsHistoryEl = document.getElementById('reservationsHistory');
+            const loadMoreTrailsBtn = document.getElementById('loadMoreTrails');
+            const loadMoreReservationsBtn = document.getElementById('loadMoreReservations');
+            const passwordForm = document.getElementById('passwordForm');
+            const twoFaStatus = document.getElementById('twoFaStatus');
+            const toggleTwoFaBtn = document.getElementById('toggleTwoFa');
+            const twoFaSetup = document.getElementById('twoFaSetup');
+            const closeAllSessionsBtn = document.getElementById('closeAllSessions');
+            const sessionsList = document.getElementById('sessionsList');
+            const closeAccountBtn = document.getElementById('closeAccountBtn');
+            const cadasturBanner = document.getElementById('cadasturBanner');
+            const cadasturStatus = document.getElementById('cadasturStatus');
+            const renewCadasturBtn = document.getElementById('renewCadastur');
+            const validateCadasturBtn = document.getElementById('validateCadastur');
+            const manageExpeditionsBtn = document.getElementById('manageExpeditions');
+            const viewAllExpeditionsBtn = document.getElementById('viewAllExpeditions');
+            const upcomingExpeditionsEl = document.getElementById('upcomingExpeditions');
+            const guideReviewsEl = document.getElementById('guideReviews');
+            const ratingAverageEl = document.getElementById('ratingAverage');
+            const ratingCountEl = document.getElementById('ratingCount');
+
+            const personalFields = personalForm.querySelectorAll('input, select, textarea');
+            let personalEditing = false;
+            let preferencesDirty = false;
+            let currentTab = 'personal';
+            let twoFaEnabled = true;
+            const originalAvatarSrc = profileAvatar.getAttribute('src');
+            const originalPersonalData = new Map();
+
+            personalFields.forEach(field => {
+                if (field.id) {
+                    originalPersonalData.set(field.id, field.value);
+                }
+            });
+
+            const telemetry = (eventName, payload = {}) => {
+                console.info(`[telemetry] ${eventName}`, payload);
+            };
+
+            const showToast = (type, message) => {
+                if (!toastContainer) return;
+                const toast = document.createElement('div');
+                toast.className = `toast toast--${type}`;
+                toast.role = 'alert';
+                toast.innerHTML = `<span>${message}</span>`;
+                toastContainer.appendChild(toast);
+                requestAnimationFrame(() => toast.classList.add('is-visible'));
+                setTimeout(() => {
+                    toast.classList.remove('is-visible');
+                    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+                }, 4500);
+            };
+
+            const confirmAction = ({ title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar' }) => {
+                if (!confirmDialog) {
+                    return Promise.resolve(false);
+                }
+                return new Promise(resolve => {
+                    document.getElementById('confirmDialogTitle').textContent = title;
+                    document.getElementById('confirmDialogMessage').textContent = message;
+                    confirmButtons[0].textContent = cancelLabel;
+                    confirmButtons[1].textContent = confirmLabel;
+
+                    const handleClose = () => {
+                        confirmDialog.removeEventListener('close', handleClose);
+                        resolve(confirmDialog.returnValue === 'confirm');
+                    };
+
+                    confirmDialog.addEventListener('close', handleClose, { once: true });
+                    confirmDialog.showModal();
+                });
+            };
+
+            const setFieldError = (fieldId, message) => {
+                const errorElement = personalForm.querySelector(`[data-error-for="${fieldId}"]`) || passwordForm?.querySelector(`[data-error-for="${fieldId}"]`);
+                const input = document.getElementById(fieldId);
+                if (errorElement) {
+                    errorElement.textContent = message || '';
+                }
+                if (input) {
+                    if (message) {
+                        input.classList.add('input-error');
+                        input.setAttribute('aria-invalid', 'true');
+                    } else {
+                        input.classList.remove('input-error');
+                        input.removeAttribute('aria-invalid');
+                    }
+                }
+            };
+
+            const clearPersonalErrors = () => {
+                personalForm.querySelectorAll('.field-error').forEach(el => (el.textContent = ''));
+                personalForm.querySelectorAll('.input-error').forEach(el => {
+                    el.classList.remove('input-error');
+                    el.removeAttribute('aria-invalid');
+                });
+            };
+
+            const validatePersonalForm = () => {
+                clearPersonalErrors();
+                let isValid = true;
+
+                const fullName = document.getElementById('fullName').value.trim();
+                if (fullName.split(/\s+/).length < 2) {
+                    setFieldError('fullName', 'Informe nome e sobrenome.');
+                    isValid = false;
+                }
+
+                const birthInput = document.getElementById('birthDate').value;
+                if (!birthInput) {
+                    setFieldError('birthDate', 'Informe sua data de nascimento.');
+                    isValid = false;
+                } else {
+                    const birthDate = new Date(birthInput);
+                    const today = new Date();
+                    let age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    if (Number.isNaN(birthDate.getTime())) {
+                        setFieldError('birthDate', 'Data inválida.');
+                        isValid = false;
+                    } else if (age < 16) {
+                        setFieldError('birthDate', 'É necessário ter pelo menos 16 anos.');
+                        isValid = false;
+                    }
+                }
+
+                const phoneValue = document.getElementById('phone').value.trim();
+                const normalizedPhone = phoneValue.replace(/\s|\-/g, '');
+                if (!/^\+[1-9]\d{7,14}$/.test(normalizedPhone)) {
+                    setFieldError('phone', 'Verifique o formato do telefone (+55XX999999999).');
+                    isValid = false;
+                }
+
+                if (bioField.value.length > 240) {
+                    setFieldError('bio', 'A bio deve ter no máximo 240 caracteres.');
+                    isValid = false;
+                }
+
+                return isValid;
+            };
+
+            const togglePersonalEditing = (enable) => {
+                personalEditing = enable;
+                personalFields.forEach(field => {
+                    if (field.id === 'document' || field.id === 'email') return;
+                    field.disabled = !enable;
+                });
+                editPersonalBtn.hidden = enable;
+                personalEditActions.hidden = !enable;
+                profileRoot.classList.toggle('is-editing', enable);
+            };
+
+            const updateProfileSummary = () => {
+                const name = document.getElementById('fullName').value.trim();
+                const citySelect = document.getElementById('city');
+                const stateSelect = document.getElementById('state');
+                const countrySelect = document.getElementById('country');
+                const locationText = `${citySelect.options[citySelect.selectedIndex].textContent}, ${stateSelect.options[stateSelect.selectedIndex].textContent} · ${countrySelect.options[countrySelect.selectedIndex].textContent}`;
+                profileName.textContent = name;
+                profileLocation.innerHTML = `<i class="fas fa-location-dot"></i> ${locationText}`;
+                const bioValue = bioField.value.trim();
+                profileBioText.textContent = bioValue || 'Adicione uma bio para compartilhar sua história.';
+            };
+
+            const resetPersonalForm = () => {
+                originalPersonalData.forEach((value, key) => {
+                    const field = document.getElementById(key);
+                    if (field) {
+                        field.value = value;
+                    }
+                });
+                bioCounter.textContent = bioField.value.length;
+                clearPersonalErrors();
+                togglePersonalEditing(false);
+            };
+
+            const setActiveTab = async (tabName) => {
+                if (currentTab === 'preferences' && preferencesDirty && tabName !== 'preferences') {
+                    const confirmed = await confirmAction({
+                        title: 'Preferências não salvas',
+                        message: 'Suas preferências ainda não foram salvas. Deseja sair desta aba sem salvar?',
+                        confirmLabel: 'Sair sem salvar'
+                    });
+                    if (!confirmed) {
+                        return;
+                    }
+                    preferencesDirty = false;
+                    preferencesForm.reset();
+                }
+                if (personalEditing && tabName !== 'personal') {
+                    const confirmed = await confirmAction({
+                        title: 'Edição em andamento',
+                        message: 'Você possui alterações não salvas. Deseja descartar?',
+                        confirmLabel: 'Descartar'
+                    });
+                    if (!confirmed) {
+                        return;
+                    }
+                    resetPersonalForm();
+                }
+
+                currentTab = tabName;
+                tabButtons.forEach(button => {
+                    const isActive = button.dataset.tab === tabName;
+                    button.classList.toggle('active', isActive);
+                    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    button.setAttribute('tabindex', isActive ? '0' : '-1');
+                });
+                tabPanels.forEach(panel => {
+                    const isActive = panel.id === `tab-${tabName}`;
+                    panel.classList.toggle('hidden', !isActive);
+                    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+                });
+            };
+
+            tabButtons.forEach(button => {
+                if (button.dataset.visibleFor === 'guide' && !isGuide) {
+                    button.remove();
+                    return;
+                }
+                button.addEventListener('click', () => setActiveTab(button.dataset.tab));
+            });
+
+            if (!isGuide && guideTabButton) {
+                guideTabButton.remove();
+                document.getElementById('tab-guide')?.remove();
+            }
+
+            bioField.addEventListener('input', () => {
+                bioCounter.textContent = bioField.value.length;
+                if (bioField.value.length <= 240) {
+                    setFieldError('bio');
+                }
+            });
+
+            changePhotoBtn.addEventListener('click', () => avatarInput.click());
+            avatarInput.addEventListener('change', () => {
+                const file = avatarInput.files?.[0];
+                if (!file) return;
+                if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                    showToast('error', 'Formato não suportado. Utilize JPG ou PNG.');
+                    avatarInput.value = '';
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    showToast('error', 'Arquivo muito grande. Tamanho máximo: 5MB.');
+                    avatarInput.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = () => {
+                    profileAvatar.src = reader.result;
+                    showToast('success', 'Foto atualizada com sucesso.');
+                    telemetry('profile_update_success', { field: 'avatar' });
+                };
+                reader.readAsDataURL(file);
+            });
+
+            removePhotoBtn.addEventListener('click', async () => {
+                const confirmed = await confirmAction({
+                    title: 'Remover foto',
+                    message: 'Deseja remover sua foto de perfil?',
+                    confirmLabel: 'Remover'
+                });
+                if (!confirmed) return;
+                profileAvatar.src = originalAvatarSrc;
+                avatarInput.value = '';
+                showToast('success', 'Foto removida.');
+            });
+
+            copyProfileLink?.addEventListener('click', async () => {
+                const url = `${window.location.origin}/guia/ana-monteiro`;
+                try {
+                    await navigator.clipboard.writeText(url);
+                    showToast('success', 'Link copiado para a área de transferência.');
+                } catch (error) {
+                    window.prompt('Copie o link do seu perfil:', url);
+                }
+                telemetry('profile_view', { type: 'copy_link' });
+            });
+
+            viewPublicProfile?.addEventListener('click', () => {
+                telemetry('profile_view', { type: 'public_profile' });
+                showToast('info', 'Em breve você poderá visualizar a página pública do guia.');
+            });
+
+            editPersonalBtn.addEventListener('click', () => {
+                togglePersonalEditing(true);
+                const firstEditable = personalForm.querySelector('input:not([disabled]):not([aria-disabled="true"]), select:not([disabled]), textarea:not([disabled])');
+                firstEditable?.focus();
+            });
+
+            cancelPersonalBtn.addEventListener('click', () => {
+                resetPersonalForm();
+                showToast('info', 'Alterações descartadas.');
+            });
+
+            savePersonalBtn.addEventListener('click', () => {
+                if (!validatePersonalForm()) {
+                    telemetry('profile_update_error', { section: 'personal' });
+                    showToast('error', 'Corrija os campos destacados antes de salvar.');
+                    return;
+                }
+
+                personalFields.forEach(field => {
+                    if (field.id) {
+                        originalPersonalData.set(field.id, field.value);
+                        if (typeof field.defaultValue !== 'undefined') {
+                            field.defaultValue = field.value;
+                        }
+                        if (field.id === 'fullName') {
+                            telemetry('profile_update_success', { field: field.id });
+                        }
+                    }
+                    field.disabled = true;
+                });
+
+                togglePersonalEditing(false);
+                updateProfileSummary();
+                showToast('success', 'Perfil atualizado com sucesso.');
+                telemetry('profile_update_success', { section: 'personal' });
+            });
+
+            document.getElementById('changeEmailBtn').addEventListener('click', () => {
+                telemetry('profile_update_success', { field: 'email_change_request' });
+                showToast('info', 'Enviamos um link para alterar seu e-mail. Confira sua caixa de entrada.');
+            });
+
+            bioCounter.textContent = bioField.value.length;
+
+            preferencesForm.addEventListener('change', () => {
+                preferencesDirty = true;
+            });
+            preferencesForm.addEventListener('input', () => {
+                preferencesDirty = true;
+            });
+
+            savePreferencesBtn.addEventListener('click', () => {
+                preferencesDirty = false;
+                showToast('success', 'Preferências salvas.');
+                telemetry('pref_update');
+            });
+
+            const trailsHistory = [
+                {
+                    id: 'travessia-serra-dos-orgaos',
+                    name: 'Travessia Petrópolis-Teresópolis',
+                    date: '12/03/2024',
+                    rating: 5,
+                    comment: 'Visual inesquecível e grupo engajado.'
+                },
+                {
+                    id: 'pico-da-bandeira',
+                    name: 'Ataque ao Pico da Bandeira',
+                    date: '28/01/2024',
+                    rating: 4,
+                    comment: 'Noite fria, mas nascer do sol recompensador.'
+                }
+            ];
+
+            const reservations = [
+                {
+                    id: 'exp-001',
+                    title: 'Expedição Agulhas Negras',
+                    date: '20/05/2024',
+                    status: 'active',
+                    allowCancel: true,
+                    allowReview: false,
+                    guideName: 'João Pereira'
+                },
+                {
+                    id: 'exp-002',
+                    title: 'Circuito Vale do Pati',
+                    date: '05/02/2024',
+                    status: 'completed',
+                    allowCancel: false,
+                    allowReview: true,
+                    guideName: 'Maria Alves'
+                },
+                {
+                    id: 'exp-003',
+                    title: 'Imersão na Serra Fina',
+                    date: '17/04/2024',
+                    status: 'pending',
+                    allowCancel: true,
+                    allowReview: false,
+                    guideName: 'Equipe Trekko'
+                }
+            ];
+
+            const formatStatus = (status) => {
+                switch (status) {
+                    case 'active':
+                        return { label: 'Ativa', modifier: 'status-chip--info' };
+                    case 'completed':
+                        return { label: 'Concluída', modifier: 'status-chip--success' };
+                    case 'cancelled':
+                        return { label: 'Cancelada', modifier: 'status-chip--neutral' };
+                    case 'pending':
+                        return { label: 'Em análise', modifier: 'status-chip--warning' };
+                    default:
+                        return { label: status, modifier: '' };
+                }
+            };
+
+            const renderTrailsHistory = (items) => {
+                trailsHistoryEl.innerHTML = '';
+                if (!items.length) {
+                    const emptyState = document.createElement('li');
+                    emptyState.className = 'empty-state';
+                    emptyState.innerHTML = '<p>Você ainda não registrou trilhas realizadas.</p><button class="btn btn-primary" type="button">Explorar trilhas</button>';
+                    trailsHistoryEl.appendChild(emptyState);
+                    return;
+                }
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'history-item';
+                    li.innerHTML = `
+                        <div>
+                            <h4>${item.name}</h4>
+                            <span class="history-meta">${item.date} · Nota ${item.rating}/5</span>
+                            <p>${item.comment}</p>
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn btn-outline" data-action="viewTrail" data-id="${item.id}">Ver trilha</button>
+                        </div>
+                    `;
+                    trailsHistoryEl.appendChild(li);
+                });
+            };
+
+            const renderReservations = () => {
+                const filter = reservationFilter.value;
+                reservationsHistoryEl.innerHTML = '';
+                const filtered = reservations.filter(res => filter === 'all' || res.status === filter);
+                if (!filtered.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'empty-state';
+                    empty.innerHTML = '<p>Nenhuma reserva neste status.</p><button class="btn btn-primary" type="button">Ver expedições</button>';
+                    reservationsHistoryEl.appendChild(empty);
+                    return;
+                }
+                filtered.forEach(reservation => {
+                    const statusInfo = formatStatus(reservation.status);
+                    const li = document.createElement('li');
+                    li.className = 'history-item';
+                    li.dataset.id = reservation.id;
+                    li.innerHTML = `
+                        <div>
+                            <h4>${reservation.title}</h4>
+                            <span class="history-meta">${reservation.date} · Guia ${reservation.guideName}</span>
+                            <span class="status-chip ${statusInfo.modifier}">${statusInfo.label}</span>
+                        </div>
+                        <div class="history-actions">
+                            <button class="btn btn-outline" data-action="viewReservation">Ver detalhes</button>
+                            <button class="btn btn-outline" data-action="openChat">Mensagens</button>
+                            ${reservation.allowCancel && reservation.status === 'active' ? '<button class="btn btn-secondary" data-action="cancelReservation">Cancelar</button>' : ''}
+                            ${reservation.allowReview && reservation.status === 'completed' ? '<button class="btn btn-primary" data-action="reviewReservation">Avaliar expedição</button>' : ''}
+                        </div>
+                    `;
+                    reservationsHistoryEl.appendChild(li);
+                });
+            };
+
+            trailsHistoryEl.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-action="viewTrail"]');
+                if (!button) return;
+                telemetry('profile_view', { type: 'trail_detail', id: button.dataset.id });
+                showToast('info', 'Em breve você poderá ver os detalhes completos da trilha.');
+            });
+
+            reservationsHistoryEl.addEventListener('click', async (event) => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+                const action = button.dataset.action;
+                const item = button.closest('li');
+                const reservationId = item?.dataset.id;
+
+                switch (action) {
+                    case 'viewReservation':
+                        telemetry('profile_view', { type: 'reservation_detail', id: reservationId });
+                        showToast('info', 'Visualização detalhada da reserva estará disponível em breve.');
+                        break;
+                    case 'openChat':
+                        showToast('info', 'Mensagens com o guia estarão disponíveis em breve.');
+                        break;
+                    case 'cancelReservation': {
+                        const confirmed = await confirmAction({
+                            title: 'Cancelar reserva',
+                            message: 'Tem certeza que deseja cancelar esta reserva? Podem existir políticas de multa por cancelamento.',
+                            confirmLabel: 'Cancelar reserva'
+                        });
+                        if (!confirmed) return;
+                        const reservation = reservations.find(res => res.id === reservationId);
+                        if (reservation) {
+                            reservation.status = 'cancelled';
+                            reservation.allowCancel = false;
+                        }
+                        renderReservations();
+                        showToast('success', 'Reserva cancelada.');
+                        telemetry('reservation_cancel_click', { id: reservationId });
+                        break;
+                    }
+                    case 'reviewReservation':
+                        telemetry('review_submit', { id: reservationId });
+                        showToast('success', 'Obrigado pela avaliação!');
+                        button.disabled = true;
+                        button.textContent = 'Avaliação enviada';
+                        break;
+                }
+            });
+
+            reservationFilter.addEventListener('change', renderReservations);
+            loadMoreTrailsBtn.addEventListener('click', () => {
+                showToast('info', 'Não há mais trilhas no momento.');
+            });
+            loadMoreReservationsBtn.addEventListener('click', () => {
+                showToast('info', 'Histórico completo em breve.');
+            });
+
+            passwordForm.addEventListener('submit', (event) => {
+                event.preventDefault();
+                setFieldError('newPassword');
+                setFieldError('confirmPassword');
+                const currentPassword = document.getElementById('currentPassword').value.trim();
+                const newPassword = document.getElementById('newPassword').value.trim();
+                const confirmPassword = document.getElementById('confirmPassword').value.trim();
+
+                let valid = true;
+                if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/\d/.test(newPassword)) {
+                    setFieldError('newPassword', 'Sua nova senha deve ter ao menos 8 caracteres, incluindo 1 maiúscula e 1 número.');
+                    valid = false;
+                }
+                if (newPassword !== confirmPassword) {
+                    setFieldError('confirmPassword', 'A confirmação precisa ser igual à nova senha.');
+                    valid = false;
+                }
+                if (!currentPassword) {
+                    showToast('error', 'Informe a senha atual.');
+                    valid = false;
+                }
+                if (!valid) {
+                    telemetry('profile_update_error', { section: 'security_password' });
+                    return;
+                }
+                showToast('success', 'Senha alterada com sucesso.');
+                telemetry('security_password_change');
+                passwordForm.reset();
+            });
+
+            toggleTwoFaBtn.addEventListener('click', async () => {
+                if (twoFaEnabled) {
+                    const confirmed = await confirmAction({
+                        title: 'Desativar 2FA',
+                        message: 'Tem certeza que deseja desativar a autenticação em duas etapas?',
+                        confirmLabel: 'Desativar'
+                    });
+                    if (!confirmed) return;
+                    twoFaEnabled = false;
+                    twoFaStatus.textContent = 'Desativada';
+                    twoFaStatus.className = 'status-chip status-chip--neutral';
+                    toggleTwoFaBtn.textContent = 'Ativar 2FA';
+                    twoFaSetup.hidden = false;
+                    showToast('info', '2FA desativada. Reative para continuar protegido.');
+                    telemetry('2fa_disable');
+                } else {
+                    twoFaEnabled = true;
+                    twoFaStatus.textContent = 'Ativa';
+                    twoFaStatus.className = 'status-chip status-chip--success';
+                    toggleTwoFaBtn.textContent = 'Desativar 2FA';
+                    twoFaSetup.hidden = true;
+                    showToast('success', '2FA ativada com sucesso.');
+                    telemetry('2fa_enable');
+                }
+            });
+
+            sessionsList.addEventListener('click', async (event) => {
+                const button = event.target.closest('.session-close');
+                if (!button) return;
+                const confirmed = await confirmAction({
+                    title: 'Encerrar sessão',
+                    message: 'Deseja encerrar esta sessão? Você será desconectado daquele dispositivo.',
+                    confirmLabel: 'Encerrar sessão'
+                });
+                if (!confirmed) return;
+                button.closest('li')?.remove();
+                showToast('success', 'Sessão encerrada.');
+            });
+
+            closeAllSessionsBtn.addEventListener('click', async () => {
+                const confirmed = await confirmAction({
+                    title: 'Encerrar todas as sessões',
+                    message: 'Tem certeza que deseja encerrar o acesso em todos os dispositivos?',
+                    confirmLabel: 'Encerrar todas'
+                });
+                if (!confirmed) return;
+                sessionsList.innerHTML = '';
+                showToast('success', 'Todas as sessões foram encerradas.');
+            });
+
+            closeAccountBtn.addEventListener('click', async () => {
+                const confirmed = await confirmAction({
+                    title: 'Encerrar conta',
+                    message: 'Ao confirmar, você receberá um e-mail para concluir o encerramento da conta. Deseja continuar?',
+                    confirmLabel: 'Enviar confirmação'
+                });
+                if (!confirmed) return;
+                showToast('info', 'Enviamos um e-mail com instruções para encerrar sua conta.');
+            });
+
+            const upcomingExpeditions = [
+                { id: 'up-001', title: 'Travessia Serra dos Órgãos', date: '28/06/2024', slots: '8 vagas', status: 'Inscrições abertas' },
+                { id: 'up-002', title: 'Expedição Monte Roraima', date: '15/07/2024', slots: '5 vagas', status: 'Últimas vagas' },
+                { id: 'up-003', title: 'Circuito Serra Fina', date: '05/08/2024', slots: '12 vagas', status: 'Pré-inscrição' }
+            ];
+
+            const guideReviews = [
+                { id: 'rev-001', author: 'Paulo Lima', rating: 5, date: '18/03/2024', comment: 'Ana foi impecável em todo o processo, recomendo demais!' },
+                { id: 'rev-002', author: 'Luciana Ribeiro', rating: 4, date: '02/02/2024', comment: 'Expedição muito organizada e com ótimos briefings.' }
+            ];
+
+            const ratingSummary = { average: 4.8, count: 86 };
+            if (ratingAverageEl && ratingCountEl) {
+                ratingAverageEl.textContent = ratingSummary.average.toFixed(1);
+                ratingCountEl.textContent = `(${ratingSummary.count} avaliações)`;
+            }
+
+            const renderUpcomingExpeditions = () => {
+                upcomingExpeditionsEl.innerHTML = '';
+                if (!upcomingExpeditions.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'empty-state';
+                    empty.innerHTML = '<p>Nenhuma expedição publicada.</p><button class="btn btn-primary" type="button">Criar expedição</button>';
+                    upcomingExpeditionsEl.appendChild(empty);
+                    return;
+                }
+                upcomingExpeditions.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'expedition-card';
+                    li.innerHTML = `
+                        <div>
+                            <h4>${item.title}</h4>
+                            <span class="history-meta">${item.date} · ${item.slots}</span>
+                            <span class="status-chip status-chip--info">${item.status}</span>
+                        </div>
+                        <button class="btn btn-outline" data-action="manageExpedition" data-id="${item.id}">Editar</button>
+                    `;
+                    upcomingExpeditionsEl.appendChild(li);
+                });
+            };
+
+            const renderGuideReviews = () => {
+                guideReviewsEl.innerHTML = '';
+                if (!guideReviews.length) {
+                    const empty = document.createElement('li');
+                    empty.className = 'empty-state';
+                    empty.innerHTML = '<p>Nenhuma avaliação ainda.</p>';
+                    guideReviewsEl.appendChild(empty);
+                    return;
+                }
+                guideReviews.forEach(review => {
+                    const li = document.createElement('li');
+                    li.className = 'review-card';
+                    li.innerHTML = `
+                        <div class="review-header">
+                            <strong>${review.author}</strong>
+                            <span class="history-meta">${review.date}</span>
+                        </div>
+                        <div class="review-rating" aria-label="Avaliação ${review.rating} de 5">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+                        <p>${review.comment}</p>
+                        <button class="btn btn-outline" data-action="replyReview" data-id="${review.id}">Responder</button>
+                    `;
+                    guideReviewsEl.appendChild(li);
+                });
+            };
+
+            upcomingExpeditionsEl.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-action="manageExpedition"]');
+                if (!button) return;
+                telemetry('guide_expeditions_cta_click', { id: button.dataset.id });
+                showToast('info', 'Você será direcionado ao módulo de expedições em breve.');
+            });
+
+            guideReviewsEl.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-action="replyReview"]');
+                if (!button) return;
+                telemetry('review_submit', { id: button.dataset.id, type: 'reply' });
+                showToast('success', 'Resposta enviada com sucesso.');
+            });
+
+            manageExpeditionsBtn?.addEventListener('click', () => {
+                telemetry('guide_expeditions_cta_click');
+                showToast('info', 'Redirecionando para Minhas Expedições em breve.');
+            });
+
+            viewAllExpeditionsBtn?.addEventListener('click', () => {
+                showToast('info', 'Listagem completa de expedições em desenvolvimento.');
+            });
+
+            renewCadasturBtn?.addEventListener('click', () => {
+                showToast('info', 'Você será notificado assim que a renovação estiver disponível.');
+            });
+
+            validateCadasturBtn?.addEventListener('click', async () => {
+                telemetry('guide_cadastur_validate_click');
+                showToast('info', 'Validando cadastro CADASTUR...');
+                await new Promise(resolve => setTimeout(resolve, 1200));
+                cadasturStatus.textContent = 'Ativo';
+                cadasturStatus.className = 'status-chip status-chip--success';
+                cadasturBanner.classList.add('hidden');
+                showToast('success', 'CADASTUR validado com sucesso.');
+            });
+
+            renderTrailsHistory(trailsHistory);
+            renderReservations();
+            renderUpcomingExpeditions();
+            renderGuideReviews();
+            setActiveTab('personal');
+
+            window.addEventListener('beforeunload', (event) => {
+                if (preferencesDirty || personalEditing) {
+                    event.preventDefault();
+                    event.returnValue = '';
+                }
+            });
+        });
+    </script>
     <script src="data/trails.js"></script>
     <script src="data/expeditions.js"></script>
     <script src="data/guides.js"></script>
