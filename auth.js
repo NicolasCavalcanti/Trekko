@@ -45,15 +45,49 @@ const Auth = (() => {
     return result;
   }
 
-  // Hash password with salt using SHA‑256 via Web Crypto
+  // Detect if the secure Web Crypto API is available (requires HTTPS context)
+  function hasSubtleCrypto() {
+    return typeof crypto !== 'undefined' && crypto && typeof crypto.subtle !== 'undefined';
+  }
+
+  // Fallback hash implementation for environments without crypto.subtle
+  function fallbackHashHex(input) {
+    const bytes = [];
+    for (let i = 0; i < input.length; i++) {
+      const code = input.charCodeAt(i);
+      if (code < 0x80) {
+        bytes.push(code);
+      } else if (code < 0x800) {
+        bytes.push(0xc0 | (code >> 6));
+        bytes.push(0x80 | (code & 0x3f));
+      } else {
+        bytes.push(0xe0 | (code >> 12));
+        bytes.push(0x80 | ((code >> 6) & 0x3f));
+        bytes.push(0x80 | (code & 0x3f));
+      }
+    }
+    let h1 = 0x811c9dc5;
+    let h2 = 0xc9dc5111;
+    for (let i = 0; i < bytes.length; i++) {
+      const byte = bytes[i];
+      h1 = Math.imul(h1 ^ byte, 0x01000193) >>> 0;
+      h2 = Math.imul(h2 + byte, 0x01000193) >>> 0;
+    }
+    const parts = [h1, h2, h1 ^ h2, Math.imul(h1 + 0x9e3779b9, h2 ^ 0x85ebca6b) >>> 0];
+    return parts.map(n => n.toString(16).padStart(8, '0')).join('');
+  }
+
+  // Hash password with salt using SHA‑256 via Web Crypto, with fallback for insecure origins
   async function hashPassword(password, salt) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password + salt);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    // Convert to hex string
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
+    const data = password + salt;
+    if (hasSubtleCrypto()) {
+      const encoder = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(data));
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    // Fallback when crypto.subtle is unavailable (e.g., file:// origin)
+    return fallbackHashHex(data);
   }
 
   // Generate a basic JWT (header.payload.signature) signed with HMAC‑SHA256
@@ -69,18 +103,21 @@ const Auth = (() => {
     const headerEncoded = base64url(header);
     const payloadEncoded = base64url(payload);
     const toSign = `${headerEncoded}.${payloadEncoded}`;
-    // Derive key
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(SECRET),
-      { name: 'HMAC', hash: { name: 'SHA-256' } },
-      false,
-      ['sign']
-    );
-    const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(toSign));
-    const signatureArray = Array.from(new Uint8Array(signature));
-    const signatureHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    // Convert signature to base64url (for compactness) – using hex for simplicity
+    let signatureHex;
+    if (hasSubtleCrypto()) {
+      const key = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(SECRET),
+        { name: 'HMAC', hash: { name: 'SHA-256' } },
+        false,
+        ['sign']
+      );
+      const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(toSign));
+      const signatureArray = Array.from(new Uint8Array(signature));
+      signatureHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } else {
+      signatureHex = fallbackHashHex(`${toSign}.${SECRET}`);
+    }
     const jwt = `${toSign}.${signatureHex}`;
     return jwt;
   }
@@ -90,17 +127,22 @@ const Auth = (() => {
     try {
       const [headerEnc, payloadEnc, signatureHex] = token.split('.');
       const encoder = new TextEncoder();
-      const key = await crypto.subtle.importKey(
-        'raw',
-        encoder.encode(SECRET),
-        { name: 'HMAC', hash: { name: 'SHA-256' } },
-        false,
-        ['sign']
-      );
       const toSign = `${headerEnc}.${payloadEnc}`;
-      const signatureBuf = await crypto.subtle.sign('HMAC', key, encoder.encode(toSign));
-      const signatureArray = Array.from(new Uint8Array(signatureBuf));
-      const expectedHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      let expectedHex;
+      if (hasSubtleCrypto()) {
+        const key = await crypto.subtle.importKey(
+          'raw',
+          encoder.encode(SECRET),
+          { name: 'HMAC', hash: { name: 'SHA-256' } },
+          false,
+          ['sign']
+        );
+        const signatureBuf = await crypto.subtle.sign('HMAC', key, encoder.encode(toSign));
+        const signatureArray = Array.from(new Uint8Array(signatureBuf));
+        expectedHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      } else {
+        expectedHex = fallbackHashHex(`${toSign}.${SECRET}`);
+      }
       if (expectedHex !== signatureHex) return null;
       const payloadJson = JSON.parse(atob(payloadEnc.replace(/-/g, '+').replace(/_/g, '/')));
       return payloadJson;
