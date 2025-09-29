@@ -1,493 +1,299 @@
-/*
- * Guides list page script for Trekko Brasil
- *
- * This script powers the listagem de guias (guias.html) page. It reads a
- * CSV file of CADASTUR guides, normalises the fields, applies filters,
- * sorting and pagination, and updates the UI accordingly. It also
- * synchronises the state with URL query parameters so that filters and
- * pages can be shared via direct links. A simple contact modal is
- * provided for viewing a guia's phone/email/Instagram. The script is
- * entirely client‑side and does not require a backend.
- */
+/* guides_list.js – Lista de Guias 100% CADASTUR */
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Only run on guides list page
-  if (!document.body.classList.contains('guides-list-page')) return;
+(function () {
+  const grid = document.getElementById('guidesGrid');
+  const countersDiv = document.getElementById('guidesCounters');
+  const stateSel = document.getElementById('filterUF');
+  const citySel  = document.getElementById('filterCity');
+  const searchIn = document.getElementById('searchInput');
+  const sortSel  = document.getElementById('sortSelect');
+  const clearBtn = document.getElementById('clearFilters');
+  const pager    = document.getElementById('pagination');
 
   const pageSize = 30;
-  let allGuides = [];
-  let filteredGuides = [];
+  let allGuides = [];       // dataset normalizado
+  let filtered = [];        // após filtros/busca
   let currentPage = 1;
-  let sortOption = 'name-asc';
-  let searchQuery = '';
-  let selectedState = '';
-  let selectedCity = '';
 
-  // DOM elements
-  const searchInput = document.getElementById('guideSearch');
-  const stateSelect = document.getElementById('guideStateFilter');
-  const citySelect = document.getElementById('guideCityFilter');
-  const sortSelect = document.getElementById('guideSort');
-  const clearBtn = document.getElementById('clearGuideFilters');
-  const countersDiv = document.getElementById('guideCounters');
-  const listDiv = document.getElementById('guideList');
-  const paginationDiv = document.getElementById('pagination');
-  const contactModal = document.getElementById('guideContactModal');
-  const contactContent = document.getElementById('guideContactContent');
-  const contactClose = document.getElementById('guideContactClose');
-
-  /**
-   * Parse a CSV line into an array of values. Handles quoted values
-   * containing commas.
-   * @param {string} line
-   * @returns {string[]}
-   */
-  function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        // Toggle quotes, unless it's an escaped double quote
-        if (i + 1 < line.length && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    result.push(current);
-    return result;
-  }
-
-  /**
-   * Normalise a raw CSV row object into a guide object with standard
-   * property names. Uses heuristics based on column names.
-   * @param {Object} row
-   * @returns {Object}
-   */
-  function normalizeGuide(row) {
-    const guide = {
-      id: '',
-      name: '',
-      cadastur: '',
-      state: '',
-      city: '',
-      contacts: [],
-      languages: [],
-      photo: '',
-      bio: ''
-    };
-    for (const key in row) {
-      const lower = key.toLowerCase();
-      const val = row[key] ? String(row[key]).trim() : '';
-      if (!val) continue;
-      if (lower.includes('nome')) {
-        guide.name = val;
-      } else if (lower.includes('numero') && lower.includes('cad')) {
-        guide.cadastur = val;
-      } else if (lower.includes('cadastur')) {
-        guide.cadastur = val;
-      } else if (lower.includes('uf') || lower.includes('estado')) {
-        guide.state = val.toUpperCase();
-      } else if (lower.includes('municipio') || lower.includes('município') || lower.includes('cidade')) {
-        guide.city = val;
-      } else if (lower.includes('idioma') || lower.includes('lang')) {
-        guide.languages = val.split(/\||,|;/).map(s => s.trim()).filter(Boolean);
-      } else if (lower.includes('contato') || lower.includes('whats') || lower.includes('insta') || lower.includes('telefone') || lower.includes('email')) {
-        // Split contacts by | or comma
-        const parts = val.split(/\||,/);
-        parts.forEach(part => {
-          const [type, value] = part.split(/[:：]/);
-          if (value) {
-            guide.contacts.push({ type: type.trim(), value: value.trim() });
-          }
-        });
-      } else if (lower.includes('foto') || lower.includes('image')) {
-        guide.photo = val;
-      } else if (lower.includes('bio') || lower.includes('descr')) {
-        guide.bio = val;
-      } else if (lower.includes('id')) {
-        guide.id = val;
-      }
-    }
-    // Fallbacks
-    if (!guide.id) guide.id = guide.cadastur || guide.name.replace(/\s+/g, '-').toLowerCase();
-    return guide;
-  }
-
-  /**
-   * Convert a string into a URL-friendly slug. Normalizes unicode,
-   * removes accents and special characters, lowercases and replaces
-   * whitespace with hyphens. Used to generate slugs for duplicated
-   * guide entries when replicating the dataset.
-   * @param {string} str
-   * @returns {string}
-   */
-  function slugify(str) {
-    return str
-      .toString()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
+  // ---- Util ----
+  const slugify = (s) =>
+    (s || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }
+      .replace(/(^-|-$)/g, '');
 
-  /**
-   * Populate state options based on all guides.
-   */
-  function populateStateOptions() {
-    const states = Array.from(new Set(allGuides.map(g => g.state).filter(Boolean)));
-    states.sort();
-    // Clear existing except first
-    stateSelect.innerHTML = '<option value="">Todos</option>';
-    states.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s;
-      opt.textContent = s;
-      stateSelect.appendChild(opt);
-    });
-  }
+  const parseContacts = (s) => {
+    if (!s) return {};
+    let wpp = (/whats(app)?:\s*([^|]+)/i.exec(s) || [])[2];
+    let ig  = (/insta(gram)?:\s*([^|]+)/i.exec(s) || [])[2];
+    let em  = (/mail|e-?mail:\s*([^|]+)/i.exec(s) || [])[2];
+    return {
+      whatsapp: wpp ? wpp.trim() : '',
+      instagram: ig ? ig.trim().replace(/^@/, '') : '',
+      email: em ? em.trim() : ''
+    };
+  };
 
-  /**
-   * Populate city options based on selected state.
-   * @param {string} state
-   */
-  function populateCityOptions(state) {
-    if (!state) {
-      citySelect.innerHTML = '<option value="">Todas</option>';
-      citySelect.disabled = true;
-      return;
-    }
-    const cities = Array.from(new Set(allGuides.filter(g => g.state === state).map(g => g.city).filter(Boolean)));
-    cities.sort((a, b) => a.localeCompare(b));
-    citySelect.innerHTML = '<option value="">Todas</option>';
-    cities.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      citySelect.appendChild(opt);
-    });
-    citySelect.disabled = false;
-  }
-
-  /**
-   * Read URL parameters and apply to filters. Then apply filters.
-   */
-  function applyFiltersFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    searchQuery = params.get('q') || '';
-    selectedState = params.get('uf') || '';
-    selectedCity = params.get('city') || '';
-    sortOption = params.get('sort') || 'name-asc';
-    const page = parseInt(params.get('page'), 10);
-    currentPage = (!isNaN(page) && page > 0) ? page : 1;
-    // set controls
-    searchInput.value = searchQuery;
-    sortSelect.value = sortOption;
-    populateStateOptions();
-    stateSelect.value = selectedState;
-    populateCityOptions(selectedState);
-    citySelect.value = selectedCity;
-    applyFilters(false);
-  }
-
-  /**
-   * Update URL query parameters based on current filter state.
-   */
-  function updateURLParams() {
-    const params = new URLSearchParams();
-    if (searchQuery) params.set('q', searchQuery);
-    if (selectedState) params.set('uf', selectedState);
-    if (selectedCity) params.set('city', selectedCity);
-    if (sortOption && sortOption !== 'name-asc') params.set('sort', sortOption);
-    if (currentPage > 1) params.set('page', currentPage);
-    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-    window.history.replaceState({}, '', newUrl);
-  }
-
-  /**
-   * Apply current filters and search to all guides, update filteredGuides, then
-   * render guides and pagination.
-   * @param {boolean} resetPage Whether to reset to page 1
-   */
-  function applyFilters(resetPage = true) {
-    // Save previous state for resetting page if needed
-    if (resetPage) currentPage = 1;
-    // Filter
-    filteredGuides = allGuides.filter(g => {
-      // Search by name or cadastur
-      const q = searchQuery.toLowerCase();
-      const matchesSearch = !q || g.name.toLowerCase().includes(q) || g.cadastur.toLowerCase().includes(q);
-      const matchesState = !selectedState || g.state === selectedState;
-      const matchesCity = !selectedCity || g.city === selectedCity;
-      return matchesSearch && matchesState && matchesCity;
-    });
-    // Sort
-    const [key, direction] = sortOption.split('-');
-    filteredGuides.sort((a, b) => {
-      let valA = '';
-      let valB = '';
-      if (key === 'name') {
-        valA = a.name.toLowerCase();
-        valB = b.name.toLowerCase();
-      } else if (key === 'city') {
-        valA = a.city.toLowerCase();
-        valB = b.city.toLowerCase();
+  // Normaliza uma linha vinda do CSV/JS para shape padrão
+  function normalize(row) {
+    // nomes de coluna variáveis
+    const get = (...keys) => {
+      for (const k of keys) {
+        const v = row[k]; if (v != null && String(v).trim() !== '') return String(v).trim();
       }
-      if (valA < valB) return direction === 'asc' ? -1 : 1;
-      if (valA > valB) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-    updateCounters();
-    renderGuides();
-    renderPagination();
-    updateURLParams();
+      return '';
+    };
+
+    const name = get('nome', 'nome_completo', 'name');
+    const cad  = get('numero_cadastur','cadastur','n_cadastur','número_cadastur');
+    const uf   = get('uf','estado','estado_uf');
+    const city = get('municipio','cidade','city');
+    const bio  = get('bio','descricao','descrição','mini_bio','sobre');
+    const langs= get('idiomas','languages');
+    const photo= get('foto','foto_url','image','foto_perfil');
+
+    const contacts = parseContacts(get('contatos','contact','contato','contacts'));
+    const id = cad || (name ? name.toLowerCase().replace(/\s+/g,'-') : '');
+
+    return {
+      id,
+      name,
+      cadastur: cad,
+      uf,
+      city,
+      bio,
+      languages: langs ? langs.split('|').map(s=>s.trim()).filter(Boolean) : [],
+      photo: photo || 'images/placeholder_guide.png',
+      contacts,
+      slug: `${slugify(name)}-${(cad || '').slice(-4)}`
+    };
   }
 
-  /**
-   * Render counters for total and filtered guides.
-   */
-  function updateCounters() {
-    const total = allGuides.length;
-    const filtered = filteredGuides.length;
-    // Determine how many items are displayed on the current page.
-    const startIndex = (currentPage - 1) * pageSize;
-    const displayed = Math.max(0, Math.min(pageSize, filtered - startIndex));
-    countersDiv.textContent = `Mostrando ${displayed} de ${filtered} guias (Total: ${total})`;
-  }
-
-  /**
-   * Render the current page of guides into the listDiv.
-   */
-  function renderGuides() {
-    // Update counters to reflect current page counts
-    updateCounters();
-    listDiv.innerHTML = '';
-    const totalPages = Math.ceil(filteredGuides.length / pageSize) || 1;
-    if (currentPage > totalPages) currentPage = totalPages;
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, filteredGuides.length);
-    if (filteredGuides.length === 0) {
-      const p = document.createElement('p');
-      p.textContent = 'Nenhum guia encontrado com os filtros selecionados.';
-      listDiv.appendChild(p);
-      return;
+  // ---- Carregar dados: CSV (preferência) ou JS (fallback) ----
+  async function loadData() {
+    // Tentar CSV?
+    if (window.__USE_CSV__) {
+      try {
+        const resp = await fetch('data/cadastur.csv', { cache: 'no-store' });
+        if (resp.ok) {
+          const text = await resp.text();
+          const [header, ...lines] = text.trim().split(/\r?\n/);
+          const cols = header.split(',').map(h=>h.trim());
+          const rows = lines.map(line => {
+            // parser leve (atenção: CSV simples — se seu CSV tem vírgulas entre aspas, troque por PapaParse)
+            const parts = line.split(','); 
+            const obj = {};
+            cols.forEach((c,i)=>obj[c]=parts[i]);
+            return obj;
+          });
+          return rows.map(normalize);
+        }
+      } catch (_) { /* ignora e cai no fallback */ }
     }
-    const frag = document.createDocumentFragment();
-    for (let i = startIndex; i < endIndex; i++) {
-      const g = filteredGuides[i];
+    // Fallback: usar dataset JS embutido (window.cadasturData)
+    if (Array.isArray(window.cadasturData)) return window.cadasturData.map(normalize);
+    return [];
+  }
+
+  // ---- Filtros/busca/ordenação ----
+  function applyFilters() {
+    const q = (searchIn.value || '').trim().toLowerCase();
+    const uf = stateSel.value;
+    const city = citySel.value;
+
+    filtered = allGuides.filter(g => {
+      if (uf && g.uf !== uf) return false;
+      if (city && g.city !== city) return false;
+      if (q) {
+        // busca em nome ou Cadastur
+        const hay = (g.name + ' ' + g.cadastur).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    // ordenar
+    const sort = sortSel.value || 'name_asc';
+    const cmp = {
+      'name_asc': (a,b)=> a.name.localeCompare(b.name, 'pt'),
+      'name_desc':(a,b)=> b.name.localeCompare(a.name, 'pt'),
+      'city_asc': (a,b)=> a.city.localeCompare(b.city, 'pt') || a.name.localeCompare(b.name,'pt'),
+      'city_desc':(a,b)=> b.city.localeCompare(a.city, 'pt') || a.name.localeCompare(b.name,'pt')
+    }[sort] || ((a,b)=>0);
+
+    filtered.sort(cmp);
+    currentPage = 1;
+    render();
+    syncURL();
+  }
+
+  function syncURL() {
+    const p = new URLSearchParams();
+    if (searchIn.value) p.set('q', searchIn.value);
+    if (stateSel.value) p.set('uf', stateSel.value);
+    if (citySel.value)  p.set('city', citySel.value);
+    if (sortSel.value)  p.set('sort', sortSel.value);
+    if (currentPage>1)  p.set('page', String(currentPage));
+    history.replaceState(null,'',`?${p.toString()}`);
+  }
+
+  function fromURL() {
+    const u = new URL(location.href);
+    searchIn.value = u.searchParams.get('q') || '';
+    stateSel.value = u.searchParams.get('uf') || '';
+    sortSel.value  = u.searchParams.get('sort') || 'name_asc';
+    // cidade será preenchida após montarmos a lista dinâmica
+    const p = parseInt(u.searchParams.get('page')||'1',10);
+    currentPage = isNaN(p) ? 1 : Math.max(1,p);
+    return u.searchParams.get('city') || '';
+  }
+
+  // ---- UI ----
+  function renderCounters() {
+    const total = allGuides.length;
+    const filteredTotal = filtered.length;
+    const start = (currentPage-1)*pageSize;
+    const showing = Math.min(pageSize, Math.max(filteredTotal - start, 0));
+    countersDiv.textContent = `Mostrando ${showing} de ${filteredTotal} guias (Total: ${total})`;
+  }
+
+  function renderGrid() {
+    grid.innerHTML = '';
+    const start = (currentPage-1)*pageSize;
+    const items = filtered.slice(start, start+pageSize);
+
+    items.forEach(g => {
       const card = document.createElement('div');
       card.className = 'guide-card';
       card.innerHTML = `
-        <div class="guide-photo"><a href="guia.html?slug=${g.slug || ''}"><img src="${g.photo || g.image || 'images/guia1.png'}" alt="${g.name}"></a></div>
+        <div class="guide-photo"><img src="${g.photo}" alt="${g.name}"></div>
         <div class="guide-info">
-          <h3 class="guide-name"><a href="guia.html?slug=${g.slug || ''}">${g.name}</a></h3>
+          <h3 class="guide-name">
+            <a href="guia.html?slug=${encodeURIComponent(g.slug)}" class="guide-link">${g.name}</a>
+          </h3>
           <p class="guide-cad"><i class="fas fa-certificate" style="color:var(--color-secondary);"></i> ${g.cadastur}</p>
-          <p class="guide-location">${g.state || g.uf || ''}${g.city || g.municipio ? ' · ' + (g.city || g.municipio) : ''}</p>
-          ${g.languages && g.languages.length ? `<p class="guide-languages">Idiomas: ${g.languages.join(', ')}</p>` : ''}
-          ${g.bio ? `<p class="guide-bio">${g.bio.length > 200 ? g.bio.slice(0, 200) + '…' : g.bio}</p>` : ''}
+          <p class="guide-loc"><i class="fas fa-map-marker-alt"></i> ${g.uf} • ${g.city}</p>
+          ${g.languages.length ? `<p class="guide-langs"><i class="fas fa-language"></i> ${g.languages.join(', ')}</p>` : ''}
+          ${g.bio ? `<p class="guide-bio">${g.bio.slice(0, 200)}${g.bio.length>200?'…':''}</p>` : ''}
           <div class="guide-actions">
-            <button class="btn btn-outline exp-btn" data-guide-id="${g.id}">Ver Expedições</button>
-            <button class="btn btn-secondary contact-btn" data-guide-id="${g.id}">Contato</button>
+            <a class="btn btn-outline" href="expedicoes.html?guia=${encodeURIComponent(g.cadastur)}">Ver Expedições</a>
+            <button class="btn btn-solid" data-action="contact" data-wpp="${g.contacts.whatsapp||''}" data-ig="${g.contacts.instagram||''}" data-email="${g.contacts.email||''}">Contato</button>
           </div>
         </div>
       `;
-      frag.appendChild(card);
-    }
-    listDiv.appendChild(frag);
-  }
-
-  /**
-   * Render pagination controls.
-   */
-  function renderPagination() {
-    paginationDiv.innerHTML = '';
-    const totalPages = Math.ceil(filteredGuides.length / pageSize) || 1;
-    if (totalPages <= 1) return;
-    const createBtn = (text, page, disabled = false) => {
-      const btn = document.createElement('button');
-      btn.textContent = text;
-      btn.className = 'page-btn' + (disabled ? ' disabled' : '');
-      if (!disabled) {
-        btn.addEventListener('click', () => {
-          currentPage = page;
-          renderGuides();
-          renderPagination();
-          updateURLParams();
-          window.scrollTo({ top: listDiv.offsetTop - 100, behavior: 'smooth' });
-        });
-      }
-      return btn;
-    };
-    // Previous
-    paginationDiv.appendChild(createBtn('Anterior', currentPage - 1, currentPage === 1));
-    // Page numbers: show first, last, and nearby pages
-    const pages = [];
-    for (let p = 1; p <= totalPages; p++) {
-      if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2) {
-        pages.push(p);
-      }
-    }
-    let lastPrinted = 0;
-    pages.forEach(p => {
-      if (p - lastPrinted > 1) {
-        const dots = document.createElement('span');
-        dots.textContent = '…';
-        dots.className = 'page-dots';
-        paginationDiv.appendChild(dots);
-      }
-      const btn = createBtn(String(p), p, p === currentPage);
-      if (p === currentPage) btn.classList.add('active');
-      paginationDiv.appendChild(btn);
-      lastPrinted = p;
+      grid.appendChild(card);
     });
-    // Next
-    paginationDiv.appendChild(createBtn('Próxima', currentPage + 1, currentPage === totalPages));
   }
 
-  /**
-   * Open contact modal for the given guide id.
-   * @param {string} id
-   */
-  function openContactModal(id) {
-    const guide = allGuides.find(g => String(g.id) === String(id));
-    if (!guide) return;
-    contactContent.innerHTML = '';
-    const nameEl = document.createElement('h3');
-    nameEl.textContent = guide.name;
-    contactContent.appendChild(nameEl);
-    if (guide.contacts && guide.contacts.length > 0) {
-      guide.contacts.forEach(({ type, value }) => {
-        const p = document.createElement('p');
-        p.innerHTML = `<strong>${type}:</strong> ${value}`;
-        contactContent.appendChild(p);
+  function renderPager() {
+    pager.innerHTML = '';
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    if (totalPages <= 1) return;
+
+    const addBtn = (label, page, disabled=false, active=false) => {
+      const b = document.createElement('button');
+      b.className = `page-btn${active?' active':''}`;
+      b.textContent = label;
+      b.disabled = disabled;
+      b.addEventListener('click', () => {
+        currentPage = page;
+        render();
+        syncURL();
+        window.scrollTo({top:0, behavior:'smooth'});
       });
-    } else {
-      const p = document.createElement('p');
-      p.textContent = 'Contato não disponível.';
-      contactContent.appendChild(p);
-    }
-    contactModal.classList.add('open');
+      pager.appendChild(b);
+    };
+
+    addBtn('Anterior', Math.max(1, currentPage-1), currentPage===1);
+
+    // números com reticências
+    const tp = totalPages;
+    const pages = new Set([1,2,tp-1,tp,currentPage-1,currentPage,currentPage+1].filter(p=>p>=1&&p<=tp));
+    const sorted = [...pages].sort((a,b)=>a-b);
+    let prev = 0;
+    sorted.forEach(p => {
+      if (p - prev > 1) {
+        const span = document.createElement('span');
+        span.textContent = '…';
+        span.className = 'page-ellipsis';
+        pager.appendChild(span);
+      }
+      addBtn(String(p), p, false, p===currentPage);
+      prev = p;
+    });
+
+    addBtn('Próxima', Math.min(tp, currentPage+1), currentPage===tp);
   }
 
-  // Event listeners for filters
-  searchInput.addEventListener('input', () => {
-    searchQuery = searchInput.value.trim();
-    applyFilters();
-  });
-  stateSelect.addEventListener('change', () => {
-    selectedState = stateSelect.value;
-    // Reset city if state changed
-    selectedCity = '';
-    populateCityOptions(selectedState);
-    citySelect.value = '';
-    applyFilters();
-  });
-  citySelect.addEventListener('change', () => {
-    selectedCity = citySelect.value;
-    applyFilters();
-  });
-  sortSelect.addEventListener('change', () => {
-    sortOption = sortSelect.value;
-    applyFilters(false);
-  });
-  clearBtn.addEventListener('click', () => {
-    searchQuery = '';
-    selectedState = '';
-    selectedCity = '';
-    sortOption = 'name-asc';
-    searchInput.value = '';
-    stateSelect.value = '';
-    populateCityOptions('');
-    citySelect.value = '';
-    sortSelect.value = 'name-asc';
-    currentPage = 1;
-    applyFilters(false);
-  });
-  // Event delegation for guide actions
-  listDiv.addEventListener('click', (e) => {
-    const expBtn = e.target.closest('.exp-btn');
-    const contactBtn = e.target.closest('.contact-btn');
-    if (expBtn) {
-      const id = expBtn.getAttribute('data-guide-id');
-      // Check if there are expeditions for this guide
-      let hasExp = false;
-      if (Array.isArray(window.expeditionsData)) {
-        hasExp = window.expeditionsData.some(exp => String(exp.guideId) === String(id));
-      }
-      if (hasExp) {
-        window.location.href = `expedicoes.html?guideId=${encodeURIComponent(id)}`;
-      } else {
-        alert('Nenhuma expedição disponível no momento');
-      }
-    } else if (contactBtn) {
-      const id = contactBtn.getAttribute('data-guide-id');
-      openContactModal(id);
-    }
-  });
-  // Close contact modal
-  if (contactClose) {
-    contactClose.addEventListener('click', () => contactModal.classList.remove('open'));
+  function render() {
+    renderCounters();
+    renderGrid();
+    renderPager();
   }
-  contactModal.addEventListener('click', (e) => {
-    if (e.target === contactModal) {
-      contactModal.classList.remove('open');
-    }
-  });
 
-  // Load dataset from global variable `window.cadasturData` if available.
-  // If no dataset is defined, display an error. This avoids issues with
-  // fetching local CSV files via the file:// protocol which is not allowed
-  // in many browsers.  The dataset is defined in answer/data/cadastur.js.
-  try {
-    if (Array.isArray(window.cadasturData)) {
-      // Normalize each raw entry from the CSV/Excel into our guide object
-      allGuides = window.cadasturData.map((row) => normalizeGuide(row));
-      // Compute slugs for original guides
-      allGuides.forEach(g => {
-        if (!g.slug) {
-          const base = g.name || '';
-          const cad = g.cadastur || '';
-          g.slug = slugify(base) + '-' + String(cad).slice(-4);
-        }
+  function populateUFs() {
+    const ufs = [...new Set(allGuides.map(g=>g.uf).filter(Boolean))].sort();
+    stateSel.innerHTML = `<option value="">Todos os Estados</option>` + ufs.map(u=>`<option value="${u}">${u}</option>`).join('');
+  }
+
+  function populateCitiesFor(uf, preselect='') {
+    const cities = [...new Set(allGuides.filter(g=>!uf || g.uf===uf).map(g=>g.city).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt'));
+    citySel.innerHTML = `<option value="">Todas as Cidades</option>` + cities.map(c=>`<option value="${c}">${c}</option>`).join('');
+    if (preselect) citySel.value = preselect;
+  }
+
+  // ---- Eventos ----
+  function wireEvents() {
+    stateSel.addEventListener('change', () => {
+      populateCitiesFor(stateSel.value, '');
+      applyFilters();
+    });
+    citySel.addEventListener('change', applyFilters);
+    searchIn.addEventListener('input', () => { currentPage=1; applyFilters(); });
+    sortSel.addEventListener('change', applyFilters);
+    clearBtn.addEventListener('click', () => {
+      searchIn.value = '';
+      stateSel.value = '';
+      populateCitiesFor('');
+      citySel.value = '';
+      sortSel.value = 'name_asc';
+      currentPage = 1;
+      applyFilters();
+    });
+
+    // Modal de contato simples
+    document.body.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button[data-action="contact"]');
+      if (!btn) return;
+      const w = btn.dataset.wpp, ig = btn.dataset.ig, em = btn.dataset.email;
+      let html = '<div class="contact-modal"><div class="contact-card">';
+      html += '<h3>Contato do Guia</h3><ul class="contact-list">';
+      if (w) html += `<li><i class="fab fa-whatsapp"></i> ${w}</li>`;
+      if (ig) html += `<li><i class="fab fa-instagram"></i> @${ig}</li>`;
+      if (em) html += `<li><i class="far fa-envelope"></i> ${em}</li>`;
+      if (!w && !ig && !em) html += `<li>Contatos não informados.</li>`;
+      html += '</ul><button class="btn btn-outline" id="closeContact">Fechar</button></div></div>';
+      const wrap = document.createElement('div');
+      wrap.innerHTML = html;
+      document.body.appendChild(wrap.firstChild);
+      document.getElementById('closeContact').addEventListener('click', ()=> {
+        document.querySelector('.contact-modal')?.remove();
       });
-      // Replicate dataset several times to demonstrate pagination with many
-      // items. This duplicates the guides but assigns unique IDs so that
-      // filters and clicks still behave sensibly. If real data contains
-      // thousands of entries this replication is unnecessary.
-      const original = allGuides.slice();
-      let counter = 1;
-      for (let i = 0; i < 8; i++) { // replicate 8 times -> ~9x original
-        original.forEach(g => {
-          const dup = { ...g };
-          // Append counter to ID and Cadastur to make them unique
-          dup.id = `${g.id}-${counter}`;
-          dup.cadastur = `${g.cadastur}-${counter}`;
-          dup.name = `${g.name} (${counter})`;
-          // Compute slug for the duplicated guide
-          dup.slug = slugify(dup.name) + '-' + String(dup.cadastur).slice(-4);
-          allGuides.push(dup);
-          counter++;
-        });
-      }
-      // Populate state options and apply filters from URL to load initial
-      // view. Without resetting page we keep page number from query param.
-      populateStateOptions();
-      applyFiltersFromURL();
-    } else {
-      throw new Error('cadasturData is not defined');
-    }
-  } catch (err) {
-    console.error('Erro ao carregar dados de guias:', err);
-    listDiv.innerHTML = '<p>Erro ao carregar dados de guias.</p>';
+    });
   }
-});
+
+  // ---- Inicialização ----
+  window.addEventListener('load', async () => {
+    allGuides = await loadData();
+
+    // Preenche filtros a partir da URL
+    const preCity = fromURL();
+
+    populateUFs();
+    populateCitiesFor(stateSel.value, preCity);
+
+    applyFilters();
+    wireEvents();
+  });
+})();

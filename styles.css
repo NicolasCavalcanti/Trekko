@@ -87,6 +87,27 @@ a:hover {
   color: #ffffff;
 }
 
+.btn-outline {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+}
+
+.btn-outline:hover {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.btn-solid {
+  background-color: var(--color-secondary);
+  color: #ffffff;
+}
+
+.btn-solid:hover {
+  background-color: #d98f42;
+  color: #ffffff;
+}
+
 .hidden {
   display: none !important;
 }
@@ -867,6 +888,20 @@ footer {
   width: 100%;
   height: 180px;
   object-fit: cover;
+  background: #eef1f0;
+}
+
+/* placeholder para fotos de guias ausentes */
+.guide-hero img {
+  object-fit: cover;
+  background: #eef1f0;
+}
+
+.guide-loc,
+.guide-langs {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+  margin-bottom: 0.25rem;
 }
 
 .guide-info {
@@ -946,30 +981,91 @@ footer {
   background-color: var(--color-primary);
   color: #fff;
 }
+
+/* Guide profile */
+.guide-detail-section {
+  display: grid;
+  gap: 2rem;
+}
+
+.guide-hero {
+  position: relative;
+  height: 320px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  background: #eef1f0;
+}
+
+.guide-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(14, 33, 40, 0.15) 0%, rgba(14, 33, 40, 0.75) 100%);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2rem;
+  gap: 0.5rem;
+}
+
+.guide-detail-left,
+.guide-detail-right {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(14, 33, 40, 0.08);
+}
+
+.contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+  color: var(--color-dark);
+}
+
+.contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.contact-list i {
+  color: var(--color-secondary);
+}
+
+.contact-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 2000;
+}
+
+.contact-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: min(90%, 360px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+}
+
+@media (min-width: 900px) {
+  .guide-detail-section {
+    grid-template-columns: 2fr 1fr;
+  }
+}
 .page-dots {
   font-size: 0.85rem;
   color: var(--color-muted);
   padding: 0 0.5rem;
 }
 
-/* Contact modal specific */
-#guideContactModal .modal-content {
-  background-color: #fff;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-#guideContactModal h3 {
-  font-family: 'Sora', sans-serif;
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
-  color: var(--color-primary);
-}
-#guideContactModal p {
-  font-size: 0.9rem;
-  color: var(--color-dark);
-  margin-bottom: 0.25rem;
-}
 .user-button {
   background: none;
   border: none;

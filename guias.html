@@ -70,55 +70,47 @@
         <!-- Filters -->
         <div class="guide-filters" style="display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
             <div class="filter-field" style="flex:1 1 220px;">
-                <label for="guideSearch">Nome ou Nº Cadastur</label>
-                <input type="text" id="guideSearch" placeholder="Pesquisar..." />
+                <label for="searchInput">Nome ou Nº Cadastur</label>
+                <input type="text" id="searchInput" placeholder="Pesquisar..." />
             </div>
             <div class="filter-field" style="flex:1 1 160px;">
-                <label for="guideStateFilter">Estado</label>
-                <select id="guideStateFilter">
-                    <option value="">Todos</option>
+                <label for="filterUF">Estado</label>
+                <select id="filterUF">
+                    <option value="">Todos os Estados</option>
                     <!-- options populated via JS -->
                 </select>
             </div>
             <div class="filter-field" style="flex:1 1 160px;">
-                <label for="guideCityFilter">Cidade</label>
-                <select id="guideCityFilter" disabled>
-                    <option value="">Todas</option>
+                <label for="filterCity">Cidade</label>
+                <select id="filterCity">
+                    <option value="">Todas as Cidades</option>
                 </select>
             </div>
             <div class="filter-field" style="flex:1 1 160px;">
-                <label for="guideSort">Ordenar por</label>
-                <select id="guideSort">
-                    <option value="name-asc">Nome (A–Z)</option>
-                    <option value="name-desc">Nome (Z–A)</option>
-                    <option value="city-asc">Cidade (A–Z)</option>
-                    <option value="city-desc">Cidade (Z–A)</option>
+                <label for="sortSelect">Ordenar por</label>
+                <select id="sortSelect">
+                    <option value="name_asc">Nome (A–Z)</option>
+                    <option value="name_desc">Nome (Z–A)</option>
+                    <option value="city_asc">Cidade (A–Z)</option>
+                    <option value="city_desc">Cidade (Z–A)</option>
                 </select>
             </div>
             <div style="display:flex;align-items:flex-end;">
-                <button id="clearGuideFilters" class="btn-clear" style="margin-top:auto;">Limpar</button>
+                <button id="clearFilters" class="btn-clear" style="margin-top:auto;">Limpar</button>
             </div>
         </div>
 
         <!-- Counters -->
-        <div id="guideCounters" style="margin-bottom:1rem;font-size:0.95rem;color:var(--color-muted);">
+        <div id="guidesCounters" style="margin-bottom:1rem;font-size:0.95rem;color:var(--color-muted);">
             <!-- dynamic counters inserted here -->
         </div>
 
         <!-- Guide Cards Grid -->
-        <div id="guideList" class="guide-grid" style="display:grid;gap:1.5rem;"></div>
+        <div id="guidesGrid" class="guide-grid" style="display:grid;gap:1.5rem;"></div>
 
         <!-- Pagination -->
         <div id="pagination" class="pagination" style="margin-top:2rem;display:flex;justify-content:center;gap:0.5rem;"></div>
     </main>
-
-    <!-- Contact Modal -->
-    <div id="guideContactModal" class="modal">
-        <div class="modal-content" style="max-width:400px;">
-            <button id="guideContactClose" class="modal-close">&times;</button>
-            <div id="guideContactContent"></div>
-        </div>
-    </div>
 
     <!-- Footer -->
     <footer>
@@ -156,12 +148,18 @@
     </footer>
 
     <!-- Load scripts -->
+    <!-- Auth + utilidades globais -->
     <script src="auth.js"></script>
-    <!-- Main script (nav, search, modals) -->
     <script src="scripts.js"></script>
-    <!-- Data for CADASTUR guides -->
+
+    <!-- Fonte oficial de dados -->
+    <!-- Preferência: CSV; fallback: JS embutido quando rodar via file:// -->
+    <script>
+      window.__USE_CSV__ = true; // mude para false só se estiver testando via file:// sem servidor
+    </script>
     <script src="data/cadastur.js"></script>
-    <!-- Guides list script -->
+
+    <!-- Lógica da listagem de guias (somente CADASTUR) -->
     <script src="guides_list.js"></script>
 </body>
 </html>
