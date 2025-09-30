@@ -72,10 +72,13 @@
                     <input type="text" id="expeditionTitle" name="title" placeholder="Ex.: Travessia da Serra Fina" required>
                 </div>
                 <div class="form-field">
-                    <label for="expeditionTrail">Trilha</label>
-                    <select id="expeditionTrail" name="trail" required>
-                        <option value="">Selecione uma trilha</option>
-                    </select>
+                    <label for="expeditionTrailName">Trilha</label>
+                    <div class="trail-selector">
+                        <input type="text" id="expeditionTrailName" name="trailName" placeholder="Nenhuma trilha selecionada" readonly required aria-describedby="selectedTrailHelper">
+                        <input type="hidden" id="expeditionTrailId" name="trail">
+                        <button type="button" class="btn btn-secondary trail-selector__action" id="openTrailSearch"><i class="fas fa-search"></i><span>Pesquisar</span></button>
+                    </div>
+                    <p class="form-helper" id="selectedTrailHelper">Selecione uma trilha cadastrada para prosseguir.</p>
                 </div>
                 <div class="form-field">
                     <label for="expeditionLevel">Nível de dificuldade</label>
@@ -125,6 +128,121 @@
         </section>
     </main>
 
+    <div id="trailSearchModal" class="modal trail-search-modal" role="dialog" aria-modal="true" aria-labelledby="trailSearchTitle">
+        <div class="modal-content">
+            <div class="trail-search-modal__header">
+                <button type="button" class="trail-search-modal__back" data-close-modal aria-label="Voltar"><i class="fas fa-arrow-left"></i><span>Voltar</span></button>
+                <h2 id="trailSearchTitle">Selecionar trilha cadastrada</h2>
+                <button type="button" class="modal-close" data-close-modal aria-label="Fechar">&times;</button>
+            </div>
+            <div class="trail-search-modal__body">
+                <form class="trail-search-filters" id="trailSearchFilters" autocomplete="off">
+                    <div class="filter-field full-width">
+                        <label for="trailSearchQuery">Busca livre</label>
+                        <input type="text" id="trailSearchQuery" placeholder="Busque por nome, cidade ou parque">
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchState">Estado (UF)</label>
+                        <select id="trailSearchState">
+                            <option value="">Todos</option>
+                            <option value="AC">Acre</option>
+                            <option value="AL">Alagoas</option>
+                            <option value="AP">Amapá</option>
+                            <option value="AM">Amazonas</option>
+                            <option value="BA">Bahia</option>
+                            <option value="CE">Ceará</option>
+                            <option value="DF">Distrito Federal</option>
+                            <option value="ES">Espírito Santo</option>
+                            <option value="GO">Goiás</option>
+                            <option value="MA">Maranhão</option>
+                            <option value="MT">Mato Grosso</option>
+                            <option value="MS">Mato Grosso do Sul</option>
+                            <option value="MG">Minas Gerais</option>
+                            <option value="PA">Pará</option>
+                            <option value="PB">Paraíba</option>
+                            <option value="PR">Paraná</option>
+                            <option value="PE">Pernambuco</option>
+                            <option value="PI">Piauí</option>
+                            <option value="RJ">Rio de Janeiro</option>
+                            <option value="RN">Rio Grande do Norte</option>
+                            <option value="RS">Rio Grande do Sul</option>
+                            <option value="RO">Rondônia</option>
+                            <option value="RR">Roraima</option>
+                            <option value="SC">Santa Catarina</option>
+                            <option value="SP">São Paulo</option>
+                            <option value="SE">Sergipe</option>
+                            <option value="TO">Tocantins</option>
+                            <option value="SP/MG">SP/MG</option>
+                            <option value="MG/ES">MG/ES</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchCity">Cidade</label>
+                        <select id="trailSearchCity">
+                            <option value="">Todas</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchName">Nome da trilha</label>
+                        <input type="text" id="trailSearchName" placeholder="Ex.: Pedra Bonita">
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchPark">Parque / Região</label>
+                        <input type="text" id="trailSearchPark" placeholder="Ex.: Parque Nacional">
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchDistanceMin">Extensão mínima (km)</label>
+                        <input type="number" id="trailSearchDistanceMin" min="0" step="0.1" placeholder="0">
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchDistanceMax">Extensão máxima (km)</label>
+                        <input type="number" id="trailSearchDistanceMax" min="0" step="0.1" placeholder="50">
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchElevationMin">Ganho mínimo (m)</label>
+                        <input type="number" id="trailSearchElevationMin" min="0" step="10" placeholder="0">
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchElevationMax">Ganho máximo (m)</label>
+                        <input type="number" id="trailSearchElevationMax" min="0" step="10" placeholder="1500">
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchDifficulty">Nível de dificuldade</label>
+                        <select id="trailSearchDifficulty">
+                            <option value="">Todos</option>
+                            <option value="fácil">Fácil</option>
+                            <option value="moderada">Moderada</option>
+                            <option value="difícil">Difícil</option>
+                            <option value="extrema">Extrema</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchGuide">Guia obrigatório</label>
+                        <select id="trailSearchGuide">
+                            <option value="">Todos</option>
+                            <option value="true">Sim</option>
+                            <option value="false">Não</option>
+                        </select>
+                    </div>
+                    <div class="filter-field">
+                        <label for="trailSearchEntryFee">Entrada paga</label>
+                        <select id="trailSearchEntryFee">
+                            <option value="">Todas</option>
+                            <option value="true">Sim</option>
+                            <option value="false">Não</option>
+                        </select>
+                    </div>
+                    <div class="trail-search-filters__actions">
+                        <button type="button" class="btn btn-outline" id="trailSearchClear">Limpar filtros</button>
+                        <div class="trail-search-results-info" aria-live="polite"></div>
+                    </div>
+                </form>
+                <div id="trailSearchResults" class="trail-search-results"></div>
+                <button type="button" class="btn btn-secondary trail-search-load-more" id="trailSearchLoadMore">Carregar mais trilhas</button>
+            </div>
+        </div>
+    </div>
+
     <footer>
         <div class="footer-grid">
             <div>
@@ -167,7 +285,34 @@
     <script>
         (function() {
             const form = document.getElementById('createExpeditionForm');
-            const trailSelect = document.getElementById('expeditionTrail');
+            const trailNameInput = document.getElementById('expeditionTrailName');
+            const trailIdInput = document.getElementById('expeditionTrailId');
+            const trailHelperText = document.getElementById('selectedTrailHelper');
+            const openTrailSearch = document.getElementById('openTrailSearch');
+            const trailSearchModal = document.getElementById('trailSearchModal');
+            const modalCloseButtons = trailSearchModal ? trailSearchModal.querySelectorAll('[data-close-modal]') : [];
+            const filtersForm = document.getElementById('trailSearchFilters');
+            const resultsContainer = document.getElementById('trailSearchResults');
+            const loadMoreButton = document.getElementById('trailSearchLoadMore');
+            const resultsInfo = trailSearchModal ? trailSearchModal.querySelector('.trail-search-results-info') : null;
+            const queryInput = document.getElementById('trailSearchQuery');
+            const stateSelect = document.getElementById('trailSearchState');
+            const citySelect = document.getElementById('trailSearchCity');
+            const nameFilter = document.getElementById('trailSearchName');
+            const parkFilter = document.getElementById('trailSearchPark');
+            const distanceMin = document.getElementById('trailSearchDistanceMin');
+            const distanceMax = document.getElementById('trailSearchDistanceMax');
+            const elevationMin = document.getElementById('trailSearchElevationMin');
+            const elevationMax = document.getElementById('trailSearchElevationMax');
+            const difficultySelect = document.getElementById('trailSearchDifficulty');
+            const guideSelect = document.getElementById('trailSearchGuide');
+            const entryFeeSelect = document.getElementById('trailSearchEntryFee');
+            const clearFiltersButton = document.getElementById('trailSearchClear');
+            const pageSize = 10;
+            let currentPage = 1;
+            const trailsData = Array.isArray(window.trailsData) ? [...window.trailsData] : [];
+            const sortedTrails = trailsData.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+            let filteredTrails = [...sortedTrails];
             const cancelButton = document.getElementById('cancelCreateExpedition');
             if (typeof Auth !== 'undefined' && Auth.getSession) {
                 Auth.getSession().then((session) => {
@@ -179,22 +324,299 @@
                     window.location.href = 'expedicoes.html';
                 });
             }
-            if (trailSelect && Array.isArray(window.trailsData)) {
-                window.trailsData.forEach(trail => {
-                    const option = document.createElement('option');
-                    option.value = trail.id;
-                    option.textContent = trail.name;
-                    trailSelect.appendChild(option);
-                });
+            function openModal() {
+                if (!trailSearchModal) return;
+                trailNameInput?.setCustomValidity('');
+                document.body.classList.add('modal-open');
+                trailSearchModal.classList.add('open');
+                populateCities();
+                applyFilters(true);
+                setTimeout(() => {
+                    queryInput?.focus();
+                }, 100);
             }
+
+            function closeModal() {
+                if (!trailSearchModal) return;
+                trailSearchModal.classList.remove('open');
+                document.body.classList.remove('modal-open');
+            }
+
+            function populateCities() {
+                if (!citySelect) return;
+                const selectedState = (stateSelect?.value || '').toLowerCase();
+                const previousValue = citySelect.value;
+                const citySet = new Set();
+                sortedTrails.forEach(trail => {
+                    if (!trail.city) return;
+                    if (selectedState && !(trail.state || '').toLowerCase().includes(selectedState)) return;
+                    citySet.add(trail.city);
+                });
+                const cities = Array.from(citySet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                citySelect.innerHTML = '<option value="">Todas</option>';
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+                if (cities.includes(previousValue)) {
+                    citySelect.value = previousValue;
+                } else {
+                    citySelect.value = '';
+                }
+            }
+
+            function applyFilters(resetPage = false) {
+                if (!Array.isArray(sortedTrails)) return;
+                const queryValue = (queryInput?.value || '').trim().toLowerCase();
+                const stateValue = (stateSelect?.value || '').trim().toLowerCase();
+                const cityValue = (citySelect?.value || '').trim().toLowerCase();
+                const nameValue = (nameFilter?.value || '').trim().toLowerCase();
+                const parkValue = (parkFilter?.value || '').trim().toLowerCase();
+                const distanceMinValue = parseFloat(distanceMin?.value || '');
+                const distanceMaxValue = parseFloat(distanceMax?.value || '');
+                const elevationMinValue = parseFloat(elevationMin?.value || '');
+                const elevationMaxValue = parseFloat(elevationMax?.value || '');
+                const difficultyValue = (difficultySelect?.value || '').trim().toLowerCase();
+                const guideValue = guideSelect?.value || '';
+                const entryFeeValue = entryFeeSelect?.value || '';
+
+                filteredTrails = sortedTrails.filter(trail => {
+                    const trailName = (trail.name || '').toLowerCase();
+                    const trailCity = (trail.city || '').toLowerCase();
+                    const trailPark = (trail.park || '').toLowerCase();
+                    const trailState = (trail.state || '').toLowerCase();
+                    const trailDifficulty = (trail.difficulty || '').toLowerCase();
+                    const trailDistance = typeof trail.distance === 'number' ? trail.distance : Number(trail.distance);
+                    const trailElevation = typeof trail.elevationGain === 'number' ? trail.elevationGain : Number(trail.elevationGain);
+                    const hasPaidEntry = typeof trail.entryFee === 'number' ? trail.entryFee > 0 : Number(trail.entryFee) > 0;
+
+                    if (queryValue && ![trailName, trailCity, trailPark, trailState].some(field => field.includes(queryValue))) {
+                        return false;
+                    }
+
+                    if (stateValue && !trailState.includes(stateValue)) {
+                        return false;
+                    }
+
+                    if (cityValue && trailCity !== cityValue) {
+                        return false;
+                    }
+
+                    if (nameValue && !trailName.includes(nameValue)) {
+                        return false;
+                    }
+
+                    if (parkValue && !trailPark.includes(parkValue)) {
+                        return false;
+                    }
+
+                    if (!Number.isNaN(distanceMinValue) && !(typeof trailDistance === 'number' && trailDistance >= distanceMinValue)) {
+                        return false;
+                    }
+
+                    if (!Number.isNaN(distanceMaxValue) && !(typeof trailDistance === 'number' && trailDistance <= distanceMaxValue)) {
+                        return false;
+                    }
+
+                    if (!Number.isNaN(elevationMinValue) && !(typeof trailElevation === 'number' && trailElevation >= elevationMinValue)) {
+                        return false;
+                    }
+
+                    if (!Number.isNaN(elevationMaxValue) && !(typeof trailElevation === 'number' && trailElevation <= elevationMaxValue)) {
+                        return false;
+                    }
+
+                    if (difficultyValue && !trailDifficulty.includes(difficultyValue)) {
+                        return false;
+                    }
+
+                    if (guideValue === 'true' && !trail.requiresGuide) {
+                        return false;
+                    }
+
+                    if (guideValue === 'false' && trail.requiresGuide) {
+                        return false;
+                    }
+
+                    if (entryFeeValue === 'true' && !hasPaidEntry) {
+                        return false;
+                    }
+
+                    if (entryFeeValue === 'false' && hasPaidEntry) {
+                        return false;
+                    }
+
+                    return true;
+                });
+
+                if (resetPage) {
+                    currentPage = 1;
+                }
+
+                renderResults();
+            }
+
+            function formatNumber(value, suffix = '') {
+                const numericValue = typeof value === 'number' ? value : Number(value);
+                if (!Number.isFinite(numericValue)) return '—';
+                return `${numericValue.toLocaleString('pt-BR')} ${suffix}`.trim();
+            }
+
+            function renderResults() {
+                if (!resultsContainer) return;
+                resultsContainer.innerHTML = '';
+                const totalVisible = currentPage * pageSize;
+                const trailsToShow = filteredTrails.slice(0, totalVisible);
+
+                if (resultsInfo) {
+                    const total = filteredTrails.length;
+                    resultsInfo.textContent = total
+                        ? `${total} ${total === 1 ? 'trilha encontrada' : 'trilhas encontradas'}`
+                        : 'Nenhuma trilha encontrada';
+                }
+
+                if (!trailsToShow.length) {
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'trail-search-empty';
+                    emptyState.textContent = 'Nenhuma trilha corresponde aos filtros selecionados. Ajuste a busca para tentar novamente.';
+                    resultsContainer.appendChild(emptyState);
+                } else {
+                    trailsToShow.forEach(trail => {
+                        const item = document.createElement('article');
+                        item.className = 'trail-search-item';
+                        const cityState = [trail.city, trail.state].filter(Boolean).join(' / ');
+                        const difficultyLabel = trail.difficulty
+                            ? trail.difficulty.charAt(0).toUpperCase() + trail.difficulty.slice(1)
+                            : '—';
+                        item.innerHTML = `
+                            <div class="trail-search-item__header">
+                                <h3>${trail.name}</h3>
+                                <span>${cityState || 'Localização não informada'}${trail.park ? ` • ${trail.park}` : ''}</span>
+                            </div>
+                            <div class="trail-search-item__meta">
+                                <span><i class="fas fa-route"></i>${formatNumber(trail.distance, 'km')}</span>
+                                <span><i class="fas fa-mountain"></i>${formatNumber(trail.elevationGain, 'm')}</span>
+                                <span><i class="fas fa-signal"></i>${difficultyLabel}</span>
+                            </div>
+                            <div class="trail-search-item__badges">
+                                ${trail.requiresGuide ? '<span class="trail-search-badge"><i class="fas fa-user-shield"></i> Guia obrigatório</span>' : ''}
+                                ${(typeof trail.entryFee === 'number' && trail.entryFee > 0) ? '<span class="trail-search-badge"><i class="fas fa-ticket-alt"></i> Entrada paga</span>' : ''}
+                            </div>
+                            <div class="trail-search-item__actions">
+                                <button type="button" class="btn btn-secondary" data-select-trail="${trail.id}">Selecionar esta trilha</button>
+                            </div>
+                        `;
+                        resultsContainer.appendChild(item);
+                    });
+                }
+
+                if (loadMoreButton) {
+                    loadMoreButton.hidden = totalVisible >= filteredTrails.length;
+                }
+
+                if (trailSearchModal && currentPage === 1) {
+                    const modalBody = trailSearchModal.querySelector('.trail-search-modal__body');
+                    modalBody && (modalBody.scrollTop = 0);
+                }
+            }
+
+            function clearFilters() {
+                if (!filtersForm) return;
+                filtersForm.reset();
+                populateCities();
+                applyFilters(true);
+            }
+
+            function selectTrail(trailId) {
+                const trail = sortedTrails.find(item => item.id === trailId);
+                if (!trail || !trailNameInput || !trailIdInput) return;
+                trailIdInput.value = trail.id;
+                trailNameInput.value = trail.name;
+                trailNameInput.setCustomValidity('');
+                trailHelperText && (trailHelperText.textContent = `Trilha selecionada: ${trail.name}`);
+                closeModal();
+            }
+
+            openTrailSearch?.addEventListener('click', openModal);
+            trailNameInput?.addEventListener('click', openModal);
+
+            filtersForm?.addEventListener('submit', (event) => event.preventDefault());
+
+            clearFiltersButton?.addEventListener('click', clearFilters);
+
+            [queryInput, nameFilter, parkFilter, distanceMin, distanceMax, elevationMin, elevationMax].forEach(input => {
+                input?.addEventListener('input', () => applyFilters(true));
+            });
+
+            [stateSelect, citySelect, difficultySelect, guideSelect, entryFeeSelect].forEach(select => {
+                select?.addEventListener('change', () => {
+                    if (select === stateSelect) {
+                        populateCities();
+                    }
+                    applyFilters(true);
+                });
+            });
+
+            loadMoreButton?.addEventListener('click', () => {
+                currentPage += 1;
+                renderResults();
+            });
+
+            resultsContainer?.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) return;
+                const button = target.closest('[data-select-trail]');
+                if (button) {
+                    const trailId = button.getAttribute('data-select-trail');
+                    if (trailId) {
+                        selectTrail(trailId);
+                    }
+                }
+            });
+
+            modalCloseButtons.forEach(button => {
+                button.addEventListener('click', closeModal);
+            });
+
+            trailSearchModal?.addEventListener('click', (event) => {
+                if (event.target === trailSearchModal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && trailSearchModal?.classList.contains('open')) {
+                    closeModal();
+                }
+            });
+
             form?.addEventListener('submit', (event) => {
                 event.preventDefault();
+                if (!trailIdInput?.value) {
+                    trailNameInput?.setCustomValidity('Selecione uma trilha cadastrada antes de publicar sua expedição.');
+                    trailNameInput?.reportValidity();
+                    return;
+                }
+                trailNameInput?.setCustomValidity('');
                 alert('Expedição enviada! Em breve você poderá gerenciar suas publicações pelo painel do guia.');
                 form.reset();
+                if (trailNameInput) {
+                    trailNameInput.value = '';
+                }
+                if (trailIdInput) {
+                    trailIdInput.value = '';
+                }
+                if (trailHelperText) {
+                    trailHelperText.textContent = 'Selecione uma trilha cadastrada para prosseguir.';
+                }
             });
             cancelButton?.addEventListener('click', () => {
                 window.location.href = 'expedicoes.html';
             });
+            populateCities();
+            applyFilters(true);
         })();
     </script>
 </body>
