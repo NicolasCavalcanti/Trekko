@@ -1256,6 +1256,10 @@ footer {
   pointer-events: auto;
 }
 
+.modal-open {
+  overflow: hidden;
+}
+
 .modal-content {
   background-color: #ffffff;
   border-radius: 8px;
@@ -1276,6 +1280,229 @@ footer {
   font-size: 1.5rem;
   color: var(--color-dark);
   cursor: pointer;
+}
+
+.trail-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trail-selector input[type="text"] {
+  flex: 1;
+  cursor: pointer;
+}
+
+.trail-selector__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.trail-selector__action i {
+  font-size: 0.95rem;
+}
+
+.form-helper {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.trail-search-modal .modal-content {
+  width: 80vw;
+  max-width: 1100px;
+  max-height: 90vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.trail-search-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid rgba(12, 28, 21, 0.08);
+}
+
+.trail-search-modal__header h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.5rem;
+  flex: 1;
+  text-align: center;
+}
+
+.trail-search-modal__back {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.trail-search-modal__back i {
+  font-size: 0.95rem;
+}
+
+.trail-search-modal__body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.trail-search-filters {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: flex-end;
+}
+
+.trail-search-filters .full-width {
+  grid-column: 1 / -1;
+}
+
+.trail-search-filters__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.trail-search-results-info {
+  font-size: 0.9rem;
+  color: var(--color-muted);
+}
+
+.trail-search-results {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trail-search-item {
+  background-color: #ffffff;
+  border: 1px solid rgba(12, 28, 21, 0.08);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.trail-search-item__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.trail-search-item__header h3 {
+  font-family: 'Sora', sans-serif;
+  font-size: 1.25rem;
+}
+
+.trail-search-item__header span {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.trail-search-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.trail-search-item__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-dark);
+}
+
+.trail-search-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.trail-search-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: rgba(26, 77, 46, 0.1);
+  color: var(--color-primary);
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.trail-search-item__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.trail-search-load-more {
+  display: block;
+  margin: 2rem auto 0;
+}
+
+.trail-search-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--color-muted);
+  border: 1px dashed rgba(12, 28, 21, 0.15);
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .trail-search-modal .modal-content {
+    width: 100vw;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  .trail-search-modal__header {
+    justify-content: flex-start;
+    padding: 1rem 1.25rem;
+  }
+
+  .trail-search-modal__header h2 {
+    font-size: 1.25rem;
+    text-align: left;
+  }
+
+  .trail-search-modal__back {
+    display: inline-flex;
+  }
+
+  .trail-search-modal .modal-close {
+    display: none;
+  }
+
+  .trail-search-modal__body {
+    padding: 1rem 1.25rem 1.5rem;
+  }
+
+  .trail-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .trail-selector__action {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* Login Modal */
