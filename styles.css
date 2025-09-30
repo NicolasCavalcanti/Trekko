@@ -336,6 +336,18 @@ a:hover {
   resize: vertical;
 }
 
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: var(--color-dark);
+}
+
+.checkbox-field input[type='checkbox'] {
+  width: auto;
+}
+
 .form-field .optional {
   color: var(--color-muted);
   font-weight: 400;
@@ -1921,6 +1933,31 @@ footer {
 }
 .expedition-card .btn {
   margin-top: 0.5rem;
+}
+
+.guide-expedition-actions {
+  display: none;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.guide-expedition-actions.is-visible {
+  display: flex;
+}
+
+.guide-expedition-actions .btn {
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .guide-expedition-actions {
+    justify-content: flex-start;
+  }
+
+  .guide-expedition-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
 }
 
 .cta-segment {

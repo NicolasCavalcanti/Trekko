@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Expedição – Trekko Brasil</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="create-expedition-page">
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo"><i class="fas fa-mountain"></i> Trekko Brasil</a>
+            <nav id="navMenu" class="nav-menu">
+                <a href="trilhas.html" class="nav-link">Trilhas</a>
+                <a href="guias.html" class="nav-link">Guias</a>
+                <a href="expedicoes.html" class="nav-link">Expedições</a>
+                <a href="sobre.html" class="nav-link">Sobre</a>
+                <a href="blog.html" class="nav-link">Blog</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="global-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Busque trilhas, guias, parques..." autocomplete="off">
+                    <div id="searchSuggestions" class="suggestions"></div>
+                </div>
+                <div id="guideCTA" class="guide-cta">
+                    <a href="conta.html" class="btn btn-outline user-profile-icon" aria-label="Perfil do usuário">
+                        <i class="fas fa-user"></i>
+                    </a>
+                </div>
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="btn btn-secondary">Entrar</button>
+                    <button id="registerBtn" class="btn btn-primary">Cadastrar-se</button>
+                </div>
+                <div id="userNav" class="user-nav">
+                    <button class="user-button"><i class="fas fa-user"></i> <span class="user-name"></span> <i class="fas fa-chevron-down"></i></button>
+                    <div class="user-menu"></div>
+                </div>
+                <button id="mobileMenuBtn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div id="loginModal" class="login-modal">
+        <div class="modal-box">
+            <button id="loginClose" class="modal-close">&times;</button>
+            <h2>Entrar no Trekko</h2>
+            <form>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Senha" required>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+            <p style="font-size:0.875rem;">Ainda não tem conta? <a href="cadastro.html">Cadastre-se</a></p>
+        </div>
+    </div>
+
+    <main class="container" style="padding-top:2rem;padding-bottom:4rem;">
+        <section class="tab-panel" style="max-width:980px;margin:0 auto;">
+            <div class="panel-header">
+                <div>
+                    <h2>Criar nova expedição</h2>
+                    <p>Preencha as informações abaixo para publicar uma nova expedição e conectar trekkers à sua próxima aventura.</p>
+                </div>
+            </div>
+            <form id="createExpeditionForm" class="form-grid" autocomplete="off">
+                <div class="form-field" style="grid-column:1 / -1;">
+                    <label for="expeditionTitle">Título da expedição</label>
+                    <input type="text" id="expeditionTitle" name="title" placeholder="Ex.: Travessia da Serra Fina" required>
+                </div>
+                <div class="form-field">
+                    <label for="expeditionTrail">Trilha</label>
+                    <select id="expeditionTrail" name="trail" required>
+                        <option value="">Selecione uma trilha</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="expeditionLevel">Nível de dificuldade</label>
+                    <select id="expeditionLevel" name="level" required>
+                        <option value="">Selecione o nível</option>
+                        <option value="fácil">Fácil</option>
+                        <option value="moderada">Moderada</option>
+                        <option value="difícil">Difícil</option>
+                        <option value="extrema">Extrema</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="expeditionStart">Data de início</label>
+                    <input type="date" id="expeditionStart" name="start" required>
+                </div>
+                <div class="form-field">
+                    <label for="expeditionEnd">Data de término</label>
+                    <input type="date" id="expeditionEnd" name="end" required>
+                </div>
+                <div class="form-field">
+                    <label for="expeditionPrice">Preço por pessoa (R$)</label>
+                    <input type="number" id="expeditionPrice" name="price" min="0" step="0.01" placeholder="0,00" required>
+                </div>
+                <div class="form-field">
+                    <label for="expeditionVacancies">Vagas disponíveis</label>
+                    <input type="number" id="expeditionVacancies" name="vacancies" min="1" step="1" placeholder="10" required>
+                </div>
+                <div class="form-field" style="grid-column:1 / -1;">
+                    <label for="expeditionDescription">Descrição</label>
+                    <textarea id="expeditionDescription" name="description" rows="6" placeholder="Descreva a experiência, logística e requisitos." required></textarea>
+                </div>
+                <div class="form-field" style="grid-column:1 / -1;">
+                    <label for="expeditionHighlights">Destaques (opcional)</label>
+                    <textarea id="expeditionHighlights" name="highlights" rows="4" placeholder="Separe os destaques por linha para facilitar a leitura."></textarea>
+                </div>
+                <div class="form-field" style="grid-column:1 / -1;">
+                    <label for="expeditionTerms" class="checkbox-field">
+                        <input type="checkbox" id="expeditionTerms" required>
+                        Confirmo que as informações estão corretas e que possuo a autorização necessária para conduzir esta expedição.
+                    </label>
+                </div>
+                <div class="panel-actions" style="grid-column:1 / -1;justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary" id="cancelCreateExpedition">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Publicar expedição</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4 class="footer-title">Explorar</h4>
+                <a href="trilhas.html" class="footer-link">Trilhas</a>
+                <a href="guias.html" class="footer-link">Guias</a>
+                <a href="expedicoes.html" class="footer-link">Expedições</a>
+                <a href="blog.html" class="footer-link">Blog</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Institucional</h4>
+                <a href="sobre.html" class="footer-link">Sobre</a>
+                <a href="#" class="footer-link">Contato</a>
+                <a href="#" class="footer-link">Imprensa</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Suporte</h4>
+                <a href="ajuda.html" class="footer-link">Ajuda / FAQ</a>
+                <a href="politicas/privacidade.html" class="footer-link">Política de Privacidade</a>
+                <a href="politicas/termos.html" class="footer-link">Termos de Uso</a>
+                <a href="politicas/cancelamento.html" class="footer-link">Política de Cancelamento</a>
+            </div>
+            <div>
+                <h4 class="footer-title">Siga-nos</h4>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-tiktok"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Trekko Brasil. Todos os direitos reservados.</div>
+    </footer>
+
+    <script src="data/trails.js"></script>
+    <script src="data/expeditions.js"></script>
+    <script src="data/guides.js"></script>
+    <script src="auth.js"></script>
+    <script src="scripts.js"></script>
+    <script>
+        (function() {
+            const form = document.getElementById('createExpeditionForm');
+            const trailSelect = document.getElementById('expeditionTrail');
+            const cancelButton = document.getElementById('cancelCreateExpedition');
+            if (typeof Auth !== 'undefined' && Auth.getSession) {
+                Auth.getSession().then((session) => {
+                    if (!session || session.user?.type !== 'guide') {
+                        alert('Faça login como guia para criar expedições.');
+                        window.location.href = 'expedicoes.html';
+                    }
+                }).catch(() => {
+                    window.location.href = 'expedicoes.html';
+                });
+            }
+            if (trailSelect && Array.isArray(window.trailsData)) {
+                window.trailsData.forEach(trail => {
+                    const option = document.createElement('option');
+                    option.value = trail.id;
+                    option.textContent = trail.name;
+                    trailSelect.appendChild(option);
+                });
+            }
+            form?.addEventListener('submit', (event) => {
+                event.preventDefault();
+                alert('Expedição enviada! Em breve você poderá gerenciar suas publicações pelo painel do guia.');
+                form.reset();
+            });
+            cancelButton?.addEventListener('click', () => {
+                window.location.href = 'expedicoes.html';
+            });
+        })();
+    </script>
+</body>
+</html>

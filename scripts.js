@@ -509,6 +509,18 @@ function initExpeditionsPage() {
   if (!container) return;
   computeSlugs();
   const title = document.querySelector('main h1');
+  const guideActions = document.getElementById('guideExpeditionActions');
+  if (guideActions && typeof Auth !== 'undefined' && Auth.getSession) {
+    Auth.getSession()
+      .then(session => {
+        if (session?.user?.type === 'guide') {
+          guideActions.classList.add('is-visible');
+        }
+      })
+      .catch(() => {
+        // Mantemos o botão oculto caso a sessão não possa ser recuperada.
+      });
+  }
   // Define filters
   const searchInput = document.getElementById('expSearchFilter');
   const stateFilter = document.getElementById('expStateFilter');
