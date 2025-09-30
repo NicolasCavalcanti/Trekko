@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { Prisma, ExpeditionStatus } from '@prisma/client'
+import { Prisma, ExpeditionStatus, UserRole } from '@prisma/client'
 
 import prisma from '../../../lib/prisma'
 import { verifyAuthToken } from '../../../lib/authToken'
@@ -89,7 +89,113 @@ async function resolveAuthenticatedGuide(payload: Awaited<ReturnType<typeof veri
     }
   }
 
+  const ensured = await ensureGuideUserFromPayload(payload)
+  if (ensured) {
+    return ensured
+  }
+
   return null
+}
+
+function normalizeString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function parseOptionalDate(value: unknown): Date | null {
+  if (!value) {
+    return null
+  }
+  const str = typeof value === 'string' || typeof value === 'number' ? String(value) : ''
+  if (!str.trim()) {
+    return null
+  }
+  const parsed = new Date(str)
+  if (Number.isNaN(parsed.getTime())) {
+    return null
+  }
+  return parsed
+}
+
+async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof verifyAuthToken>>): Promise<GuideUser | null> {
+  const email = normalizeString(payload?.email)
+  if (!email) {
+    return null
+  }
+
+  const cadastur = normalizeString(payload?.cadastur)
+  if (!cadastur) {
+    return null
+  }
+
+  const existing = await findGuideUserByEmail(email)
+  if (existing) {
+    return existing
+  }
+
+  const name = normalizeString(payload?.name) || email
+  const phone = normalizeString((payload as { phone?: unknown })?.phone)
+  const state = normalizeString((payload as { state?: unknown })?.state).toUpperCase() || null
+  const city = normalizeString((payload as { city?: unknown })?.city) || null
+  const validity = parseOptionalDate((payload as { validity?: unknown; cadasturValidity?: unknown })?.validity)
+    || parseOptionalDate((payload as { validity?: unknown; cadasturValidity?: unknown })?.cadasturValidity)
+  const specialtiesRaw = Array.isArray((payload as { specialties?: unknown })?.specialties)
+    ? (payload as { specialties: unknown[] }).specialties
+    : []
+  const specialties = specialtiesRaw
+    .map(item => {
+      if (typeof item === 'string') {
+        return item.trim()
+      }
+      if (typeof item === 'number') {
+        return item.toString()
+      }
+      return ''
+    })
+    .filter(Boolean)
+    .join(', ')
+
+  const guide = await prisma.guide.upsert({
+    where: { cadastur },
+    create: {
+      name,
+      email,
+      phone: phone || null,
+      cadastur,
+      uf: state,
+      city,
+      validity,
+      specialties: specialties || null
+    },
+    update: {
+      name,
+      email,
+      phone: phone || null,
+      uf: state,
+      city,
+      validity,
+      specialties: specialties || null
+    }
+  })
+
+  const user = await prisma.user.upsert({
+    where: { email },
+    create: {
+      email,
+      name,
+      role: UserRole.guide,
+      guideId: guide.id
+    },
+    update: {
+      name,
+      role: UserRole.guide,
+      guideId: guide.id
+    }
+  })
+
+  return prisma.user.findUnique({
+    where: { id: user.id },
+    include: { guide: true }
+  })
 }
 
 async function handleGet(req: NextApiRequest, res: NextApiResponse) {
