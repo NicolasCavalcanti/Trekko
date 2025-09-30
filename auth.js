@@ -280,7 +280,25 @@ const Auth = (() => {
     if (!user.isVerified) {
       throw new Error('Conta ainda não verificada. Verifique seu e-mail.');
     }
-    const payload = { id: user.id, email: user.email, type: user.type, name: user.name, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 };
+    const rawSpecialties = Array.isArray(user.specialties)
+      ? user.specialties
+      : Array.isArray(user.parks)
+        ? user.parks
+        : [];
+    const payload = {
+      id: user.id,
+      email: user.email,
+      type: user.type,
+      name: user.name,
+      cadastur: user.cadastur || '',
+      phone: user.phone || '',
+      state: user.state || '',
+      city: user.city || '',
+      specialties: rawSpecialties.map((item) =>
+        typeof item === 'string' ? item : typeof item === 'number' ? item.toString() : ''
+      ).filter(Boolean),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7
+    };
     const token = await generateJWT(payload);
     // Save session
     localStorage.setItem(SESSION_KEY, JSON.stringify({ token, user: payload }));
