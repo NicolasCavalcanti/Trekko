@@ -62,7 +62,7 @@
     <main class="container profile-container" id="profileRoot">
         <div class="profile-intro">
             <div class="profile-avatar" aria-live="polite">
-                <img id="profileAvatar" src="images/guia1.png" alt="Foto de perfil de Ana Monteiro" loading="lazy">
+                <img id="profileAvatar" src="images/guia1.png" alt="Foto de perfil" loading="lazy">
                 <button class="btn btn-secondary change-photo" id="changePhotoBtn" type="button">
                     <i class="fas fa-camera"></i>
                     Trocar foto
@@ -73,15 +73,15 @@
             </div>
             <div class="profile-summary">
                 <div class="profile-summary-header">
-                    <h1 class="profile-name">Ana Monteiro</h1>
+                    <h1 class="profile-name">Carregando perfil</h1>
                     <div class="profile-badges">
-                        <span class="badge badge-guide" data-badge="guide">Guia CADASTUR</span>
-                        <span class="badge badge-verified" data-badge="verified">Verificado</span>
+                        <span class="badge badge-guide" data-badge="guide" hidden>Guia CADASTUR</span>
+                        <span class="badge badge-verified" data-badge="verified" hidden>Verificado</span>
                     </div>
                 </div>
-                <p class="profile-location"><i class="fas fa-location-dot"></i> Petrópolis, RJ · Brasil</p>
-                <p class="profile-member-since">Membro desde março/2021</p>
-                <p class="profile-bio" id="profileBioText">Guia apaixonada por expedições na Serra dos Órgãos, com foco em experiências seguras e sustentáveis.</p>
+                <p class="profile-location"><i class="fas fa-location-dot"></i> Carregando localização…</p>
+                <p class="profile-member-since">Membro desde —</p>
+                <p class="profile-bio" id="profileBioText">Carregando informações do perfil…</p>
                 <div class="profile-actions">
                     <button class="btn btn-secondary" id="copyProfileLink" type="button">
                         <i class="fas fa-link"></i>
@@ -119,20 +119,20 @@
             <form id="personalForm" class="form-grid" novalidate>
                 <div class="form-field">
                     <label for="fullName">Nome completo</label>
-                    <input type="text" id="fullName" name="fullName" value="Ana Clara Monteiro" disabled required>
+                    <input type="text" id="fullName" name="fullName" value="" disabled required>
                     <p class="field-hint">Informe ao menos nome e sobrenome.</p>
                     <p class="field-error" data-error-for="fullName"></p>
                 </div>
                 <div class="form-field">
                     <label for="birthDate">Data de nascimento</label>
-                    <input type="date" id="birthDate" name="birthDate" value="1991-05-18" disabled required>
+                    <input type="date" id="birthDate" name="birthDate" value="" disabled required>
                     <p class="field-error" data-error-for="birthDate"></p>
                 </div>
                 <div class="form-field">
                     <label for="gender">Gênero <span class="optional">(opcional)</span></label>
                     <select id="gender" name="gender" disabled>
                         <option value="">Selecione</option>
-                        <option value="feminino" selected>Feminino</option>
+                        <option value="feminino">Feminino</option>
                         <option value="masculino">Masculino</option>
                         <option value="nao-informar">Prefiro não informar</option>
                         <option value="outro">Outro</option>
@@ -140,26 +140,27 @@
                 </div>
                 <div class="form-field">
                     <label for="document">Documento</label>
-                    <input type="text" id="document" value="CPF · 123.456.789-10" disabled aria-disabled="true">
-                    <p class="field-hint">Verificado em 12/04/2024.</p>
+                    <input type="text" id="document" value="" disabled aria-disabled="true">
+                    <p class="field-hint">Verifique seus documentos para manter seu perfil atualizado.</p>
                 </div>
                 <div class="form-field">
                     <label for="email">E-mail</label>
                     <div class="input-with-action">
-                        <input type="email" id="email" value="ana.monteiro@trekko.com" disabled aria-disabled="true">
+                        <input type="email" id="email" value="" disabled aria-disabled="true">
                         <button class="btn btn-outline" id="changeEmailBtn" type="button">Alterar e-mail</button>
                     </div>
                 </div>
                 <div class="form-field">
                     <label for="phone">Telefone / WhatsApp</label>
-                    <input type="tel" id="phone" name="phone" value="+55 21 99876-5432" disabled required>
+                    <input type="tel" id="phone" name="phone" value="" disabled required>
                     <p class="field-hint">Formato internacional: +55 21 90000-0000</p>
                     <p class="field-error" data-error-for="phone"></p>
                 </div>
                 <div class="form-field">
                     <label for="country">País</label>
                     <select id="country" name="country" disabled required>
-                        <option value="BR" selected>Brasil</option>
+                        <option value="">Selecione</option>
+                        <option value="BR">Brasil</option>
                         <option value="AR">Argentina</option>
                         <option value="CL">Chile</option>
                     </select>
@@ -167,7 +168,8 @@
                 <div class="form-field">
                     <label for="state">Estado</label>
                     <select id="state" name="state" disabled required>
-                        <option value="RJ" selected>Rio de Janeiro</option>
+                        <option value="">Selecione</option>
+                        <option value="RJ">Rio de Janeiro</option>
                         <option value="SP">São Paulo</option>
                         <option value="MG">Minas Gerais</option>
                     </select>
@@ -175,15 +177,16 @@
                 <div class="form-field">
                     <label for="city">Cidade</label>
                     <select id="city" name="city" disabled required>
-                        <option value="petropolis" selected>Petrópolis</option>
+                        <option value="">Selecione</option>
+                        <option value="petropolis">Petrópolis</option>
                         <option value="teresopolis">Teresópolis</option>
                         <option value="rio">Rio de Janeiro</option>
                     </select>
                 </div>
                 <div class="form-field full-width">
                     <label for="bio">Bio</label>
-                    <textarea id="bio" name="bio" maxlength="240" rows="3" disabled>Guia apaixonada por expedições na Serra dos Órgãos, com foco em experiências seguras e sustentáveis.</textarea>
-                    <div class="field-meta"><span id="bioCounter">98</span>/240</div>
+                    <textarea id="bio" name="bio" maxlength="240" rows="3" disabled></textarea>
+                    <div class="field-meta"><span id="bioCounter">0</span>/240</div>
                     <p class="field-error" data-error-for="bio"></p>
                 </div>
             </form>
@@ -398,25 +401,25 @@
             </header>
             <div class="guide-banner" id="cadasturBanner" role="status">
                 <i class="fas fa-circle-exclamation"></i>
-                <span>Seu CADASTUR expirou em 12/02/2025. Atualize para manter seu perfil visível.</span>
+                <span id="cadasturBannerMessage">Validando registro CADASTUR…</span>
                 <button class="btn btn-outline" id="renewCadastur" type="button">Atualizar/renovar</button>
             </div>
             <article class="card">
                 <header class="card-header">
                     <h3>Registro CADASTUR</h3>
                     <div class="status-group">
-                        <span class="status-chip status-chip--warning" id="cadasturStatus">Expirado</span>
-                        <span class="status-date">Última verificação em 12/02/2025 às 08:14</span>
+                        <span class="status-chip status-chip--warning" id="cadasturStatus">—</span>
+                        <span class="status-date" id="cadasturStatusDate">Última verificação pendente</span>
                     </div>
                 </header>
                 <dl class="data-list">
                     <div>
                         <dt>Número</dt>
-                        <dd>19.765.432/0001-22</dd>
+                        <dd id="cadasturNumber">—</dd>
                     </div>
                     <div>
                         <dt>Status</dt>
-                        <dd>Expirado</dd>
+                        <dd id="cadasturStatusText">—</dd>
                     </div>
                 </dl>
                 <div class="card-footer">
@@ -428,21 +431,9 @@
                     <h3>Atuação</h3>
                 </header>
                 <div class="card-body">
-                    <div class="tag-list" aria-label="Estados e municípios">
-                        <span class="tag">RJ · Petrópolis</span>
-                        <span class="tag">RJ · Teresópolis</span>
-                        <span class="tag">MG · Aiuruoca</span>
-                    </div>
-                    <div class="tag-list" aria-label="Idiomas">
-                        <span class="tag">Português</span>
-                        <span class="tag">Inglês</span>
-                        <span class="tag">Espanhol</span>
-                    </div>
-                    <div class="guide-links">
-                        <a href="https://instagram.com/trekko.guia" target="_blank" rel="noopener" class="link-pill"><i class="fab fa-instagram"></i> Instagram</a>
-                        <a href="https://trekko.com.br/ana" target="_blank" rel="noopener" class="link-pill"><i class="fas fa-globe"></i> Site</a>
-                        <a href="https://wa.me/5521998765432" target="_blank" rel="noopener" class="link-pill"><i class="fab fa-whatsapp"></i> WhatsApp comercial</a>
-                    </div>
+                    <div class="tag-list" id="guideLocations" aria-label="Estados e municípios"></div>
+                    <div class="tag-list" id="guideLanguages" aria-label="Idiomas"></div>
+                    <div class="guide-links" id="guideContacts"></div>
                 </div>
             </article>
             <article class="card">
@@ -516,8 +507,8 @@
     </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const isGuide = true;
+        document.addEventListener('DOMContentLoaded', async () => {
+            let isGuide = false;
             const profileRoot = document.getElementById('profileRoot');
             const toastContainer = document.querySelector('.toast-container');
             const confirmDialog = document.getElementById('confirmDialog');
@@ -539,6 +530,11 @@
             const profileName = document.querySelector('.profile-name');
             const profileLocation = document.querySelector('.profile-location');
             const profileBioText = document.getElementById('profileBioText');
+            const profileMemberSince = document.querySelector('.profile-member-since');
+            const profileBadges = document.querySelector('.profile-badges');
+            const badgeGuide = profileBadges?.querySelector('[data-badge="guide"]');
+            const badgeVerified = profileBadges?.querySelector('[data-badge="verified"]');
+            const profileActions = document.querySelector('.profile-actions');
             const bioField = document.getElementById('bio');
             const bioCounter = document.getElementById('bioCounter');
             const preferencesForm = document.getElementById('preferencesForm');
@@ -556,7 +552,11 @@
             const sessionsList = document.getElementById('sessionsList');
             const closeAccountBtn = document.getElementById('closeAccountBtn');
             const cadasturBanner = document.getElementById('cadasturBanner');
+            const cadasturBannerMessage = document.getElementById('cadasturBannerMessage');
             const cadasturStatus = document.getElementById('cadasturStatus');
+            const cadasturNumberEl = document.getElementById('cadasturNumber');
+            const cadasturStatusTextEl = document.getElementById('cadasturStatusText');
+            const cadasturStatusDate = document.getElementById('cadasturStatusDate');
             const renewCadasturBtn = document.getElementById('renewCadastur');
             const validateCadasturBtn = document.getElementById('validateCadastur');
             const manageExpeditionsBtn = document.getElementById('manageExpeditions');
@@ -565,20 +565,30 @@
             const guideReviewsEl = document.getElementById('guideReviews');
             const ratingAverageEl = document.getElementById('ratingAverage');
             const ratingCountEl = document.getElementById('ratingCount');
+            const guideLocationsEl = document.getElementById('guideLocations');
+            const guideLanguagesEl = document.getElementById('guideLanguages');
+            const guideContactsEl = document.getElementById('guideContacts');
 
             const personalFields = personalForm.querySelectorAll('input, select, textarea');
             let personalEditing = false;
             let preferencesDirty = false;
             let currentTab = 'personal';
             let twoFaEnabled = true;
-            const originalAvatarSrc = profileAvatar.getAttribute('src');
+            let originalAvatarSrc = profileAvatar.getAttribute('src');
             const originalPersonalData = new Map();
 
-            personalFields.forEach(field => {
-                if (field.id) {
-                    originalPersonalData.set(field.id, field.value);
-                }
-            });
+            const updateOriginalPersonalData = () => {
+                originalPersonalData.clear();
+                personalFields.forEach(field => {
+                    if (field.id) {
+                        originalPersonalData.set(field.id, field.value);
+                    }
+                });
+            };
+
+            let publicProfileUrl = '';
+            let currentUser = null;
+            let currentCadasturRecord = null;
 
             const telemetry = (eventName, payload = {}) => {
                 console.info(`[telemetry] ${eventName}`, payload);
@@ -596,6 +606,172 @@
                     toast.classList.remove('is-visible');
                     toast.addEventListener('transitionend', () => toast.remove(), { once: true });
                 }, 4500);
+            };
+
+            const slugify = (value) => {
+                if (!value) return '';
+                return value
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+            };
+
+            const formatMemberSince = (isoDate) => {
+                if (!isoDate) return null;
+                const parsed = new Date(isoDate);
+                if (Number.isNaN(parsed.getTime())) return null;
+                const months = [
+                    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+                ];
+                return `Membro desde ${months[parsed.getMonth()]}/${parsed.getFullYear()}`;
+            };
+
+            const formatDatePt = (date) => {
+                if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+                    return '';
+                }
+                return new Intl.DateTimeFormat('pt-BR').format(date);
+            };
+
+            const formatDateTimePt = (date) => {
+                if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+                    return '';
+                }
+                return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+            };
+
+            const ensureOption = (select, value, label) => {
+                if (!select) return;
+                if (value == null || value === '') return;
+                const normalizedValue = value.toString().toLowerCase();
+                const exists = Array.from(select.options).some(option => option.value.toString().toLowerCase() === normalizedValue);
+                if (!exists) {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = label ?? value;
+                    select.appendChild(option);
+                }
+            };
+
+            const setSelectValue = (select, value, label) => {
+                if (!select) return;
+                if (value == null || value === '') {
+                    select.value = '';
+                    return;
+                }
+                ensureOption(select, value, label);
+                select.value = value;
+            };
+
+            const parseCadasturList = (value) => {
+                if (!value) return [];
+                if (Array.isArray(value)) return value.filter(Boolean).map(item => item.toString().trim()).filter(Boolean);
+                return value
+                    .toString()
+                    .split('|')
+                    .map(item => item.trim())
+                    .filter(Boolean);
+            };
+
+            const getCadasturRecord = (cadasturNumber) => {
+                if (!cadasturNumber) return null;
+                const normalized = cadasturNumber.toString().trim().toLowerCase();
+                const datasets = [];
+                if (Array.isArray(window.cadasturData)) datasets.push(window.cadasturData);
+                if (Array.isArray(window.guidesData)) datasets.push(window.guidesData);
+                for (const dataset of datasets) {
+                    const match = dataset.find(entry => {
+                        if (!entry || typeof entry !== 'object') return false;
+                        const candidates = [
+                            entry.numero_cadastur,
+                            entry.numero_do_certificado,
+                            entry['numero_do_certificado'],
+                            entry['número_do_certificado'],
+                            entry.cadastur,
+                            entry.cadasturNumber,
+                            entry.cadastur_number,
+                            entry.cadasturRegistro
+                        ];
+                        return candidates.some(candidate => candidate && candidate.toString().trim().toLowerCase() === normalized);
+                    });
+                    if (match) return match;
+                }
+                return null;
+            };
+
+            const parseContactEntries = (value) => {
+                if (!value) return [];
+                if (Array.isArray(value)) return value;
+                return value
+                    .toString()
+                    .split('|')
+                    .map(entry => entry.trim())
+                    .filter(Boolean);
+            };
+
+            const extractPhone = (user, cadasturRecord) => {
+                if (user?.phone) return user.phone;
+                const entries = parseContactEntries(cadasturRecord?.contatos);
+                for (const entry of entries) {
+                    const [type, ...rest] = entry.split(':');
+                    const label = type ? type.trim().toLowerCase() : '';
+                    const value = rest.join(':').trim();
+                    if (label.includes('whatsapp') || label.includes('telefone')) {
+                        return value;
+                    }
+                }
+                return '';
+            };
+
+            const createContactLink = (type, rawValue) => {
+                if (!type || !rawValue || !guideContactsEl) return null;
+                const normalizedType = type.trim().toLowerCase();
+                const value = rawValue.trim();
+                const link = document.createElement('a');
+                link.className = 'link-pill';
+                link.target = '_blank';
+                link.rel = 'noopener';
+                let href = '';
+                let label = value;
+                let icon = 'fas fa-link';
+
+                if (normalizedType.includes('whatsapp')) {
+                    const digits = value.replace(/\D/g, '');
+                    if (!digits) return null;
+                    href = `https://wa.me/${digits}`;
+                    label = 'WhatsApp';
+                    icon = 'fab fa-whatsapp';
+                } else if (normalizedType.includes('instagram')) {
+                    const handle = value.replace(/^@/, '');
+                    href = `https://instagram.com/${handle}`;
+                    label = 'Instagram';
+                    icon = 'fab fa-instagram';
+                } else if (normalizedType.includes('email')) {
+                    href = `mailto:${value}`;
+                    label = 'E-mail';
+                    icon = 'fas fa-envelope';
+                } else if (normalizedType.includes('site') || normalizedType.includes('website')) {
+                    href = value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
+                    label = 'Site';
+                    icon = 'fas fa-globe';
+                } else {
+                    href = value.startsWith('http://') || value.startsWith('https://') ? value : '';
+                    label = value;
+                }
+
+                if (!href) {
+                    link.removeAttribute('target');
+                    link.removeAttribute('rel');
+                    link.href = '#';
+                    link.addEventListener('click', event => event.preventDefault());
+                } else {
+                    link.href = href;
+                }
+                link.innerHTML = `<i class="${icon}"></i> ${label}`;
+                return link;
             };
 
             const confirmAction = ({ title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar' }) => {
@@ -701,13 +877,23 @@
             };
 
             const updateProfileSummary = () => {
-                const name = document.getElementById('fullName').value.trim();
+                const fullNameInput = document.getElementById('fullName');
+                const name = fullNameInput?.value.trim() || 'Seu perfil';
                 const citySelect = document.getElementById('city');
                 const stateSelect = document.getElementById('state');
                 const countrySelect = document.getElementById('country');
-                const locationText = `${citySelect.options[citySelect.selectedIndex].textContent}, ${stateSelect.options[stateSelect.selectedIndex].textContent} · ${countrySelect.options[countrySelect.selectedIndex].textContent}`;
+                const cityLabel = citySelect && citySelect.value ? citySelect.options[citySelect.selectedIndex].textContent : '';
+                const stateLabel = stateSelect && stateSelect.value ? stateSelect.options[stateSelect.selectedIndex].textContent : '';
+                const countryLabel = countrySelect && countrySelect.value ? countrySelect.options[countrySelect.selectedIndex].textContent : '';
+                const locationSegments = [];
+                if (cityLabel) locationSegments.push(cityLabel);
+                if (stateLabel) locationSegments.push(stateLabel);
+                let locationText = locationSegments.join(', ');
+                if (countryLabel) {
+                    locationText = locationText ? `${locationText} · ${countryLabel}` : countryLabel;
+                }
                 profileName.textContent = name;
-                profileLocation.innerHTML = `<i class="fas fa-location-dot"></i> ${locationText}`;
+                profileLocation.innerHTML = `<i class="fas fa-location-dot"></i> ${locationText || 'Atualize sua localização'}`;
                 const bioValue = bioField.value.trim();
                 profileBioText.textContent = bioValue || 'Adicione uma bio para compartilhar sua história.';
             };
@@ -719,9 +905,10 @@
                         field.value = value;
                     }
                 });
-                bioCounter.textContent = bioField.value.length;
+                bioCounter.textContent = String(bioField.value.length);
                 clearPersonalErrors();
                 togglePersonalEditing(false);
+                updateProfileSummary();
             };
 
             const setActiveTab = async (tabName) => {
@@ -763,21 +950,264 @@
                 });
             };
 
-            tabButtons.forEach(button => {
-                if (button.dataset.visibleFor === 'guide' && !isGuide) {
-                    button.remove();
+            const configureTabs = () => {
+                tabButtons.forEach(button => {
+                    if (button.dataset.visibleFor === 'guide' && !isGuide) {
+                        button.remove();
+                        return;
+                    }
+                    button.addEventListener('click', () => setActiveTab(button.dataset.tab));
+                });
+                if (!isGuide && guideTabButton) {
+                    guideTabButton.remove();
+                    document.getElementById('tab-guide')?.remove();
+                }
+            };
+
+            const populateGuideSection = (user, cadRecord = {}) => {
+                if (!isGuide) {
+                    cadasturBanner?.classList.add('hidden');
                     return;
                 }
-                button.addEventListener('click', () => setActiveTab(button.dataset.tab));
-            });
+                const cadNumber = user?.cadastur
+                    || cadRecord?.numero_cadastur
+                    || cadRecord?.cadastur
+                    || cadRecord?.numero_do_certificado
+                    || cadRecord?.['numero_do_certificado']
+                    || cadRecord?.['número_do_certificado']
+                    || '';
+                if (cadasturNumberEl) {
+                    cadasturNumberEl.textContent = cadNumber || '—';
+                }
+                const expiryRaw = cadRecord?.validade_do_certificado || cadRecord?.validade_certificado;
+                const expiryDate = expiryRaw ? new Date(expiryRaw) : null;
+                const expired = expiryDate ? expiryDate.getTime() < Date.now() : false;
+                if (cadasturStatus) {
+                    cadasturStatus.textContent = expired ? 'Expirado' : 'Ativo';
+                    cadasturStatus.className = `status-chip ${expired ? 'status-chip--warning' : 'status-chip--success'}`;
+                }
+                if (cadasturStatusTextEl) {
+                    cadasturStatusTextEl.textContent = expired ? 'Expirado' : 'Ativo';
+                }
+                if (cadasturStatusDate) {
+                    cadasturStatusDate.textContent = `Verificado em ${formatDateTimePt(new Date())}`;
+                }
+                if (cadasturBanner) {
+                    if (expired) {
+                        cadasturBanner.classList.remove('hidden');
+                        if (cadasturBannerMessage) {
+                            const formatted = formatDatePt(expiryDate);
+                            cadasturBannerMessage.textContent = formatted
+                                ? `Seu CADASTUR expirou em ${formatted}. Atualize para manter seu perfil visível.`
+                                : 'Seu CADASTUR está expirado. Atualize para manter seu perfil visível.';
+                        }
+                    } else {
+                        cadasturBanner.classList.add('hidden');
+                    }
+                }
+                if (guideLocationsEl) {
+                    guideLocationsEl.innerHTML = '';
+                    const locations = new Set();
+                    const cadMunicipio = cadRecord?.municipio || cadRecord?.['município'];
+                    const cadUf = cadRecord?.uf || user?.state;
+                    if (cadMunicipio) {
+                        const prefix = cadUf ? `${cadUf.toString().toUpperCase()} · ` : '';
+                        locations.add(`${prefix}${cadMunicipio}`);
+                    }
+                    const atuacaoRaw = cadRecord?.municipio_de_atuacao ?? cadRecord?.['município_de_atuação'];
+                    const atuacaoList = Array.isArray(atuacaoRaw) ? atuacaoRaw : parseCadasturList(atuacaoRaw);
+                    atuacaoList.forEach(item => {
+                        if (item) locations.add(item);
+                    });
+                    (user?.parks || []).forEach(item => {
+                        if (item) locations.add(item);
+                    });
+                    if (locations.size) {
+                        locations.forEach(item => {
+                            const span = document.createElement('span');
+                            span.className = 'tag';
+                            span.textContent = item;
+                            guideLocationsEl.appendChild(span);
+                        });
+                    } else {
+                        const span = document.createElement('span');
+                        span.className = 'tag';
+                        span.textContent = 'Atualize suas áreas de atuação';
+                        guideLocationsEl.appendChild(span);
+                    }
+                }
+                if (guideLanguagesEl) {
+                    guideLanguagesEl.innerHTML = '';
+                    const idiomasRaw = cadRecord?.idiomas ?? cadRecord?.idiomasLista;
+                    const idiomas = Array.isArray(idiomasRaw) ? idiomasRaw : parseCadasturList(idiomasRaw);
+                    if (idiomas.length) {
+                        idiomas.forEach(idioma => {
+                            const span = document.createElement('span');
+                            span.className = 'tag';
+                            span.textContent = idioma;
+                            guideLanguagesEl.appendChild(span);
+                        });
+                    } else {
+                        const span = document.createElement('span');
+                        span.className = 'tag';
+                        span.textContent = 'Informe seus idiomas';
+                        guideLanguagesEl.appendChild(span);
+                    }
+                }
+                if (guideContactsEl) {
+                    guideContactsEl.innerHTML = '';
+                    const contactEntries = parseContactEntries(cadRecord?.contatos);
+                    const existingTypes = contactEntries.map(entry => entry.split(':')[0]?.trim().toLowerCase());
+                    if (user?.phone && !existingTypes.some(type => type && (type.includes('whatsapp') || type.includes('telefone')))) {
+                        contactEntries.push(`Whatsapp:${user.phone}`);
+                    }
+                    if (user?.email && !existingTypes.some(type => type && type.includes('email'))) {
+                        contactEntries.push(`Email:${user.email}`);
+                    }
+                    let added = 0;
+                    contactEntries.forEach(entry => {
+                        const [type, ...rest] = entry.split(':');
+                        if (!type || !rest.length) return;
+                        const link = createContactLink(type, rest.join(':'));
+                        if (link) {
+                            guideContactsEl.appendChild(link);
+                            added += 1;
+                        }
+                    });
+                    if (!added) {
+                        const span = document.createElement('span');
+                        span.className = 'link-pill';
+                        span.textContent = 'Adicione seus contatos profissionais';
+                        guideContactsEl.appendChild(span);
+                    }
+                }
+            };
 
-            if (!isGuide && guideTabButton) {
-                guideTabButton.remove();
-                document.getElementById('tab-guide')?.remove();
+            const applyUserProfileData = (user, cadRecord, sessionUser) => {
+                currentUser = user;
+                currentCadasturRecord = cadRecord;
+                const fullNameInput = document.getElementById('fullName');
+                const emailInput = document.getElementById('email');
+                const documentInput = document.getElementById('document');
+                const phoneInput = document.getElementById('phone');
+                const stateSelect = document.getElementById('state');
+                const citySelect = document.getElementById('city');
+                const countrySelect = document.getElementById('country');
+
+                const displayName = (cadRecord?.nome_completo || cadRecord?.nome || user?.name || sessionUser?.name || '').trim();
+                const safeName = displayName || user?.name || sessionUser?.name || 'Seu perfil';
+                if (fullNameInput) {
+                    fullNameInput.value = displayName || user?.name || sessionUser?.name || '';
+                }
+                profileName.textContent = safeName;
+                profileAvatar.alt = `Foto de perfil de ${safeName}`;
+                const avatarCandidates = [user?.photos?.[0], cadRecord?.foto, cadRecord?.image];
+                const avatarSource = avatarCandidates.find(value => typeof value === 'string' && value.trim());
+                if (avatarSource) {
+                    profileAvatar.src = avatarSource;
+                }
+                originalAvatarSrc = profileAvatar.getAttribute('src');
+
+                const emailValue = user?.email || sessionUser?.email || '';
+                if (emailInput) {
+                    emailInput.value = emailValue;
+                }
+                if (documentInput) {
+                    const cadNumber = user?.cadastur
+                        || cadRecord?.numero_cadastur
+                        || cadRecord?.cadastur
+                        || cadRecord?.numero_do_certificado
+                        || cadRecord?.['numero_do_certificado']
+                        || cadRecord?.['número_do_certificado']
+                        || '';
+                    documentInput.value = isGuide && cadNumber ? `CADASTUR · ${cadNumber}` : '';
+                }
+                if (countrySelect) {
+                    setSelectValue(countrySelect, 'BR', 'Brasil');
+                }
+                if (stateSelect) {
+                    const stateValue = (user?.state || cadRecord?.uf || '').toString().toUpperCase();
+                    if (stateValue) {
+                        setSelectValue(stateSelect, stateValue, stateValue);
+                    } else {
+                        stateSelect.value = '';
+                    }
+                }
+                if (citySelect) {
+                    const cityRaw = (user?.city || cadRecord?.municipio || cadRecord?.['município'] || '').toString();
+                    if (cityRaw) {
+                        const cityValue = slugify(cityRaw) || cityRaw;
+                        ensureOption(citySelect, cityValue, cityRaw);
+                        citySelect.value = cityValue;
+                    } else {
+                        citySelect.value = '';
+                    }
+                }
+                const phoneValue = extractPhone(user, cadRecord);
+                if (phoneInput) {
+                    phoneInput.value = phoneValue;
+                }
+                const bioValue = (user?.description || user?.bio || cadRecord?.bio || '').trim();
+                bioField.value = bioValue;
+                bioCounter.textContent = String(bioValue.length);
+                const memberSinceText = formatMemberSince(user?.createdAt);
+                if (profileMemberSince) {
+                    profileMemberSince.textContent = memberSinceText || 'Membro desde —';
+                }
+                badgeGuide?.toggleAttribute('hidden', !isGuide);
+                badgeVerified?.toggleAttribute('hidden', !user?.isVerified);
+                if (profileActions) {
+                    profileActions.style.display = isGuide ? '' : 'none';
+                }
+                if (copyProfileLink) {
+                    copyProfileLink.style.display = isGuide ? '' : 'none';
+                }
+                if (viewPublicProfile) {
+                    viewPublicProfile.style.display = isGuide ? '' : 'none';
+                }
+                publicProfileUrl = isGuide ? `${window.location.origin}/guia/${slugify(safeName)}` : '';
+                updateProfileSummary();
+                updateOriginalPersonalData();
+                if (isGuide) {
+                    populateGuideSection(user, cadRecord || {});
+                } else {
+                    cadasturBanner?.classList.add('hidden');
+                }
+            };
+
+            const initializeProfile = async () => {
+                try {
+                    const session = await Auth.getSession();
+                    if (!session) {
+                        window.location.href = 'entrar.html?redirect=conta.html';
+                        return false;
+                    }
+                    const users = typeof Auth.loadUsers === 'function' ? Auth.loadUsers() : [];
+                    const userData = users.find(item => item.id === session.user.id);
+                    if (!userData) {
+                        showToast('error', 'Não foi possível carregar seus dados de perfil.');
+                        return false;
+                    }
+                    isGuide = userData.type === 'guide';
+                    const cadRecord = isGuide ? getCadasturRecord(userData.cadastur) : null;
+                    applyUserProfileData(userData, cadRecord, session.user);
+                    return true;
+                } catch (error) {
+                    console.error('Erro ao carregar dados do perfil', error);
+                    showToast('error', 'Não foi possível carregar seus dados de perfil.');
+                    return false;
+                }
+            };
+
+            const profileLoaded = await initializeProfile();
+            if (!profileLoaded) {
+                return;
             }
 
+            configureTabs();
+
             bioField.addEventListener('input', () => {
-                bioCounter.textContent = bioField.value.length;
+                bioCounter.textContent = String(bioField.value.length);
                 if (bioField.value.length <= 240) {
                     setFieldError('bio');
                 }
@@ -819,19 +1249,26 @@
             });
 
             copyProfileLink?.addEventListener('click', async () => {
-                const url = `${window.location.origin}/guia/ana-monteiro`;
+                if (!publicProfileUrl) {
+                    showToast('info', 'Perfil público indisponível para esta conta.');
+                    return;
+                }
                 try {
-                    await navigator.clipboard.writeText(url);
+                    await navigator.clipboard.writeText(publicProfileUrl);
                     showToast('success', 'Link copiado para a área de transferência.');
                 } catch (error) {
-                    window.prompt('Copie o link do seu perfil:', url);
+                    window.prompt('Copie o link do seu perfil:', publicProfileUrl);
                 }
                 telemetry('profile_view', { type: 'copy_link' });
             });
 
             viewPublicProfile?.addEventListener('click', () => {
+                if (!publicProfileUrl) {
+                    showToast('info', 'Perfil público indisponível para esta conta.');
+                    return;
+                }
                 telemetry('profile_view', { type: 'public_profile' });
-                showToast('info', 'Em breve você poderá visualizar a página pública do guia.');
+                window.open(publicProfileUrl, '_blank', 'noopener');
             });
 
             editPersonalBtn.addEventListener('click', () => {
@@ -876,7 +1313,7 @@
                 showToast('info', 'Enviamos um link para alterar seu e-mail. Confira sua caixa de entrada.');
             });
 
-            bioCounter.textContent = bioField.value.length;
+            bioCounter.textContent = String(bioField.value.length);
 
             preferencesForm.addEventListener('change', () => {
                 preferencesDirty = true;
