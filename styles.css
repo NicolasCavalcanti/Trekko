@@ -2162,10 +2162,84 @@ footer {
   margin-top: 0.5rem;
 }
 
+.expedition-loading,
+.expedition-empty,
+.expedition-error {
+  font-size: 0.95rem;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.expedition-error {
+  color: #c62828;
+}
+
+.form-feedback-message {
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.form-feedback-message.success {
+  color: #1a7f37;
+}
+
+.form-feedback-message.error {
+  color: #c62828;
+}
+
 .guide-expedition-actions {
   display: none;
   justify-content: flex-end;
   margin-bottom: 1.5rem;
+}
+
+.expeditions-tabs {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.expeditions-pagination {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.expeditions-tabs .tab-button {
+  border: 1px solid var(--color-primary);
+  background-color: transparent;
+  color: var(--color-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.expeditions-tabs .tab-button.is-active {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.pagination-button {
+  border: 1px solid var(--color-primary);
+  background-color: #fff;
+  color: var(--color-primary);
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.pagination-button.is-active {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+.pagination-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .guide-expedition-actions.is-visible {

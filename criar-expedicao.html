@@ -76,6 +76,9 @@
                     <div class="trail-selector">
                         <input type="text" id="expeditionTrailName" name="trailName" placeholder="Nenhuma trilha selecionada" readonly required aria-describedby="selectedTrailHelper">
                         <input type="hidden" id="expeditionTrailId" name="trail">
+                        <input type="hidden" id="expeditionTrailState" name="trailState">
+                        <input type="hidden" id="expeditionTrailCity" name="trailCity">
+                        <input type="hidden" id="expeditionTrailPark" name="trailPark">
                         <button type="button" class="btn btn-secondary trail-selector__action" id="openTrailSearch"><i class="fas fa-search"></i><span>Pesquisar</span></button>
                     </div>
                     <p class="form-helper" id="selectedTrailHelper">Selecione uma trilha cadastrada para prosseguir.</p>
@@ -278,15 +281,25 @@
     </footer>
 
     <script src="data/trails.js"></script>
-    <script src="data/expeditions.js"></script>
     <script src="data/guides.js"></script>
     <script src="auth.js"></script>
     <script src="scripts.js"></script>
     <script>
         (function() {
             const form = document.getElementById('createExpeditionForm');
+            const titleInput = document.getElementById('expeditionTitle');
             const trailNameInput = document.getElementById('expeditionTrailName');
             const trailIdInput = document.getElementById('expeditionTrailId');
+            const trailStateInput = document.getElementById('expeditionTrailState');
+            const trailCityInput = document.getElementById('expeditionTrailCity');
+            const trailParkInput = document.getElementById('expeditionTrailPark');
+            const levelInput = document.getElementById('expeditionLevel');
+            const startInput = document.getElementById('expeditionStart');
+            const endInput = document.getElementById('expeditionEnd');
+            const priceInput = document.getElementById('expeditionPrice');
+            const maxPeopleInput = document.getElementById('expeditionVacancies');
+            const descriptionInput = document.getElementById('expeditionDescription');
+            const highlightsInput = document.getElementById('expeditionHighlights');
             const trailHelperText = document.getElementById('selectedTrailHelper');
             const openTrailSearch = document.getElementById('openTrailSearch');
             const trailSearchModal = document.getElementById('trailSearchModal');
@@ -314,6 +327,9 @@
             const sortedTrails = trailsData.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
             let filteredTrails = [...sortedTrails];
             const cancelButton = document.getElementById('cancelCreateExpedition');
+            const feedbackMessage = document.createElement('div');
+            feedbackMessage.className = 'form-feedback-message';
+            form?.appendChild(feedbackMessage);
             if (typeof Auth !== 'undefined' && Auth.getSession) {
                 Auth.getSession().then((session) => {
                     if (!session || session.user?.type !== 'guide') {
@@ -534,6 +550,9 @@
                 if (!trail || !trailNameInput || !trailIdInput) return;
                 trailIdInput.value = trail.id;
                 trailNameInput.value = trail.name;
+                if (trailStateInput) trailStateInput.value = trail.state || '';
+                if (trailCityInput) trailCityInput.value = trail.city || '';
+                if (trailParkInput) trailParkInput.value = trail.park || '';
                 trailNameInput.setCustomValidity('');
                 trailHelperText && (trailHelperText.textContent = `Trilha selecionada: ${trail.name}`);
                 closeModal();
@@ -592,7 +611,7 @@
                 }
             });
 
-            form?.addEventListener('submit', (event) => {
+            form?.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 if (!trailIdInput?.value) {
                     trailNameInput?.setCustomValidity('Selecione uma trilha cadastrada antes de publicar sua expedição.');
@@ -600,16 +619,87 @@
                     return;
                 }
                 trailNameInput?.setCustomValidity('');
-                alert('Expedição enviada! Em breve você poderá gerenciar suas publicações pelo painel do guia.');
-                form.reset();
-                if (trailNameInput) {
-                    trailNameInput.value = '';
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalButtonText = submitButton?.textContent || '';
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Publicando...';
                 }
-                if (trailIdInput) {
-                    trailIdInput.value = '';
+                if (feedbackMessage) {
+                    feedbackMessage.textContent = '';
+                    feedbackMessage.classList.remove('error', 'success');
                 }
-                if (trailHelperText) {
-                    trailHelperText.textContent = 'Selecione uma trilha cadastrada para prosseguir.';
+                try {
+                    if (typeof Auth === 'undefined' || !Auth.getSession) {
+                        throw new Error('Sessão inválida. Faça login novamente.');
+                    }
+                    const session = await Auth.getSession();
+                    if (!session) {
+                        throw new Error('Faça login como guia para publicar expedições.');
+                    }
+                    if (session.user?.type !== 'guide') {
+                        throw new Error('Apenas contas de guia podem criar expedições.');
+                    }
+                    const payload = {
+                        trailId: trailIdInput.value,
+                        trailName: trailNameInput?.value || '',
+                        trailState: trailStateInput?.value || '',
+                        trailCity: trailCityInput?.value || '',
+                        trailPark: trailParkInput?.value || '',
+                        title: titleInput?.value || '',
+                        difficultyLevel: levelInput?.value || '',
+                        startDate: startInput?.value || '',
+                        endDate: endInput?.value || '',
+                        pricePerPerson: priceInput?.value || '',
+                        maxPeople: maxPeopleInput?.value || '',
+                        description: descriptionInput?.value || '',
+                        highlights: highlightsInput?.value || ''
+                    };
+
+                    const response = await fetch('/api/expeditions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${session.token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) {
+                        throw new Error(data?.message || 'Não foi possível criar a expedição.');
+                    }
+                    if (feedbackMessage) {
+                        feedbackMessage.textContent = 'Expedição publicada com sucesso! Redirecionando...';
+                        feedbackMessage.classList.add('success');
+                    }
+                    if (typeof expeditionService !== 'undefined' && expeditionService.clearCache) {
+                        expeditionService.clearCache();
+                    }
+                    form.reset();
+                    if (trailNameInput) trailNameInput.value = '';
+                    if (trailIdInput) trailIdInput.value = '';
+                    if (trailStateInput) trailStateInput.value = '';
+                    if (trailCityInput) trailCityInput.value = '';
+                    if (trailParkInput) trailParkInput.value = '';
+                    if (trailHelperText) {
+                        trailHelperText.textContent = 'Selecione uma trilha cadastrada para prosseguir.';
+                    }
+                    setTimeout(() => {
+                        window.location.href = 'expedicoes.html';
+                    }, 1200);
+                } catch (err) {
+                    const message = err?.message || 'Não foi possível criar a expedição.';
+                    if (feedbackMessage) {
+                        feedbackMessage.textContent = message;
+                        feedbackMessage.classList.add('error');
+                    } else {
+                        alert(message);
+                    }
+                } finally {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = originalButtonText || 'Publicar expedição';
+                    }
                 }
             });
             cancelButton?.addEventListener('click', () => {

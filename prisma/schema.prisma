@@ -17,6 +17,7 @@ model User {
   updatedAt DateTime @updatedAt
   guide     Guide?   @relation(fields: [guideId], references: [id])
   guideId   Int?
+  expeditions Expedition[]
 }
 
 enum UserRole {
@@ -80,6 +81,47 @@ enum ImportItemStatus {
   VALID
   ERROR
   IMPORTED
+}
+
+enum ExpeditionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+}
+
+model Trail {
+  id        String        @id
+  name      String
+  state     String?
+  city      String?
+  park      String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  expeditions Expedition[]
+}
+
+model Expedition {
+  id              Int               @id @default(autoincrement())
+  trailId         String
+  guideUserId     Int
+  title           String
+  description     String
+  highlights      String?
+  difficultyLevel String
+  startDate       DateTime
+  endDate         DateTime
+  pricePerPerson  Decimal           @db.Decimal(10, 2)
+  maxPeople       Int
+  status          ExpeditionStatus  @default(ACTIVE)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  trail       Trail @relation(fields: [trailId], references: [id])
+  guideUser   User  @relation(fields: [guideUserId], references: [id])
+
+  @@index([guideUserId])
+  @@index([trailId])
+  @@map("Expedicoes")
 }
 
 model CadasturGuide {
