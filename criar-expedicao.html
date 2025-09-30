@@ -656,7 +656,10 @@
                         highlights: highlightsInput?.value || ''
                     };
 
-                    const response = await fetch('/api/expeditions', {
+                    const apiEndpoint = (typeof window !== 'undefined' && typeof window.trekkoResolveApiUrl === 'function')
+                        ? window.trekkoResolveApiUrl('/api/expeditions')
+                        : '/api/expeditions';
+                    const response = await fetch(apiEndpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

@@ -158,6 +158,60 @@ function normalizeCadasturGuide(entry) {
   }
 }
 
+function normaliseApiBase(base) {
+  if (typeof base !== 'string') return ''
+  const trimmed = base.trim()
+  if (!trimmed) return ''
+  return trimmed.replace(/\/+$/, '')
+}
+
+const trekkoApiConfig = (() => {
+  let cachedBase = ''
+
+  if (typeof window !== 'undefined') {
+    const explicitBase = normaliseApiBase(window.__TREKKO_API_BASE__)
+    if (explicitBase) {
+      cachedBase = explicitBase
+    } else if (window.location) {
+      const { hostname, origin, protocol } = window.location
+      if (hostname && hostname.endsWith('github.io')) {
+        cachedBase = 'https://trekko.vercel.app'
+      } else if (protocol === 'file:') {
+        cachedBase = 'https://trekko.vercel.app'
+      } else {
+        cachedBase = ''
+        if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+          cachedBase = origin
+        }
+      }
+    }
+  }
+
+  function resolve(path = '') {
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    if (!cachedBase) {
+      return normalizedPath
+    }
+    if (cachedBase.endsWith('/api') && normalizedPath.startsWith('/api')) {
+      const withoutPrefix = normalizedPath.slice(4) || '/'
+      return `${cachedBase}${withoutPrefix}`
+    }
+    return `${cachedBase}${normalizedPath}`
+  }
+
+  return {
+    resolve
+  }
+})()
+
+function resolveApiUrl(path = '') {
+  return trekkoApiConfig.resolve(path)
+}
+
+if (typeof window !== 'undefined') {
+  window.trekkoResolveApiUrl = resolveApiUrl
+}
+
 const expeditionService = (() => {
   const cache = new Map()
 
@@ -184,7 +238,8 @@ const expeditionService = (() => {
       cache.set(
         cacheKey,
         (async () => {
-          const response = await fetch(`/api/expeditions${buildQueryString(params)}`, {
+          const baseUrl = resolveApiUrl('/api/expeditions')
+          const response = await fetch(`${baseUrl}${buildQueryString(params)}`, {
             headers: { Accept: 'application/json' }
           })
           let data = null
@@ -218,7 +273,8 @@ const expeditionService = (() => {
       cache.set(
         cacheKey,
         (async () => {
-          const response = await fetch(`/api/expeditions/${encodeURIComponent(id)}`, {
+          const baseUrl = resolveApiUrl(`/api/expeditions/${encodeURIComponent(id)}`)
+          const response = await fetch(baseUrl, {
             headers: { Accept: 'application/json' }
           })
           let data = null
