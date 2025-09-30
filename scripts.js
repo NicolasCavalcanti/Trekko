@@ -22,6 +22,12 @@ const STATE_NAMES = {
   RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo', SE: 'Sergipe', TO: 'Tocantins'
 };
 
+// Track session state for reuse across components that need to react
+// when the authentication status changes (e.g. navigation + page CTAs).
+let currentSession = null;
+let navigationSessionPromise = null;
+let userMenuOutsideClickBound = false;
+
 // Utility: slugify a string (remove accents, spaces and special characters, replace with hyphens).
 function slugify(str) {
   return String(str || '')
@@ -161,13 +167,16 @@ async function setupNavigation() {
   const navLoginButtons = document.querySelector('.auth-buttons');
   const userNav = document.getElementById('userNav');
   const guideCTA = document.getElementById('guideCTA');
+  let session = null;
   try {
-    const session = await Auth.getSession();
+    session = await Auth.getSession();
+    currentSession = session;
     if (!session) {
       // Anonymous visitor
       if (navLoginButtons) navLoginButtons.style.display = 'flex';
       if (userNav) userNav.style.display = 'none';
       if (guideCTA) guideCTA.style.display = 'block';
+      updateGuideExpeditionActionsForUser(null);
     } else {
       // Logged in user
       if (navLoginButtons) navLoginButtons.style.display = 'none';
@@ -205,22 +214,39 @@ async function setupNavigation() {
         // Toggle menu on click
         const userButton = userNav.querySelector('.user-button');
         const menuBox = userNav.querySelector('.user-menu');
-        if (userButton && menuBox) {
+        if (userButton && menuBox && userNav && !userNav.dataset.menuBound) {
           userButton.addEventListener('click', (e) => {
             e.stopPropagation();
             menuBox.classList.toggle('open');
           });
-          // Close menu when clicking outside
+          userNav.dataset.menuBound = 'true';
+        }
+        if (menuBox && userNav && !userMenuOutsideClickBound) {
           document.addEventListener('click', (e) => {
             if (!userNav.contains(e.target)) {
               menuBox.classList.remove('open');
             }
           });
+          userMenuOutsideClickBound = true;
         }
       }
+      updateGuideExpeditionActionsForUser(session.user);
     }
   } catch (err) {
     console.error('Falha ao configurar navegação:', err);
+    currentSession = null;
+    updateGuideExpeditionActionsForUser(null);
+  }
+  return session;
+}
+
+function updateGuideExpeditionActionsForUser(user) {
+  const guideActions = document.getElementById('guideExpeditionActions');
+  if (!guideActions) return;
+  if (user && user.type === 'guide') {
+    guideActions.classList.add('is-visible');
+  } else {
+    guideActions.classList.remove('is-visible');
   }
 }
 
@@ -509,17 +535,17 @@ function initExpeditionsPage() {
   if (!container) return;
   computeSlugs();
   const title = document.querySelector('main h1');
-  const guideActions = document.getElementById('guideExpeditionActions');
-  if (guideActions && typeof Auth !== 'undefined' && Auth.getSession) {
+  if (navigationSessionPromise) {
+    navigationSessionPromise
+      .then(session => updateGuideExpeditionActionsForUser(session?.user || null))
+      .catch(() => updateGuideExpeditionActionsForUser(null));
+  } else if (typeof Auth !== 'undefined' && Auth.getSession) {
     Auth.getSession()
       .then(session => {
-        if (session?.user?.type === 'guide') {
-          guideActions.classList.add('is-visible');
-        }
+        currentSession = session;
+        updateGuideExpeditionActionsForUser(session?.user || null);
       })
-      .catch(() => {
-        // Mantemos o botão oculto caso a sessão não possa ser recuperada.
-      });
+      .catch(() => updateGuideExpeditionActionsForUser(null));
   }
   // Define filters
   const searchInput = document.getElementById('expSearchFilter');
@@ -1624,6 +1650,9 @@ function initBlogPostPage() {
           const email = loginForm.querySelector('input[type="email"]').value.trim();
           const password = loginForm.querySelector('input[type="password"]').value;
           const res = await Auth.login(email, password);
+          currentSession = { token: res.token, user: res.user };
+          updateGuideExpeditionActionsForUser(res.user);
+          navigationSessionPromise = setupNavigation();
           loginResult.innerHTML = '<span class="success">Login bem‑sucedido!</span>';
           loginForm.reset();
           // Close modal after brief delay
@@ -1989,7 +2018,7 @@ function initBlogPostPage() {
   // Configura a barra de navegação (login/user) e a busca global
   // Compute slug properties before any page initialisation
   computeSlugs();
-  setupNavigation();
+  navigationSessionPromise = setupNavigation();
   setupGlobalSearch();
   // Inicializa páginas específicas com base nas classes do body
   const bodyClasses = document.body.classList;
