@@ -198,6 +198,19 @@ async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof ver
   })
 }
 
+function applyCors(req: NextApiRequest, res: NextApiResponse): boolean {
+  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).end()
+    return true
+  }
+
+  return false
+}
+
 async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   const statusQuery = getQueryValue(req.query.status).toLowerCase() || 'active'
   const searchQuery = getQueryValue(req.query.search)
@@ -475,6 +488,10 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
+    if (applyCors(req, res)) {
+      return
+    }
+
     if (req.method === 'GET') {
       return await handleGet(req, res)
     }
