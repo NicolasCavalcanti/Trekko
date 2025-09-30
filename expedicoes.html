@@ -110,7 +110,12 @@
             <input type="text" id="expDateFilter" placeholder="Data (AAAA-MM-DD - AAAA-MM-DD)" style="flex:1 1 200px;padding:0.6rem;border:1px solid #ccc;border-radius:4px;" />
             <button id="clearExpFilters" class="btn btn-secondary" style="flex:0 0 auto;padding:0.6rem 1rem;">Limpar</button>
         </div>
+        <div id="expeditionsTabs" class="expeditions-tabs">
+            <button type="button" data-status="active" class="tab-button is-active">Próximas</button>
+            <button type="button" data-status="historic" class="tab-button">Históricas</button>
+        </div>
         <div id="expeditionsContainer" class="expedition-grid"></div>
+        <div id="expeditionsPagination" class="expeditions-pagination"></div>
     </main>
 
     <footer>
@@ -148,7 +153,6 @@
     </footer>
 
     <script src="data/trails.js"></script>
-    <script src="data/expeditions.js"></script>
     <script src="data/guides.js"></script>
     <script src="auth.js"></script>
     <script src="scripts.js"></script>

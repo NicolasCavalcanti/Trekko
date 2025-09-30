@@ -158,6 +158,111 @@ function normalizeCadasturGuide(entry) {
   }
 }
 
+const expeditionService = (() => {
+  const cache = new Map()
+
+  function buildKey(prefix, params) {
+    return `${prefix}:${JSON.stringify(params || {})}`
+  }
+
+  function buildQueryString(params = {}) {
+    const query = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === undefined || value === null) return
+      const stringValue = String(value).trim()
+      if (stringValue !== '') {
+        query.set(key, stringValue)
+      }
+    })
+    const queryString = query.toString()
+    return queryString ? `?${queryString}` : ''
+  }
+
+  async function list(params = {}) {
+    const cacheKey = buildKey('list', params)
+    if (!cache.has(cacheKey)) {
+      cache.set(
+        cacheKey,
+        (async () => {
+          const response = await fetch(`/api/expeditions${buildQueryString(params)}`, {
+            headers: { Accept: 'application/json' }
+          })
+          let data = null
+          try {
+            data = await response.json()
+          } catch (err) {
+            data = null
+          }
+          if (!response.ok) {
+            const message = data?.message || 'Não foi possível carregar as expedições.'
+            throw new Error(message)
+          }
+          return data
+        })()
+      )
+    }
+    try {
+      return await cache.get(cacheKey)
+    } catch (error) {
+      cache.delete(cacheKey)
+      throw error
+    }
+  }
+
+  async function getById(id) {
+    if (!id) {
+      throw new Error('Identificador da expedição é obrigatório.')
+    }
+    const cacheKey = buildKey('detail', { id })
+    if (!cache.has(cacheKey)) {
+      cache.set(
+        cacheKey,
+        (async () => {
+          const response = await fetch(`/api/expeditions/${encodeURIComponent(id)}`, {
+            headers: { Accept: 'application/json' }
+          })
+          let data = null
+          try {
+            data = await response.json()
+          } catch (err) {
+            data = null
+          }
+          if (!response.ok) {
+            const message = data?.message || 'Expedição não encontrada.'
+            throw new Error(message)
+          }
+          return data
+        })()
+      )
+    }
+    try {
+      return await cache.get(cacheKey)
+    } catch (error) {
+      cache.delete(cacheKey)
+      throw error
+    }
+  }
+
+  function clearCache() {
+    cache.clear()
+  }
+
+  return {
+    list,
+    getById,
+    clearCache
+  }
+})()
+
+function formatDateDisplay(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+  return date.toLocaleDateString('pt-BR')
+}
+
 /**
  * Setup the top navigation bar according to the current user session.
  * Shows login/register buttons for anonymous users or a user dropdown for
@@ -368,7 +473,7 @@ function setupGlobalSearch() {
  * Inicializa a página inicial (home) adicionando carrossel de estados,
  * seções de trilhas e guias em destaque e expedições próximas.
  */
-function initHomePage() {
+async function initHomePage() {
   // States carousel container
   const statesSection = document.querySelector('.states-carousel');
   if (statesSection && Array.isArray(window.trailsData)) {
@@ -474,34 +579,57 @@ function initHomePage() {
   }
   // Upcoming expeditions
   const expSection = document.querySelector('.expeditions-section .expedition-grid');
-  if (expSection && Array.isArray(window.expeditionsData)) {
-    const upcoming = [...window.expeditionsData].sort((a, b) => new Date(a.startDate) - new Date(b.startDate)).slice(0, 3);
-    upcoming.forEach(exp => {
-      const spotsLeft = exp.maxPeople - exp.spotsTaken;
-      const card = document.createElement('div');
-      card.className = 'expedition-card';
-      // Find associated trail for image
-      const trail = window.trailsData.find(t => t.id === exp.trailId);
-      const imgSrc = trail ? trail.image : 'images/hero.jpg';
-      card.innerHTML = `
-        <img src="${imgSrc}" alt="${exp.title}" style="width:100%;height:160px;object-fit:cover;">
-        <div class="expedition-content">
-          <div class="expedition-title">${exp.title}</div>
-          <div class="expedition-meta">${exp.startDate.replace(/-/g, '/')} - ${exp.endDate.replace(/-/g, '/')} · ${exp.level}</div>
-          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
-          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
-          <button class="btn btn-secondary" data-exp-id="${exp.id}">Ver Expedição</button>
-        </div>
-      `;
-      expSection.appendChild(card);
-    });
-    expSection.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-exp-id]');
-      if (btn) {
-        const expId = btn.getAttribute('data-exp-id');
-        window.location.href = `expedicao.html?id=${expId}`;
+  if (expSection) {
+    expSection.innerHTML = '<p class="expedition-loading">Carregando expedições...</p>';
+    try {
+      const result = await expeditionService.list({ status: 'active', pageSize: 3 });
+      const upcoming = Array.isArray(result?.data) ? result.data.slice(0, 3) : [];
+      expSection.innerHTML = '';
+      if (upcoming.length === 0) {
+        const empty = document.createElement('p');
+        empty.textContent = 'Nenhuma expedição ativa no momento.';
+        empty.className = 'expedition-empty';
+        expSection.appendChild(empty);
+      } else {
+        upcoming.forEach(exp => {
+          const card = document.createElement('div');
+          card.className = 'expedition-card';
+          const trail = Array.isArray(window.trailsData)
+            ? window.trailsData.find(t => t.id === exp.trailId)
+            : null;
+          const imgSrc = trail ? trail.image : 'images/hero.jpg';
+          const price = Number(exp.pricePerPerson || exp.price || 0);
+          const difficulty = exp.difficultyLevel || exp.level || '';
+          const startDate = formatDateDisplay(exp.startDate || exp.start_date);
+          const endDate = formatDateDisplay(exp.endDate || exp.end_date);
+          const spotsLeft = Number.isFinite(Number(exp.maxPeople)) ? Number(exp.maxPeople) : null;
+          card.innerHTML = `
+            <img src="${imgSrc}" alt="${exp.title}" style="width:100%;height:160px;object-fit:cover;">
+            <div class="expedition-content">
+              <div class="expedition-title">${exp.title}</div>
+              <div class="expedition-meta">${startDate} - ${endDate}${difficulty ? ` · ${difficulty}` : ''}</div>
+              <div class="expedition-price">${price > 0 ? `R$ ${price.toFixed(2)} por pessoa` : 'Consulte valores'}</div>
+              ${spotsLeft ? `<div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponíveis</div>` : ''}
+              <button class="btn btn-secondary" data-exp-id="${exp.id}">Ver Expedição</button>
+            </div>
+          `;
+          expSection.appendChild(card);
+        });
+        expSection.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-exp-id]');
+          if (btn) {
+            const expId = btn.getAttribute('data-exp-id');
+            window.location.href = `expedicao.html?id=${expId}`;
+          }
+        });
       }
-    });
+    } catch (error) {
+      expSection.innerHTML = '';
+      const message = document.createElement('p');
+      message.className = 'expedition-error';
+      message.textContent = error?.message || 'Não foi possível carregar as expedições.';
+      expSection.appendChild(message);
+    }
   }
   // CTA segmented buttons
   const ctaSegment = document.querySelector('.cta-segment');
@@ -530,11 +658,10 @@ function initHomePage() {
  * Inicializa a página de listagem de expedições.
  * Permite filtrar expedições por diversos critérios.
  */
-function initExpeditionsPage() {
+async function initExpeditionsPage() {
   const container = document.getElementById('expeditionsContainer');
   if (!container) return;
   computeSlugs();
-  const title = document.querySelector('main h1');
   if (navigationSessionPromise) {
     navigationSessionPromise
       .then(session => updateGuideExpeditionActionsForUser(session?.user || null))
@@ -547,190 +674,368 @@ function initExpeditionsPage() {
       })
       .catch(() => updateGuideExpeditionActionsForUser(null));
   }
-  // Define filters
+
   const searchInput = document.getElementById('expSearchFilter');
   const stateFilter = document.getElementById('expStateFilter');
   const trailFilter = document.getElementById('expTrailFilter');
   const levelFilter = document.getElementById('expLevelFilter');
   const dateFilter = document.getElementById('expDateFilter');
   const clearBtn = document.getElementById('clearExpFilters');
-  let list = Array.isArray(window.expeditionsData) ? [...window.expeditionsData] : [];
+  const tabsContainer = document.getElementById('expeditionsTabs');
+  const paginationContainer = document.getElementById('expeditionsPagination');
+
   const params = new URLSearchParams(window.location.search);
   const trailParam = params.get('trail');
-  let preselectedTrailId = '';
-  if (trailParam && Array.isArray(window.trailsData)) {
-    const matchedTrail = window.trailsData.find(t => t.slug === trailParam || t.id === trailParam);
-    if (matchedTrail) {
-      preselectedTrailId = matchedTrail.id;
-    }
-  }
-  function applyFilters() {
-    let results = [...list];
-    const q = searchInput.value.trim().toLowerCase();
-    const uf = stateFilter.value;
-    const trailId = trailFilter.value;
-    const level = levelFilter.value;
-    const dateVal = dateFilter.value;
-    if (q) {
-      results = results.filter(exp => exp.title.toLowerCase().includes(q) || exp.trailName.toLowerCase().includes(q));
-    }
-    if (uf) {
-      results = results.filter(exp => exp.uf === uf);
-    }
-    if (trailId) {
-      results = results.filter(exp => exp.trailId === trailId);
-    }
-    if (level) {
-      results = results.filter(exp => exp.level === level);
-    }
-    if (dateVal) {
-      // Accepts date range as YYYY-MM-DD to YYYY-MM-DD
-      const [startRange, endRange] = dateVal.split(' - ');
-      if (startRange && endRange) {
-        const start = new Date(startRange);
-        const end = new Date(endRange);
-        results = results.filter(exp => {
-          const expStart = new Date(exp.startDate);
-          const expEnd = new Date(exp.endDate);
-          return expStart >= start && expEnd <= end;
-        });
-      }
-    }
-    renderExpeditions(results);
-  }
-  function renderExpeditions(list) {
-    container.innerHTML = '';
-    if (list.length === 0) {
-      const msg = document.createElement('p');
-      msg.textContent = 'Nenhuma expedição encontrada com os filtros selecionados.';
-      container.appendChild(msg);
-      return;
-    }
-    list.forEach(exp => {
-      const spotsLeft = exp.maxPeople - exp.spotsTaken;
-      const trail = window.trailsData.find(t => t.id === exp.trailId);
-      const card = document.createElement('div');
-      card.className = 'expedition-card';
-      const imgSrc = trail ? trail.image : 'images/hero.jpg';
-      card.innerHTML = `
-        <img src="${imgSrc}" alt="${exp.title}" style="width:100%;height:180px;object-fit:cover;">
-        <div class="expedition-content">
-          <div class="expedition-title">${exp.title}</div>
-          <div class="expedition-meta">${exp.startDate.replace(/-/g, '/')} - ${exp.endDate.replace(/-/g, '/')} · ${exp.level}</div>
-          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
-          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
-          <button class="btn btn-secondary" data-exp-id="${exp.id}">Ver Detalhes</button>
-        </div>
-      `;
-      container.appendChild(card);
-    });
-  }
-  // Populate trail options
-  if (trailFilter && Array.isArray(window.trailsData)) {
+
+  const filters = {
+    search: '',
+    state: '',
+    trailId: '',
+    level: '',
+    startDate: '',
+    endDate: ''
+  };
+
+  let currentStatus = 'active';
+  let currentPage = 1;
+  let lastRequestId = 0;
+
+  function updateTrailFilterOptions() {
+    if (!trailFilter || !Array.isArray(window.trailsData)) return;
+    if (trailFilter.dataset.populated === 'true') return;
     window.trailsData.forEach(t => {
       const opt = document.createElement('option');
       opt.value = t.id;
       opt.textContent = t.name;
       trailFilter.appendChild(opt);
     });
-    if (preselectedTrailId) {
-      trailFilter.value = preselectedTrailId;
-    }
+    trailFilter.dataset.populated = 'true';
   }
-  // Populate state options
-  if (stateFilter) {
-    // Already has options from HTML; no action needed
+
+  function normaliseDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
   }
-  // Listeners
-  [searchInput, stateFilter, trailFilter, levelFilter, dateFilter].forEach(el => {
-    if (el) {
-      el.addEventListener('input', applyFilters);
-      el.addEventListener('change', applyFilters);
+
+  function parseDateRange(value) {
+    if (!value) {
+      return { startDate: '', endDate: '' };
     }
-  });
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      searchInput.value = '';
-      stateFilter.value = '';
-      trailFilter.value = '';
-      levelFilter.value = '';
-      dateFilter.value = '';
-      const currentParams = new URLSearchParams(window.location.search);
-      currentParams.delete('trail');
-      const search = currentParams.toString();
-      const newUrl = `${window.location.pathname}${search ? `?${search}` : ''}`;
-      window.history.replaceState({}, '', newUrl);
-      renderExpeditions(list);
+    const separator = ' - ';
+    if (value.includes(separator)) {
+      const [start, end] = value.split(separator);
+      return { startDate: normaliseDate(start.trim()), endDate: normaliseDate(end.trim()) };
+    }
+    const normalized = normaliseDate(value.trim());
+    return { startDate: normalized, endDate: '' };
+  }
+
+  function buildQuery() {
+    return {
+      status: currentStatus,
+      page: currentPage,
+      pageSize: 20,
+      search: filters.search,
+      state: filters.state,
+      trailId: filters.trailId,
+      level: filters.level,
+      startDate: filters.startDate,
+      endDate: filters.endDate
+    };
+  }
+
+  function renderExpeditions(list) {
+    container.innerHTML = '';
+    if (!Array.isArray(list) || list.length === 0) {
+      const message = document.createElement('p');
+      message.className = 'expedition-empty';
+      message.textContent = currentStatus === 'historic'
+        ? 'Nenhuma expedição histórica disponível.'
+        : 'Nenhuma expedição cadastrada até o momento.';
+      container.appendChild(message);
+      return;
+    }
+    list.forEach(exp => {
+      const card = document.createElement('div');
+      card.className = 'expedition-card';
+      const trail = Array.isArray(window.trailsData)
+        ? window.trailsData.find(t => t.id === exp.trailId)
+        : null;
+      const trailName = exp.trail?.name || trail?.name || '';
+      const trailLocation = [exp.trail?.city || trail?.city || '', exp.trail?.state || trail?.state || '']
+        .filter(Boolean)
+        .join(' · ');
+      const guideName = exp.guide?.name || exp.guideName || '';
+      const price = Number(exp.pricePerPerson || exp.price || 0);
+      const maxPeople = Number.isFinite(Number(exp.maxPeople)) ? Number(exp.maxPeople) : null;
+      const imgSrc = trail?.image || 'images/hero.jpg';
+      const startDate = formatDateDisplay(exp.startDate || exp.start_date);
+      const endDate = formatDateDisplay(exp.endDate || exp.end_date);
+      const difficulty = exp.difficultyLevel || exp.level || '';
+      card.innerHTML = `
+        <img src="${imgSrc}" alt="${exp.title}" style="width:100%;height:180px;object-fit:cover;">
+        <div class="expedition-content">
+          <div class="expedition-title">${exp.title}</div>
+          ${trailName ? `<div class="expedition-meta">${trailName}${trailLocation ? ` · ${trailLocation}` : ''}</div>` : ''}
+          <div class="expedition-meta">${startDate} - ${endDate}${difficulty ? ` · ${difficulty}` : ''}</div>
+          <div class="expedition-price">${price > 0 ? `R$ ${price.toFixed(2)} por pessoa` : 'Consulte valores'}</div>
+          ${guideName ? `<div class="expedition-meta">Guia: ${guideName}</div>` : ''}
+          ${maxPeople ? `<div class="expedition-meta">Até ${maxPeople} participante${maxPeople !== 1 ? 's' : ''}</div>` : ''}
+          <button class="btn btn-secondary" data-exp-id="${exp.id}">Ver Detalhes</button>
+        </div>
+      `;
+      container.appendChild(card);
     });
   }
-  // Initial render
-  if (preselectedTrailId) {
-    applyFilters();
-  } else {
-    renderExpeditions(list);
+
+  function renderPagination(pagination) {
+    if (!paginationContainer) return;
+    paginationContainer.innerHTML = '';
+    const totalPages = pagination?.totalPages || 0;
+    const page = pagination?.page || 1;
+    if (totalPages <= 1) {
+      paginationContainer.style.display = 'none';
+      return;
+    }
+    paginationContainer.style.display = 'flex';
+
+    const createButton = (label, targetPage, disabled = false, active = false) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.className = 'pagination-button';
+      if (active) button.classList.add('is-active');
+      if (disabled) {
+        button.disabled = true;
+      } else {
+        button.addEventListener('click', () => {
+          currentPage = targetPage;
+          loadExpeditions();
+        });
+      }
+      paginationContainer.appendChild(button);
+    };
+
+    createButton('Anterior', Math.max(1, page - 1), page <= 1);
+
+    const maxButtons = 5;
+    let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+    if (endPage - startPage + 1 < maxButtons) {
+      startPage = Math.max(1, endPage - maxButtons + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i += 1) {
+      createButton(String(i), i, false, i === page);
+    }
+
+    createButton('Próxima', Math.min(totalPages, page + 1), page >= totalPages);
   }
-  // Handle click on details
+
+  async function loadExpeditions() {
+    const requestId = ++lastRequestId;
+    container.innerHTML = '<p class="expedition-loading">Carregando expedições...</p>';
+    if (paginationContainer) {
+      paginationContainer.innerHTML = '';
+    }
+    try {
+      const query = buildQuery();
+      Object.keys(query).forEach(key => {
+        if (query[key] === '') {
+          delete query[key];
+        }
+      });
+      const result = await expeditionService.list(query);
+      if (requestId !== lastRequestId) return;
+      const list = Array.isArray(result?.data) ? result.data : [];
+      window.expeditionsData = list;
+      renderExpeditions(list);
+      renderPagination(result?.pagination);
+    } catch (error) {
+      if (requestId !== lastRequestId) return;
+      container.innerHTML = '';
+      const message = document.createElement('p');
+      message.className = 'expedition-error';
+      message.textContent = error?.message || 'Não foi possível carregar as expedições.';
+      container.appendChild(message);
+    }
+  }
+
+  updateTrailFilterOptions();
+
+  if (trailParam && trailFilter) {
+    const matchingTrail = Array.isArray(window.trailsData)
+      ? window.trailsData.find(t => t.slug === trailParam || t.id === trailParam)
+      : null;
+    if (matchingTrail) {
+      trailFilter.value = matchingTrail.id;
+      filters.trailId = matchingTrail.id;
+    }
+  }
+
+  if (tabsContainer) {
+    tabsContainer.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-status]');
+      if (!button) return;
+      const nextStatus = button.getAttribute('data-status') || 'active';
+      if (currentStatus === nextStatus) return;
+      currentStatus = nextStatus;
+      currentPage = 1;
+      tabsContainer.querySelectorAll('[data-status]').forEach(tab => {
+        tab.classList.toggle('is-active', tab === button);
+      });
+      loadExpeditions();
+    });
+  }
+
+  let searchDebounce = null;
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => {
+        filters.search = searchInput.value.trim();
+        currentPage = 1;
+        loadExpeditions();
+      }, 300);
+    });
+  }
+
+  if (stateFilter) {
+    stateFilter.addEventListener('change', () => {
+      filters.state = stateFilter.value;
+      currentPage = 1;
+      loadExpeditions();
+    });
+  }
+
+  if (trailFilter) {
+    trailFilter.addEventListener('change', () => {
+      filters.trailId = trailFilter.value;
+      currentPage = 1;
+      loadExpeditions();
+    });
+  }
+
+  if (levelFilter) {
+    levelFilter.addEventListener('change', () => {
+      filters.level = levelFilter.value;
+      currentPage = 1;
+      loadExpeditions();
+    });
+  }
+
+  if (dateFilter) {
+    dateFilter.addEventListener('change', () => {
+      const { startDate, endDate } = parseDateRange(dateFilter.value);
+      filters.startDate = startDate;
+      filters.endDate = endDate;
+      currentPage = 1;
+      loadExpeditions();
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      filters.search = '';
+      filters.state = '';
+      filters.trailId = '';
+      filters.level = '';
+      filters.startDate = '';
+      filters.endDate = '';
+      currentPage = 1;
+      if (searchInput) searchInput.value = '';
+      if (stateFilter) stateFilter.value = '';
+      if (trailFilter) trailFilter.value = '';
+      if (levelFilter) levelFilter.value = '';
+      if (dateFilter) dateFilter.value = '';
+      loadExpeditions();
+    });
+  }
+
   container.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-exp-id]');
     if (btn) {
       const expId = btn.getAttribute('data-exp-id');
-      window.location.href = `expedicao.html?id=${expId}`;
+      if (expId) {
+        window.location.href = `expedicao.html?id=${expId}`;
+      }
     }
   });
+
+  await loadExpeditions();
 }
 
 /**
  * Inicializa a página de detalhes de expedição.
  */
-function initExpeditionPage() {
+async function initExpeditionPage() {
   const detailContainer = document.getElementById('expeditionDetail');
   if (!detailContainer) return;
-  // Get query param
   const params = new URLSearchParams(window.location.search);
   const expId = params.get('id');
-  if (!expId || !Array.isArray(window.expeditionsData)) {
+  if (!expId) {
     detailContainer.innerHTML = '<p>Expedição não encontrada.</p>';
     return;
   }
-  const exp = window.expeditionsData.find(e => e.id === expId);
-  if (!exp) {
-    detailContainer.innerHTML = '<p>Expedição não encontrada.</p>';
-    return;
-  }
-  const trail = window.trailsData.find(t => t.id === exp.trailId);
-  const guide = window.guidesData.find(g => g.id === String(exp.guideId) || g.id === exp.guideId);
-  const spotsLeft = exp.maxPeople - exp.spotsTaken;
-  // Build HTML
-  detailContainer.innerHTML = `
-    <h1 style="font-family:'Sora',sans-serif;color:var(--color-primary);margin-bottom:1rem;">${exp.title}</h1>
-    <div class="expedition-detail-grid" style="display:flex;flex-wrap:wrap;gap:2rem;">
-      <div style="flex:1 1 300px;">
-        <img src="${trail ? trail.image : 'images/hero.jpg'}" alt="${exp.title}" style="width:100%;border-radius:8px;">
-        <p style="margin-top:0.5rem;font-size:0.9rem;color:var(--color-muted);"><strong>Trilha:</strong> ${exp.trailName || (trail ? trail.name : '')}</p>
-        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Localização:</strong> ${exp.uf}${exp.municipio ? ' · ' + exp.municipio : ''}</p>
-        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Datas:</strong> ${exp.startDate.replace(/-/g,'/')} – ${exp.endDate.replace(/-/g,'/')}</p>
-        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Nível:</strong> ${exp.level}</p>
-        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Preço:</strong> R$ ${exp.price.toFixed(2)} por pessoa</p>
-        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Vagas restantes:</strong> ${spotsLeft}</p>
-        <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Guia:</strong> ${exp.guideName || (guide ? guide.name : '')}</p>
+
+  detailContainer.innerHTML = '<p class="expedition-loading">Carregando expedição...</p>';
+  try {
+    const expedition = await expeditionService.getById(expId);
+    if (!expedition) {
+      detailContainer.innerHTML = '<p>Expedição não encontrada.</p>';
+      return;
+    }
+    const trail = Array.isArray(window.trailsData)
+      ? window.trailsData.find(t => t.id === expedition.trailId)
+      : null;
+    const guide = expedition.guide || null;
+    const price = Number(expedition.pricePerPerson || expedition.price || 0);
+    const maxPeople = Number.isFinite(Number(expedition.maxPeople)) ? Number(expedition.maxPeople) : null;
+    const startDate = formatDateDisplay(expedition.startDate || expedition.start_date);
+    const endDate = formatDateDisplay(expedition.endDate || expedition.end_date);
+    const difficulty = expedition.difficultyLevel || expedition.level || '';
+    const trailName = expedition.trail?.name || expedition.trailName || trail?.name || '';
+    const locationParts = [expedition.trail?.city || trail?.city || '', expedition.trail?.state || trail?.state || '']
+      .filter(Boolean);
+    const location = locationParts.join(' · ');
+    const highlights = expedition.highlights ? expedition.highlights.split('\n').filter(Boolean) : [];
+
+    detailContainer.innerHTML = `
+      <h1 style="font-family:'Sora',sans-serif;color:var(--color-primary);margin-bottom:1rem;">${expedition.title}</h1>
+      <div class="expedition-detail-grid" style="display:flex;flex-wrap:wrap;gap:2rem;">
+        <div style="flex:1 1 300px;">
+          <img src="${trail ? trail.image : 'images/hero.jpg'}" alt="${expedition.title}" style="width:100%;border-radius:8px;">
+          ${trailName ? `<p style="margin-top:0.5rem;font-size:0.9rem;color:var(--color-muted);"><strong>Trilha:</strong> ${trailName}</p>` : ''}
+          ${location ? `<p style="font-size:0.9rem;color:var(--color-muted);"><strong>Localização:</strong> ${location}</p>` : ''}
+          <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Datas:</strong> ${startDate} – ${endDate}</p>
+          ${difficulty ? `<p style="font-size:0.9rem;color:var(--color-muted);"><strong>Nível:</strong> ${difficulty}</p>` : ''}
+          <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Preço:</strong> ${price > 0 ? `R$ ${price.toFixed(2)} por pessoa` : 'Consulte valores'}</p>
+          ${maxPeople ? `<p style="font-size:0.9rem;color:var(--color-muted);"><strong>Capacidade:</strong> Até ${maxPeople} participante${maxPeople !== 1 ? 's' : ''}</p>` : ''}
+          <p style="font-size:0.9rem;color:var(--color-muted);"><strong>Guia:</strong> ${guide?.name || 'Guia não informado'}${guide?.cadastur ? ` · CADASTUR ${guide.cadastur}` : ''}</p>
+        </div>
+        <div style="flex:1 1 300px;">
+          <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Descrição</h3>
+          <p style="font-size:0.95rem;margin-bottom:1rem;">${expedition.description}</p>
+          ${highlights.length ? `<h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Destaques</h3><ul style="margin-bottom:1rem;padding-left:1.2rem;">${highlights.map(item => `<li style=\"margin-bottom:0.25rem;\">${item}</li>`).join('')}</ul>` : ''}
+          <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Sobre a Trilha</h3>
+          <p style="font-size:0.95rem;margin-bottom:1rem;">${trail ? trail.description : 'Informações completas da trilha em breve.'}</p>
+          <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Sobre o Guia</h3>
+          <p style="font-size:0.95rem;margin-bottom:1rem;">${guide?.bio || guide?.description || 'Guia certificado CADASTUR disponível para contato.'}</p>
+          <button id="reserveExpeditionBtn" class="btn btn-primary" style="margin-top:0.5rem;">Reservar agora</button>
+        </div>
       </div>
-      <div style="flex:1 1 300px;">
-        <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Descrição</h3>
-        <p style="font-size:0.95rem;margin-bottom:1rem;">${exp.description}</p>
-        <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Sobre a Trilha</h3>
-        <p style="font-size:0.95rem;margin-bottom:1rem;">${trail ? trail.description : ''}</p>
-        <h3 style="margin-bottom:0.5rem;color:var(--color-primary);">Sobre o Guia</h3>
-        <p style="font-size:0.95rem;margin-bottom:1rem;">${guide ? (guide.description || 'Guia certificado CADASTUR.') : 'Guia não encontrado.'}</p>
-        <button id="reserveExpeditionBtn" class="btn btn-primary" style="margin-top:0.5rem;">Reservar agora</button>
-      </div>
-    </div>
-  `;
-  const reserveBtn = document.getElementById('reserveExpeditionBtn');
-  if (reserveBtn) {
-    reserveBtn.addEventListener('click', () => {
-      // For MVP, simulate a reservation
-      alert('Reserva iniciada! (Esta funcionalidade será implementada em uma fase posterior)');
-    });
+    `;
+
+    const reserveBtn = document.getElementById('reserveExpeditionBtn');
+    if (reserveBtn) {
+      reserveBtn.addEventListener('click', () => {
+        alert('Reserva iniciada! (Funcionalidade em desenvolvimento)');
+      });
+    }
+  } catch (error) {
+    detailContainer.innerHTML = `<p class="expedition-error">${error?.message || 'Não foi possível carregar a expedição.'}</p>`;
   }
 }
 
@@ -1017,31 +1322,12 @@ function initTrailPage() {
     ? `Baseado em ${reviews.length} avaliações verificadas`
     : 'Seja o primeiro a deixar sua avaliação';
 
-  const relatedExps = Array.isArray(window.expeditionsData)
-    ? window.expeditionsData.filter(exp => exp.trailId === trail.id)
-    : [];
-
-  const expeditionsSection = relatedExps.length
-    ? `
-      <section class="trail-section">
-        <h2 class="section-title">Expedições em destaque</h2>
-        <div class="trail-expeditions">
-          ${relatedExps.map(exp => {
-            const spotsLeft = exp.maxPeople - exp.spotsTaken;
-            return `
-              <article class="exp-card">
-                <h3>${exp.title}</h3>
-                <div class="exp-card__meta">${exp.startDate.replace(/-/g, '/')} – ${exp.endDate.replace(/-/g, '/')} · ${exp.level}</div>
-                <div class="exp-card__price">${formatCurrency(exp.price)}</div>
-                <div class="exp-card__meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
-                <a class="btn cta-secondary" href="expedicao.html?id=${exp.id}">Ver expedição</a>
-              </article>
-            `;
-          }).join('')}
-        </div>
-      </section>
-    `
-    : '';
+  const expeditionsSection = `
+    <section class="trail-section" id="trailExpeditionsSection">
+      <h2 class="section-title">Expedições em destaque</h2>
+      <div class="trail-expeditions" data-trail-expeditions></div>
+    </section>
+  `;
 
   const toSetOfStrings = (value) => {
     if (!Array.isArray(value)) return new Set();
@@ -1275,6 +1561,11 @@ function initTrailPage() {
     finalCtaSection
   ].join('');
 
+  const trailExpeditionsEl = container.querySelector('[data-trail-expeditions]');
+  if (trailExpeditionsEl) {
+    loadTrailExpeditions(trailExpeditionsEl);
+  }
+
   const readMoreButton = container.querySelector('[data-read-more]');
   if (readMoreButton) {
     const descriptionBox = container.querySelector('[data-description]');
@@ -1401,9 +1692,39 @@ function initGuideProfilePage() {
           const cad = String(entry.numero_cadastur || entry.numero || entry.numero_cad || entry['nº cadastur'] || entry['número cadastur'] || '');
           if (entryNameSlug === namePart && cad.slice(-idPart.length) === idPart) {
             guide = normalizeCadasturGuide(entry);
-          }
-        }
+    }
+  }
+
+  async function loadTrailExpeditions(targetEl) {
+    targetEl.innerHTML = '<p class="expedition-loading">Carregando expedições...</p>';
+    try {
+      const result = await expeditionService.list({ status: 'active', trailId: trail.id, pageSize: 20 });
+      const list = Array.isArray(result?.data) ? result.data : [];
+      if (!list.length) {
+        targetEl.innerHTML = '<p class="expedition-empty">Nenhuma expedição cadastrada para esta trilha.</p>';
+        return;
       }
+      targetEl.innerHTML = list
+        .map(exp => {
+          const startDate = formatDateDisplay(exp.startDate || exp.start_date);
+          const endDate = formatDateDisplay(exp.endDate || exp.end_date);
+          const difficulty = exp.difficultyLevel || exp.level || '';
+          const price = Number(exp.pricePerPerson || exp.price || 0);
+          return `
+            <article class="exp-card">
+              <h3>${exp.title}</h3>
+              <div class="exp-card__meta">${startDate} – ${endDate}${difficulty ? ` · ${difficulty}` : ''}</div>
+              <div class="exp-card__price">${price > 0 ? formatCurrency(price) : 'Consulte valores'}</div>
+              <a class="btn cta-secondary" href="expedicao.html?id=${exp.id}">Ver expedição</a>
+            </article>
+          `;
+        })
+        .join('');
+    } catch (error) {
+      targetEl.innerHTML = `<p class="expedition-error">${error?.message || 'Não foi possível carregar as expedições desta trilha.'}</p>`;
+    }
+  }
+}
     }
   } else {
     const id = params.get('id');
@@ -1496,32 +1817,50 @@ function initGuideProfilePage() {
     }
   }
   html += `</div>`;
-  // List expeditions for this guide
-  let guideExps = [];
-  if (Array.isArray(window.expeditionsData)) {
-    guideExps = window.expeditionsData.filter(exp => String(exp.guideId) === String(guide.id));
-  }
-  if (guideExps.length) {
-    html += '<div class="detail-expeditions"><h3>Expedições deste Guia</h3>';
-    html += '<div class="expedition-list">';
-    guideExps.forEach(exp => {
-      const spotsLeft = exp.maxPeople - exp.spotsTaken;
-      html += `<div class="expedition-card">
-        <div class="expedition-content">
-          <div class="expedition-title">${exp.title}</div>
-          <div class="expedition-meta">${exp.startDate.replace(/-/g,'/')} - ${exp.endDate.replace(/-/g,'/')} · ${exp.level}</div>
-          <div class="expedition-price">R$ ${exp.price.toFixed(2)} por pessoa</div>
-          <div class="expedition-meta">${spotsLeft} vaga${spotsLeft !== 1 ? 's' : ''} disponível${spotsLeft !== 1 ? 's' : ''}</div>
-          <a href="expedicao.html?id=${exp.id}" class="btn btn-secondary">Ver Expedição</a>
-        </div>
-      </div>`;
-    });
-    html += '</div></div>';
-  } else {
-    // Show a message when there are no active expeditions for this guide
-    html += '<div class="detail-expeditions"><h3>Expedições deste Guia</h3><p>Nenhuma expedição disponível no momento.</p></div>';
-  }
+  html += '<div class="detail-expeditions"><h3>Expedições deste Guia</h3><div class="expedition-list" data-guide-expeditions></div></div>';
   container.innerHTML = html;
+
+  const guideExpeditionsEl = container.querySelector('[data-guide-expeditions]');
+  if (guideExpeditionsEl) {
+    loadGuideExpeditions(guideExpeditionsEl, guide);
+  }
+
+  async function loadGuideExpeditions(targetEl, guideInfo) {
+    targetEl.innerHTML = '<p class="expedition-loading">Carregando expedições...</p>';
+    try {
+      const guideUserId = Number.parseInt(guideInfo?.id, 10);
+      if (!Number.isFinite(guideUserId)) {
+        targetEl.innerHTML = '<p class="expedition-empty">Expedições serão exibidas aqui quando o guia estiver cadastrado na plataforma.</p>';
+        return;
+      }
+      const result = await expeditionService.list({ status: 'active', guideId: guideUserId, pageSize: 50 });
+      const list = Array.isArray(result?.data) ? result.data : [];
+      if (!list.length) {
+        targetEl.innerHTML = '<p class="expedition-empty">Nenhuma expedição disponível no momento.</p>';
+        return;
+      }
+      targetEl.innerHTML = list
+        .map(exp => {
+          const startDate = formatDateDisplay(exp.startDate || exp.start_date);
+          const endDate = formatDateDisplay(exp.endDate || exp.end_date);
+          const difficulty = exp.difficultyLevel || exp.level || '';
+          const price = Number(exp.pricePerPerson || exp.price || 0);
+          return `
+            <div class="expedition-card">
+              <div class="expedition-content">
+                <div class="expedition-title">${exp.title}</div>
+                <div class="expedition-meta">${startDate} - ${endDate}${difficulty ? ` · ${difficulty}` : ''}</div>
+                <div class="expedition-price">${price > 0 ? `R$ ${price.toFixed(2)} por pessoa` : 'Consulte valores'}</div>
+                <a href="expedicao.html?id=${exp.id}" class="btn btn-secondary">Ver Expedição</a>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    } catch (error) {
+      targetEl.innerHTML = `<p class="expedition-error">${error?.message || 'Não foi possível carregar as expedições do guia.'}</p>`;
+    }
+  }
 }
 
 /**
