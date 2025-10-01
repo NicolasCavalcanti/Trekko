@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 import prisma from '../../../lib/prisma'
+import { applyCors } from '../../../lib/cors'
 
 function toNumber(value: string | string[] | undefined): number | null {
   if (Array.isArray(value)) {
@@ -17,6 +18,10 @@ function toNumber(value: string | string[] | undefined): number | null {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (applyCors(req, res, { methods: ['GET'] })) {
+    return
+  }
+
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET'])
     return res.status(405).json({ message: 'Método não permitido.' })

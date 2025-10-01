@@ -3,6 +3,7 @@ import { Prisma, ExpeditionStatus, UserRole } from '@prisma/client'
 
 import prisma from '../../../lib/prisma'
 import { verifyAuthToken } from '../../../lib/authToken'
+import { applyCors } from '../../../lib/cors'
 
 const MAX_PAGE_SIZE = 50
 
@@ -475,6 +476,10 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
+    if (applyCors(req, res, { methods: ['GET', 'POST'] })) {
+      return
+    }
+
     if (req.method === 'GET') {
       return await handleGet(req, res)
     }
