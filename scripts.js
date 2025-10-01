@@ -162,7 +162,57 @@ function normaliseApiBase(base) {
   if (typeof base !== 'string') return ''
   const trimmed = base.trim()
   if (!trimmed) return ''
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed)
+      if (
+        parsed.protocol === 'http:'
+        && !['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname)
+      ) {
+        parsed.protocol = 'https:'
+      }
+      return parsed.toString().replace(/\/+$/, '')
+    } catch (error) {
+      if (trimmed.toLowerCase().startsWith('http://')) {
+        const upgraded = trimmed.replace(/^http:\/\//i, 'https://')
+        return upgraded.replace(/\/+$/, '')
+      }
+    }
+  }
+
   return trimmed.replace(/\/+$/, '')
+}
+
+function createNetworkError(message, originalError) {
+  const error = new Error(message || 'Servidor indisponível, tente novamente.')
+  error.name = 'NetworkError'
+  if (originalError && typeof originalError === 'object') {
+    try {
+      error.cause = originalError
+    } catch (assignError) {
+      // ignore assignment errors in environments without Error.cause support
+    }
+  }
+  return error
+}
+
+async function safeFetchJson(url, fetchOptions = {}, networkErrorMessage) {
+  let response
+  try {
+    response = await fetch(url, fetchOptions)
+  } catch (error) {
+    throw createNetworkError(networkErrorMessage || 'Servidor indisponível, tente novamente.', error)
+  }
+
+  let data = null
+  try {
+    data = await response.json()
+  } catch (error) {
+    data = null
+  }
+
+  return { response, data }
 }
 
 const trekkoApiConfig = (() => {
@@ -239,20 +289,19 @@ const expeditionService = (() => {
         cacheKey,
         (async () => {
           const baseUrl = resolveApiUrl('/api/expeditions')
-          const response = await fetch(`${baseUrl}${buildQueryString(params)}`, {
-            headers: { Accept: 'application/json' }
-          })
-          let data = null
-          try {
-            data = await response.json()
-          } catch (err) {
-            data = null
-          }
+          const { response, data } = await safeFetchJson(
+            `${baseUrl}${buildQueryString(params)}`,
+            { headers: { Accept: 'application/json' } },
+            'Servidor indisponível. Tente novamente em instantes.'
+          )
+          const payload = data && typeof data === 'object' ? data : {}
           if (!response.ok) {
-            const message = data?.message || 'Não foi possível carregar as expedições.'
+            const message = typeof payload.message === 'string'
+              ? payload.message
+              : 'Não foi possível carregar as expedições.'
             throw new Error(message)
           }
-          return data
+          return payload
         })()
       )
     }
@@ -274,20 +323,19 @@ const expeditionService = (() => {
         cacheKey,
         (async () => {
           const baseUrl = resolveApiUrl(`/api/expeditions/${encodeURIComponent(id)}`)
-          const response = await fetch(baseUrl, {
-            headers: { Accept: 'application/json' }
-          })
-          let data = null
-          try {
-            data = await response.json()
-          } catch (err) {
-            data = null
-          }
+          const { response, data } = await safeFetchJson(
+            baseUrl,
+            { headers: { Accept: 'application/json' } },
+            'Servidor indisponível. Tente novamente em instantes.'
+          )
+          const payload = data && typeof data === 'object' ? data : {}
           if (!response.ok) {
-            const message = data?.message || 'Expedição não encontrada.'
+            const message = typeof payload.message === 'string'
+              ? payload.message
+              : 'Expedição não encontrada.'
             throw new Error(message)
           }
-          return data
+          return payload
         })()
       )
     }
