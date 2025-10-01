@@ -330,6 +330,109 @@
             const feedbackMessage = document.createElement('div');
             feedbackMessage.className = 'form-feedback-message';
             form?.appendChild(feedbackMessage);
+
+            const EXPEDITION_API_BASE = (() => {
+                const explicitBase = (typeof window !== 'undefined' && typeof window.__TREKKO_API_BASE__ === 'string')
+                    ? window.__TREKKO_API_BASE__
+                    : '';
+                if (explicitBase && /^https?:\/\//i.test(explicitBase)) {
+                    return explicitBase.replace(/\/+$/, '');
+                }
+
+                if (typeof window !== 'undefined' && typeof window.trekkoResolveApiUrl === 'function') {
+                    const resolved = window.trekkoResolveApiUrl('/api');
+                    if (resolved && /^https?:\/\//i.test(resolved)) {
+                        return resolved.replace(/\/+$/, '');
+                    }
+                }
+
+                return 'https://trekko.vercel.app/api';
+            })();
+
+            function toISODate(value) {
+                if (!value) return '';
+                const date = new Date(`${value}T00:00:00`);
+                if (Number.isNaN(date.getTime())) {
+                    return '';
+                }
+                return date.toISOString();
+            }
+
+            function parseNumber(value, { integer = false, min = null } = {}) {
+                if (value === null || value === undefined || value === '') {
+                    return null;
+                }
+                const numericValue = typeof value === 'number' ? value : Number(String(value).replace(/,/g, '.'));
+                if (!Number.isFinite(numericValue)) {
+                    return null;
+                }
+                const adjusted = integer ? Math.trunc(numericValue) : numericValue;
+                if (min !== null && adjusted < min) {
+                    return null;
+                }
+                return adjusted;
+            }
+
+            async function createExpeditionRequest(sessionToken, payload) {
+                const url = `${EXPEDITION_API_BASE}/expeditions`;
+                const headers = { 'Content-Type': 'application/json' };
+                if (sessionToken) {
+                    headers.Authorization = `Bearer ${sessionToken}`;
+                }
+
+                let response;
+                try {
+                    response = await fetch(url, {
+                        method: 'POST',
+                        headers,
+                        mode: 'cors',
+                        body: JSON.stringify(payload)
+                    });
+                } catch (networkError) {
+                    const error = new Error('Servidor indisponível ou bloqueio de CORS. Verifique HTTPS e permissões da API.');
+                    error.isNetworkError = true;
+                    error.cause = networkError;
+                    throw error;
+                }
+
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (parseError) {
+                    data = null;
+                }
+
+                if (!response.ok) {
+                    const message = (data && (data.message || data.error)) || `Erro ${response.status}`;
+                    const error = new Error(message);
+                    error.status = response.status;
+                    error.data = data;
+                    throw error;
+                }
+
+                return data;
+            }
+
+            function validatePayload(payload) {
+                if (!payload.trailId) {
+                    throw new Error('Selecione uma trilha cadastrada antes de publicar sua expedição.');
+                }
+                if (!payload.title) {
+                    throw new Error('Informe o título da expedição.');
+                }
+                if (!payload.startDate || !payload.endDate) {
+                    throw new Error('Informe as datas de início e término.');
+                }
+                if (new Date(payload.endDate).getTime() <= new Date(payload.startDate).getTime()) {
+                    throw new Error('A data de término deve ser posterior à data de início.');
+                }
+                if (payload.pricePerPerson === null) {
+                    throw new Error('Informe um preço por pessoa válido.');
+                }
+                if (payload.maxPeople === null) {
+                    throw new Error('Informe o número de vagas disponíveis (inteiro maior ou igual a 1).');
+                }
+            }
             if (typeof Auth !== 'undefined' && Auth.getSession) {
                 Auth.getSession().then((session) => {
                     if (!session || session.user?.type !== 'guide') {
@@ -646,44 +749,19 @@
                         trailState: trailStateInput?.value || '',
                         trailCity: trailCityInput?.value || '',
                         trailPark: trailParkInput?.value || '',
-                        title: titleInput?.value || '',
+                        title: titleInput?.value?.trim() || '',
                         difficultyLevel: levelInput?.value || '',
-                        startDate: startInput?.value || '',
-                        endDate: endInput?.value || '',
-                        pricePerPerson: priceInput?.value || '',
-                        maxPeople: maxPeopleInput?.value || '',
-                        description: descriptionInput?.value || '',
+                        startDate: toISODate(startInput?.value),
+                        endDate: toISODate(endInput?.value),
+                        pricePerPerson: parseNumber(priceInput?.value, { min: 0 }),
+                        maxPeople: parseNumber(maxPeopleInput?.value, { integer: true, min: 1 }),
+                        description: descriptionInput?.value?.trim() || '',
                         highlights: highlightsInput?.value || ''
                     };
 
-                    const apiEndpoint = (typeof window !== 'undefined' && typeof window.trekkoResolveApiUrl === 'function')
-                        ? window.trekkoResolveApiUrl('/api/expeditions')
-                        : '/api/expeditions';
-                    let response;
-                    try {
-                        response = await fetch(apiEndpoint, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${session.token}`
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                    } catch (networkError) {
-                        throw new Error('Servidor indisponível, tente novamente.');
-                    }
-                    const data = await response.json().catch(() => ({}));
-                    if (!response.ok) {
-                        let errorMessage = data?.message || 'Não foi possível criar a expedição.';
-                        if (response.status === 400) {
-                            errorMessage = 'Verifique os campos obrigatórios.';
-                        } else if (response.status === 401 || response.status === 403) {
-                            errorMessage = 'Você não tem permissão para criar expedições.';
-                        } else if (response.status >= 500) {
-                            errorMessage = 'Erro interno do servidor, tente novamente mais tarde.';
-                        }
-                        throw new Error(errorMessage);
-                    }
+                    validatePayload(payload);
+
+                    const data = await createExpeditionRequest(session.token, payload);
                     if (feedbackMessage) {
                         feedbackMessage.textContent = 'Expedição criada com sucesso. Redirecionando...';
                         feedbackMessage.classList.add('success');
@@ -704,7 +782,10 @@
                         window.location.href = 'expedicoes.html';
                     }, 1200);
                 } catch (err) {
-                    const message = err?.message || 'Não foi possível criar a expedição.';
+                    let message = err?.message || 'Não foi possível criar a expedição.';
+                    if (err?.isNetworkError || (typeof err?.message === 'string' && /CORS|Failed to fetch|NetworkError/i.test(err.message))) {
+                        message = 'Servidor indisponível ou bloqueio de CORS. Verifique HTTPS e permissões da API.';
+                    }
                     if (feedbackMessage) {
                         feedbackMessage.textContent = message;
                         feedbackMessage.classList.add('error');
