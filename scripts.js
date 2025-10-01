@@ -184,8 +184,10 @@ function normaliseApiBase(base) {
   return trimmed.replace(/\/+$/, '')
 }
 
+const DEFAULT_NETWORK_ERROR_MESSAGE = 'Servidor indisponível ou bloqueio de CORS. Verifique HTTPS e permissões da API.'
+
 function createNetworkError(message, originalError) {
-  const error = new Error(message || 'Servidor indisponível, tente novamente.')
+  const error = new Error(message || DEFAULT_NETWORK_ERROR_MESSAGE)
   error.name = 'NetworkError'
   if (originalError && typeof originalError === 'object') {
     try {
