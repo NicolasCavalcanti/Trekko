@@ -205,9 +205,16 @@ async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof ver
 }
 
 function applyCors(req: NextApiRequest, res: NextApiResponse): boolean {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  const requestOrigin = typeof req.headers.origin === 'string' ? req.headers.origin : '*'
+  res.setHeader('Access-Control-Allow-Origin', requestOrigin)
+  res.setHeader('Vary', 'Origin')
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept')
+
+  const requestedHeaders =
+    typeof req.headers['access-control-request-headers'] === 'string'
+      ? req.headers['access-control-request-headers']
+      : 'Content-Type, Authorization, Accept'
+  res.setHeader('Access-Control-Allow-Headers', requestedHeaders)
 
   if (req.method === 'OPTIONS') {
     res.status(204).end()
