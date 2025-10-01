@@ -197,22 +197,86 @@ function createNetworkError(message, originalError) {
   return error
 }
 
+function resolveFallbackApiBase() {
+  let fallbackBase = ''
+
+  if (typeof window !== 'undefined') {
+    const explicitFallback = normaliseApiBase(window.__TREKKO_FALLBACK_API_BASE__)
+    if (explicitFallback) {
+      fallbackBase = explicitFallback
+    } else {
+      fallbackBase = 'https://trekko.vercel.app'
+    }
+  } else if (typeof process !== 'undefined' && process.env) {
+    const envFallback = normaliseApiBase(process.env.TREKKO_FALLBACK_API_BASE)
+    if (envFallback) {
+      fallbackBase = envFallback
+    }
+  }
+
+  if (!fallbackBase) {
+    return ''
+  }
+
+  return fallbackBase.replace(/\/+$/, '')
+}
+
+function buildFallbackUrl(targetUrl, fallbackBase) {
+  if (!fallbackBase) {
+    return ''
+  }
+
+  const sanitizedBase = fallbackBase.replace(/\/+$/, '')
+
+  if (/^https?:\/\//i.test(targetUrl)) {
+    try {
+      const parsed = new URL(targetUrl)
+      const path = `${parsed.pathname || ''}${parsed.search || ''}${parsed.hash || ''}`
+      return `${sanitizedBase}${path}`
+    } catch (error) {
+      return ''
+    }
+  }
+
+  if (targetUrl.startsWith('/')) {
+    return `${sanitizedBase}${targetUrl}`
+  }
+
+  return `${sanitizedBase}/${targetUrl}`
+}
+
 async function safeFetchJson(url, fetchOptions = {}, networkErrorMessage) {
-  let response
-  try {
-    response = await fetch(url, fetchOptions)
-  } catch (error) {
-    throw createNetworkError(networkErrorMessage || 'Servidor indisponível, tente novamente.', error)
+  const fallbackBase = resolveFallbackApiBase()
+  const attempted = new Set()
+
+  async function attempt(targetUrl, allowFallback) {
+    attempted.add(targetUrl)
+
+    let response
+    try {
+      response = await fetch(targetUrl, fetchOptions)
+    } catch (error) {
+      if (allowFallback) {
+        const fallbackUrl = buildFallbackUrl(targetUrl, fallbackBase)
+        if (fallbackUrl && !attempted.has(fallbackUrl)) {
+          return attempt(fallbackUrl, false)
+        }
+      }
+      throw createNetworkError(networkErrorMessage || 'Servidor indisponível, tente novamente.', error)
+    }
+
+    let data = null
+    try {
+      data = await response.json()
+    } catch (error) {
+      data = null
+    }
+
+    return { response, data }
   }
 
-  let data = null
-  try {
-    data = await response.json()
-  } catch (error) {
-    data = null
-  }
-
-  return { response, data }
+  const allowFallback = Boolean(fallbackBase)
+  return attempt(url, allowFallback)
 }
 
 const trekkoApiConfig = (() => {
