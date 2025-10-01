@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { Prisma, ExpeditionStatus, UserRole } from '@prisma/client'
 
@@ -7,6 +8,10 @@ import { verifyAuthToken } from '../../../lib/authToken'
 const MAX_PAGE_SIZE = 50
 
 type GuideUser = Prisma.UserGetPayload<{ include: { guide: true } }>
+
+function generatePlaceholderPassword(): string {
+  return crypto.randomBytes(32).toString('hex')
+}
 
 function getQueryValue(value: string | string[] | undefined): string {
   if (Array.isArray(value)) {
@@ -182,6 +187,7 @@ async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof ver
     create: {
       email,
       name,
+      password: generatePlaceholderPassword(),
       role: UserRole.guide,
       guideId: guide.id
     },

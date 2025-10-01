@@ -674,10 +674,18 @@
                     }
                     const data = await response.json().catch(() => ({}));
                     if (!response.ok) {
-                        throw new Error(data?.message || 'Não foi possível criar a expedição.');
+                        let errorMessage = data?.message || 'Não foi possível criar a expedição.';
+                        if (response.status === 400) {
+                            errorMessage = 'Verifique os campos obrigatórios.';
+                        } else if (response.status === 401 || response.status === 403) {
+                            errorMessage = 'Você não tem permissão para criar expedições.';
+                        } else if (response.status >= 500) {
+                            errorMessage = 'Erro interno do servidor, tente novamente mais tarde.';
+                        }
+                        throw new Error(errorMessage);
                     }
                     if (feedbackMessage) {
-                        feedbackMessage.textContent = 'Expedição publicada com sucesso! Redirecionando...';
+                        feedbackMessage.textContent = 'Expedição criada com sucesso. Redirecionando...';
                         feedbackMessage.classList.add('success');
                     }
                     if (typeof expeditionService !== 'undefined' && expeditionService.clearCache) {
