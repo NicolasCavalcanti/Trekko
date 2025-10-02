@@ -330,6 +330,9 @@
             const feedbackMessage = document.createElement('div');
             feedbackMessage.className = 'form-feedback-message';
             form?.appendChild(feedbackMessage);
+            const localStore = (typeof window !== 'undefined' && window.localExpeditionStore)
+                ? window.localExpeditionStore
+                : null;
 
             const EXPEDITION_API_BASE = (() => {
                 const explicitBase = (typeof window !== 'undefined' && typeof window.__TREKKO_API_BASE__ === 'string')
@@ -714,6 +717,31 @@
                 }
             });
 
+            function finalizeSuccess(message) {
+                if (feedbackMessage) {
+                    feedbackMessage.textContent = message;
+                    feedbackMessage.classList.remove('error');
+                    feedbackMessage.classList.add('success');
+                } else {
+                    alert(message);
+                }
+                if (typeof expeditionService !== 'undefined' && expeditionService.clearCache) {
+                    expeditionService.clearCache();
+                }
+                form.reset();
+                if (trailNameInput) trailNameInput.value = '';
+                if (trailIdInput) trailIdInput.value = '';
+                if (trailStateInput) trailStateInput.value = '';
+                if (trailCityInput) trailCityInput.value = '';
+                if (trailParkInput) trailParkInput.value = '';
+                if (trailHelperText) {
+                    trailHelperText.textContent = 'Selecione uma trilha cadastrada para prosseguir.';
+                }
+                setTimeout(() => {
+                    window.location.href = 'expedicoes.html';
+                }, 1200);
+            }
+
             form?.addEventListener('submit', async (event) => {
                 event.preventDefault();
                 if (!trailIdInput?.value) {
@@ -732,18 +760,20 @@
                     feedbackMessage.textContent = '';
                     feedbackMessage.classList.remove('error', 'success');
                 }
+                let session = null;
+                let payload = null;
                 try {
                     if (typeof Auth === 'undefined' || !Auth.getSession) {
                         throw new Error('Sessão inválida. Faça login novamente.');
                     }
-                    const session = await Auth.getSession();
+                    session = await Auth.getSession();
                     if (!session) {
                         throw new Error('Faça login como guia para publicar expedições.');
                     }
                     if (session.user?.type !== 'guide') {
                         throw new Error('Apenas contas de guia podem criar expedições.');
                     }
-                    const payload = {
+                    payload = {
                         trailId: trailIdInput.value,
                         trailName: trailNameInput?.value || '',
                         trailState: trailStateInput?.value || '',
@@ -762,26 +792,28 @@
                     validatePayload(payload);
 
                     const data = await createExpeditionRequest(session.token, payload);
-                    if (feedbackMessage) {
-                        feedbackMessage.textContent = 'Expedição criada com sucesso. Redirecionando...';
-                        feedbackMessage.classList.add('success');
+                    if (localStore && typeof localStore.registerFromPayload === 'function') {
+                        localStore.registerFromPayload(payload, { session, origin: 'remote', id: data?.id });
                     }
-                    if (typeof expeditionService !== 'undefined' && expeditionService.clearCache) {
-                        expeditionService.clearCache();
-                    }
-                    form.reset();
-                    if (trailNameInput) trailNameInput.value = '';
-                    if (trailIdInput) trailIdInput.value = '';
-                    if (trailStateInput) trailStateInput.value = '';
-                    if (trailCityInput) trailCityInput.value = '';
-                    if (trailParkInput) trailParkInput.value = '';
-                    if (trailHelperText) {
-                        trailHelperText.textContent = 'Selecione uma trilha cadastrada para prosseguir.';
-                    }
-                    setTimeout(() => {
-                        window.location.href = 'expedicoes.html';
-                    }, 1200);
+                    finalizeSuccess('Expedição criada com sucesso. Redirecionando...');
                 } catch (err) {
+                    let handledOffline = false;
+                    if (
+                        payload
+                        && localStore
+                        && typeof localStore.registerFromPayload === 'function'
+                        && (err?.isNetworkError || err?.name === 'NetworkError'
+                            || (typeof err?.message === 'string' && /CORS|Failed to fetch|NetworkError/i.test(err.message)))
+                    ) {
+                        const stored = localStore.registerFromPayload(payload, { session, origin: 'local' });
+                        if (stored) {
+                            finalizeSuccess('Expedição salva localmente. Ela ficará disponível neste dispositivo.');
+                            handledOffline = true;
+                        }
+                    }
+                    if (handledOffline) {
+                        return;
+                    }
                     let message = err?.message || 'Não foi possível criar a expedição.';
                     if (err?.isNetworkError || (typeof err?.message === 'string' && /CORS|Failed to fetch|NetworkError/i.test(err.message))) {
                         message = 'Servidor indisponível ou bloqueio de CORS. Verifique HTTPS e permissões da API.';

@@ -189,6 +189,7 @@ const DEFAULT_NETWORK_ERROR_MESSAGE = 'Servidor indisponível ou bloqueio de COR
 function createNetworkError(message, originalError) {
   const error = new Error(message || DEFAULT_NETWORK_ERROR_MESSAGE)
   error.name = 'NetworkError'
+  error.isNetworkError = true
   if (originalError && typeof originalError === 'object') {
     try {
       error.cause = originalError
@@ -328,6 +329,366 @@ if (typeof window !== 'undefined') {
   window.trekkoResolveApiUrl = resolveApiUrl
 }
 
+const localExpeditionStore = (() => {
+  const STORAGE_KEY = 'trekkoGuideExpeditions'
+
+  function hasStorage() {
+    if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') {
+      return false
+    }
+    try {
+      const testKey = '__trekko_storage_test__'
+      window.localStorage.setItem(testKey, '1')
+      window.localStorage.removeItem(testKey)
+      return true
+    } catch (error) {
+      return false
+    }
+  }
+
+  function loadAll() {
+    if (!hasStorage()) return []
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY)
+      if (!raw) return []
+      const parsed = JSON.parse(raw)
+      return Array.isArray(parsed) ? parsed : []
+    } catch (error) {
+      return []
+    }
+  }
+
+  function persist(list) {
+    if (!hasStorage()) return
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+    } catch (error) {
+      // ignore persistence errors silently
+    }
+  }
+
+  function normaliseDate(value, fallback) {
+    if (!value) {
+      return fallback
+    }
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+      return fallback
+    }
+    return date.toISOString()
+  }
+
+  function toNumber(value, defaultValue = null) {
+    if (value === null || value === undefined || value === '') {
+      return defaultValue
+    }
+    const numeric = Number(value)
+    if (Number.isNaN(numeric)) {
+      return defaultValue
+    }
+    return numeric
+  }
+
+  function generateLocalId() {
+    return `local-expedition-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  }
+
+  function normaliseRecord(record) {
+    if (!record || typeof record !== 'object') return null
+    const nowIso = new Date().toISOString()
+    const startIso = normaliseDate(record.startDate, nowIso)
+    const endIso = normaliseDate(record.endDate, startIso)
+    const normalized = {
+      id: record.id || generateLocalId(),
+      localOnly: Boolean(record.localOnly),
+      pendingSync: Boolean(record.pendingSync),
+      trailId: record.trailId || '',
+      title: record.title || '',
+      description: record.description || '',
+      highlights: typeof record.highlights === 'string' ? record.highlights : '',
+      difficultyLevel: record.difficultyLevel || '',
+      startDate: startIso,
+      endDate: endIso,
+      pricePerPerson: toNumber(record.pricePerPerson, 0),
+      maxPeople: toNumber(record.maxPeople, null),
+      status: record.status || 'ACTIVE',
+      createdAt: normaliseDate(record.createdAt, nowIso),
+      updatedAt: normaliseDate(record.updatedAt, nowIso),
+      guideUserId: record.guideUserId || null,
+      guide: record.guide && typeof record.guide === 'object'
+        ? { ...record.guide }
+        : null,
+      trail: record.trail && typeof record.trail === 'object'
+        ? { ...record.trail }
+        : null,
+      trailName: record.trailName || '',
+      trailState: record.trailState || '',
+      trailCity: record.trailCity || '',
+      trailPark: record.trailPark || ''
+    }
+    if (normalized.trail) {
+      normalized.trail = {
+        id: normalized.trail.id || normalized.trailId || '',
+        name: normalized.trail.name || normalized.trailName || '',
+        state: normalized.trail.state || normalized.trailState || null,
+        city: normalized.trail.city || normalized.trailCity || null,
+        park: normalized.trail.park || normalized.trailPark || null
+      }
+    } else {
+      normalized.trail = {
+        id: normalized.trailId,
+        name: normalized.trailName || '',
+        state: normalized.trailState || null,
+        city: normalized.trailCity || null,
+        park: normalized.trailPark || null
+      }
+    }
+    return normalized
+  }
+
+  function upsert(record) {
+    const normalized = normaliseRecord(record)
+    if (!normalized) return null
+    const list = loadAll()
+    const index = list.findIndex(item => String(item.id) === String(normalized.id))
+    if (index >= 0) {
+      list[index] = { ...list[index], ...normalized, updatedAt: normalized.updatedAt }
+    } else {
+      list.push(normalized)
+    }
+    persist(list)
+    return normalized
+  }
+
+  function listAllNormalized() {
+    return loadAll()
+      .map(item => normaliseRecord(item))
+      .filter(Boolean)
+      .sort((a, b) => {
+        const aDate = new Date(a.startDate).getTime()
+        const bDate = new Date(b.startDate).getTime()
+        return aDate - bDate
+      })
+  }
+
+  function matchesStatus(expedition, status) {
+    if (!status || status === 'all') return true
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const end = new Date(expedition.endDate)
+    if (status === 'active') {
+      return end.getTime() >= today.getTime()
+    }
+    if (status === 'historic') {
+      return end.getTime() < today.getTime()
+    }
+    if (status === 'inactive') {
+      return expedition.status === 'INACTIVE'
+    }
+    if (status === 'cancelled') {
+      return expedition.status === 'CANCELLED'
+    }
+    return true
+  }
+
+  function matchesSearch(expedition, search) {
+    if (!search) return true
+    const normalized = search.toLowerCase()
+    const parts = [
+      expedition.title,
+      expedition.description,
+      expedition.trail?.name,
+      expedition.trail?.city,
+      expedition.trail?.state
+    ]
+    return parts.some(part => typeof part === 'string' && part.toLowerCase().includes(normalized))
+  }
+
+  function matchesFilters(expedition, params) {
+    const statusParam = (params.status || 'active').toString().toLowerCase()
+    if (!matchesStatus(expedition, statusParam)) {
+      return false
+    }
+    const searchParam = (params.search || params.query || '').toString().trim()
+    if (searchParam && !matchesSearch(expedition, searchParam)) {
+      return false
+    }
+    const stateParam = (params.state || '').toString().trim()
+    if (stateParam) {
+      const expeditionState = expedition.trail?.state || ''
+      if (stateParam.localeCompare(expeditionState, undefined, { sensitivity: 'accent' }) !== 0) {
+        return false
+      }
+    }
+    const trailParam = (params.trailId || params.trail || '').toString().trim()
+    if (trailParam && String(expedition.trailId) !== trailParam) {
+      return false
+    }
+    const levelParam = (params.level || '').toString().trim().toLowerCase()
+    if (levelParam && expedition.difficultyLevel.toLowerCase() !== levelParam) {
+      return false
+    }
+    const guideParam = (params.guideId || params.guideUserId || '').toString().trim()
+    if (guideParam) {
+      if (String(expedition.guideUserId || '') !== guideParam && String(expedition.guide?.id || '') !== guideParam) {
+        return false
+      }
+    }
+    const startFilter = params.startDate ? new Date(params.startDate) : null
+    if (startFilter && !Number.isNaN(startFilter.getTime())) {
+      if (new Date(expedition.startDate).getTime() < startFilter.getTime()) {
+        return false
+      }
+    }
+    const endFilter = params.endDate ? new Date(params.endDate) : null
+    if (endFilter && !Number.isNaN(endFilter.getTime())) {
+      if (new Date(expedition.endDate).getTime() > endFilter.getTime()) {
+        return false
+      }
+    }
+    return true
+  }
+
+  function filterRecords(params) {
+    return listAllNormalized().filter(expedition => matchesFilters(expedition, params || {}))
+  }
+
+  function resolvePage(params, total) {
+    const rawPage = Number.parseInt((params && params.page) || '1', 10)
+    const page = Number.isNaN(rawPage) || rawPage < 1 ? 1 : rawPage
+    const pageSizeRaw = Number.parseInt((params && params.pageSize) || '0', 10)
+    const defaultPageSize = total > 0 ? total : 1
+    const pageSize = Number.isNaN(pageSizeRaw) || pageSizeRaw < 1 ? defaultPageSize : pageSizeRaw
+    const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1
+    const currentPage = Math.min(page, totalPages)
+    const startIndex = pageSize > 0 ? (currentPage - 1) * pageSize : 0
+    const endIndex = pageSize > 0 ? startIndex + pageSize : total
+    return { page: currentPage, pageSize, totalPages, startIndex, endIndex }
+  }
+
+  function list(params = {}) {
+    const filtered = filterRecords(params)
+    const { page, pageSize, totalPages, startIndex, endIndex } = resolvePage(params, filtered.length)
+    const data = filtered.slice(startIndex, endIndex)
+    return {
+      data,
+      pagination: {
+        page,
+        pageSize,
+        total: filtered.length,
+        totalPages
+      }
+    }
+  }
+
+  function mergeList(remotePayload, params = {}) {
+    const remoteData = Array.isArray(remotePayload?.data) ? [...remotePayload.data] : []
+    const localFiltered = filterRecords(params)
+    const remoteIds = new Set(remoteData.map(item => String(item.id)))
+    const paginationRef = remotePayload?.pagination && typeof remotePayload.pagination === 'object'
+      ? remotePayload.pagination
+      : null
+    const requestedPageSize = Number.parseInt((params && params.pageSize) || '0', 10)
+    const basePageSize = !Number.isNaN(requestedPageSize) && requestedPageSize > 0
+      ? requestedPageSize
+      : (paginationRef?.pageSize || remoteData.length || localFiltered.length || 1)
+    const availableSlots = Math.max(basePageSize - remoteData.length, 0)
+    const localToAppend = localFiltered.filter(item => !remoteIds.has(String(item.id)))
+    const appended = availableSlots > 0 ? localToAppend.slice(0, availableSlots) : []
+    const combined = [...remoteData, ...appended]
+    combined.sort((a, b) => {
+      const aDate = new Date(a.startDate || a.start_date || 0).getTime()
+      const bDate = new Date(b.startDate || b.start_date || 0).getTime()
+      return aDate - bDate
+    })
+    const totalLocalMatches = localFiltered.length
+    const remoteTotal = paginationRef?.total ?? remoteData.length
+    const total = remoteTotal + totalLocalMatches
+    const page = paginationRef?.page ?? Number.parseInt((params && params.page) || '1', 10) || 1
+    const pageSize = basePageSize
+    const totalPages = pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1
+    return {
+      data: combined,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages
+      }
+    }
+  }
+
+  function getById(id) {
+    if (!id) return null
+    return listAllNormalized().find(expedition => String(expedition.id) === String(id)) || null
+  }
+
+  function extractGuideFromSession(session) {
+    const guide = session && session.user ? session.user : null
+    if (!guide) {
+      return {
+        id: null,
+        name: '',
+        email: '',
+        role: 'guide',
+        cadastur: ''
+      }
+    }
+    return {
+      id: guide.id || null,
+      name: guide.name || '',
+      email: guide.email || '',
+      role: guide.type === 'guide' ? 'guide' : guide.type,
+      cadastur: guide.cadastur || ''
+    }
+  }
+
+  function registerFromPayload(payload, { session, origin = 'remote', id: explicitId } = {}) {
+    if (!payload || typeof payload !== 'object') {
+      return null
+    }
+    const nowIso = new Date().toISOString()
+    const startIso = normaliseDate(payload.startDate, nowIso)
+    const endIso = normaliseDate(payload.endDate, startIso)
+    const record = {
+      id: explicitId || payload.id || generateLocalId(),
+      localOnly: origin !== 'remote',
+      pendingSync: origin !== 'remote',
+      trailId: payload.trailId || payload.trail || '',
+      trailName: payload.trailName || '',
+      trailState: payload.trailState || '',
+      trailCity: payload.trailCity || '',
+      trailPark: payload.trailPark || '',
+      title: payload.title || '',
+      description: payload.description || '',
+      highlights: payload.highlights || '',
+      difficultyLevel: payload.difficultyLevel || payload.level || '',
+      startDate: startIso,
+      endDate: endIso,
+      pricePerPerson: payload.pricePerPerson ?? payload.price ?? 0,
+      maxPeople: payload.maxPeople ?? payload.vacancies ?? null,
+      status: 'ACTIVE',
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      guideUserId: session && session.user ? session.user.id || null : null,
+      guide: extractGuideFromSession(session)
+    }
+    return upsert(record)
+  }
+
+  return {
+    list,
+    mergeList,
+    getById,
+    registerFromPayload,
+    hasStorage
+  }
+})()
+
+if (typeof window !== 'undefined') {
+  window.localExpeditionStore = localExpeditionStore
+}
+
 const expeditionService = (() => {
   const cache = new Map()
 
@@ -354,20 +715,28 @@ const expeditionService = (() => {
       cache.set(
         cacheKey,
         (async () => {
-          const baseUrl = resolveApiUrl('/api/expeditions')
-          const { response, data } = await safeFetchJson(
-            `${baseUrl}${buildQueryString(params)}`,
-            { headers: { Accept: 'application/json' } },
-            'Servidor indisponível. Tente novamente em instantes.'
-          )
-          const payload = data && typeof data === 'object' ? data : {}
-          if (!response.ok) {
-            const message = typeof payload.message === 'string'
-              ? payload.message
-              : 'Não foi possível carregar as expedições.'
-            throw new Error(message)
+          try {
+            const baseUrl = resolveApiUrl('/api/expeditions')
+            const { response, data } = await safeFetchJson(
+              `${baseUrl}${buildQueryString(params)}`,
+              { headers: { Accept: 'application/json' } },
+              'Servidor indisponível. Tente novamente em instantes.'
+            )
+            const payload = data && typeof data === 'object' ? data : {}
+            if (!response.ok) {
+              const message = typeof payload.message === 'string'
+                ? payload.message
+                : 'Não foi possível carregar as expedições.'
+              throw new Error(message)
+            }
+            return localExpeditionStore.mergeList(payload, params)
+          } catch (error) {
+            if (error?.name === 'NetworkError' || error?.isNetworkError) {
+              cache.delete(cacheKey)
+              return localExpeditionStore.list(params)
+            }
+            throw error
           }
-          return payload
         })()
       )
     }
@@ -388,20 +757,33 @@ const expeditionService = (() => {
       cache.set(
         cacheKey,
         (async () => {
-          const baseUrl = resolveApiUrl(`/api/expeditions/${encodeURIComponent(id)}`)
-          const { response, data } = await safeFetchJson(
-            baseUrl,
-            { headers: { Accept: 'application/json' } },
-            'Servidor indisponível. Tente novamente em instantes.'
-          )
-          const payload = data && typeof data === 'object' ? data : {}
-          if (!response.ok) {
-            const message = typeof payload.message === 'string'
-              ? payload.message
-              : 'Expedição não encontrada.'
-            throw new Error(message)
+          try {
+            const baseUrl = resolveApiUrl(`/api/expeditions/${encodeURIComponent(id)}`)
+            const { response, data } = await safeFetchJson(
+              baseUrl,
+              { headers: { Accept: 'application/json' } },
+              'Servidor indisponível. Tente novamente em instantes.'
+            )
+            const payload = data && typeof data === 'object' ? data : {}
+            if (!response.ok) {
+              const message = typeof payload.message === 'string'
+                ? payload.message
+                : 'Expedição não encontrada.'
+              throw new Error(message)
+            }
+            return payload
+          } catch (error) {
+            const local = localExpeditionStore.getById(id)
+            if (local && (error?.name === 'NetworkError' || error?.isNetworkError)) {
+              cache.delete(cacheKey)
+              return local
+            }
+            if (local && error && error.message && /não encontrada/i.test(error.message)) {
+              cache.delete(cacheKey)
+              return local
+            }
+            throw error
           }
-          return payload
         })()
       )
     }
