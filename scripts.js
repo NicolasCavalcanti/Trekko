@@ -900,10 +900,34 @@ async function setupNavigation() {
 function updateGuideExpeditionActionsForUser(user) {
   const guideActions = document.getElementById('guideExpeditionActions');
   if (!guideActions) return;
-  if (user && user.type === 'guide') {
+
+  const rawCadastur = user
+    ? user.cadastur
+      ?? user.cadasturNumber
+      ?? user.numero_cadastur
+      ?? user.numeroCadastur
+      ?? user.cadastur_number
+      ?? user.cadasturNumero
+      ?? user.cadasturId
+      ?? user.cadasturID
+    : null;
+  const cadasturText = typeof rawCadastur === 'number'
+    ? rawCadastur.toString()
+    : typeof rawCadastur === 'string'
+      ? rawCadastur
+      : '';
+  const hasValidCadastur = cadasturText.trim().length > 0;
+
+  const role = typeof user?.role === 'string' ? user.role.toLowerCase() : '';
+  const type = typeof user?.type === 'string' ? user.type.toLowerCase() : '';
+  const isGuide = role === 'guide' || role === 'guia' || type === 'guide' || type === 'guia';
+
+  if (user && isGuide && hasValidCadastur) {
     guideActions.classList.add('is-visible');
+    guideActions.removeAttribute('aria-hidden');
   } else {
     guideActions.classList.remove('is-visible');
+    guideActions.setAttribute('aria-hidden', 'true');
   }
 }
 
