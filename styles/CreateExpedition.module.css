@@ -1,0 +1,409 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f5f9f7 0%, #eef3f0 100%);
+  padding-bottom: 4rem;
+}
+
+.wrapper {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 0;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 16px 40px rgba(26, 77, 46, 0.12);
+  padding: 2.5rem 2.75rem;
+}
+
+.header {
+  margin-bottom: 2.5rem;
+}
+
+.title {
+  font-family: 'Sora', sans-serif;
+  font-size: 2rem;
+  color: #1a4d2e;
+  margin: 0 0 0.75rem;
+}
+
+.subtitle {
+  color: #4a5a58;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  max-width: 760px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sectionTitle {
+  font-family: 'Sora', sans-serif;
+  color: #1a4d2e;
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.4rem;
+}
+
+.label {
+  font-weight: 600;
+  color: #1f2a2e;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #c62828;
+  margin-left: 0.25rem;
+  font-weight: 600;
+}
+
+.input,
+.textarea,
+.select {
+  border: 1px solid #cfd8dc;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  font-size: 1rem;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: #1a4d2e;
+  box-shadow: 0 0 0 3px rgba(26, 77, 46, 0.15);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 150px;
+  line-height: 1.6;
+}
+
+.helper {
+  color: #6b7c7a;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.charCount {
+  font-size: 0.8rem;
+  color: #6b7c7a;
+  margin-top: 0.2rem;
+  text-align: right;
+}
+
+.error {
+  color: #c62828;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.trailPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.trailControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.trailResults {
+  border: 1px solid #d9e3de;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fafdfb;
+}
+
+.trailList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.trailItem {
+  border-bottom: 1px solid rgba(26, 77, 46, 0.08);
+}
+
+.trailItem:last-child {
+  border-bottom: none;
+}
+
+.trailButton {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: background 0.2s ease, border-left 0.2s ease;
+}
+
+.trailButton:hover,
+.trailButton:focus-visible {
+  background: rgba(26, 77, 46, 0.08);
+  outline: none;
+}
+
+.trailButtonSelected {
+  background: rgba(26, 77, 46, 0.12);
+  border-left: 4px solid #1a4d2e;
+}
+
+.trailName {
+  font-weight: 600;
+  color: #1f2a2e;
+}
+
+.trailMeta {
+  color: #546460;
+  font-size: 0.85rem;
+}
+
+.selectedTrail {
+  border: 1px solid rgba(26, 77, 46, 0.25);
+  background: rgba(26, 77, 46, 0.08);
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pagination {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.pagination button {
+  border: 1px solid #1a4d2e;
+  background: #ffffff;
+  color: #1a4d2e;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination button:not(:disabled):hover {
+  background: #1a4d2e;
+  color: #ffffff;
+}
+
+.imagesInput {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.imagesPreview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+}
+
+.imageThumb {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f0f4f2;
+  border: 1px solid rgba(26, 77, 46, 0.12);
+}
+
+.imageThumb img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+
+.removeImageButton {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(198, 40, 40, 0.9);
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submitBar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.submitActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.submitButton {
+  background: #1a4d2e;
+  color: #ffffff;
+  border: none;
+  border-radius: 999px;
+  padding: 0.9rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submitButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.submitButton:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 20px rgba(26, 77, 46, 0.2);
+}
+
+.secondaryButton {
+  border: 1px solid #1a4d2e;
+  color: #1a4d2e;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 0.85rem 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feedbackMessage {
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.success {
+  color: #1a7f37;
+}
+
+.errorMessage {
+  color: #c62828;
+}
+
+.statusCard {
+  max-width: 680px;
+  margin: 4rem auto;
+  background: #ffffff;
+  padding: 2.5rem 2rem;
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(26, 77, 46, 0.1);
+  text-align: center;
+}
+
+.statusTitle {
+  font-family: 'Sora', sans-serif;
+  color: #1a4d2e;
+  font-size: 1.6rem;
+  margin-bottom: 1rem;
+}
+
+.statusDescription {
+  color: #4f5f5c;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.statusActions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.loadingMessage {
+  color: #4f5f5c;
+  font-size: 1rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(26, 77, 46, 0.12);
+  color: #1a4d2e;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .card {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .wrapper {
+    padding: 2rem 1rem 0;
+  }
+
+  .card {
+    border-radius: 16px;
+  }
+
+  .submitActions {
+    width: 100%;
+  }
+
+  .submitButton,
+  .secondaryButton {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
