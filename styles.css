@@ -2188,10 +2188,18 @@ footer {
   color: #c62828;
 }
 
+
+.expeditions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
 .guide-expedition-actions {
   display: none;
   justify-content: flex-end;
-  margin-bottom: 1.5rem;
 }
 
 .expeditions-tabs {
@@ -2248,16 +2256,30 @@ footer {
 
 .guide-expedition-actions .btn {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.guide-expedition-actions .btn i {
+  font-size: 0.85rem;
 }
 
 @media (max-width: 640px) {
+  .expeditions-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .guide-expedition-actions {
     justify-content: flex-start;
+    width: 100%;
   }
 
   .guide-expedition-actions .btn {
     width: 100%;
     text-align: center;
+    justify-content: center;
   }
 }
 

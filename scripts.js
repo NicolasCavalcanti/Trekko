@@ -900,7 +900,15 @@ async function setupNavigation() {
 function updateGuideExpeditionActionsForUser(user) {
   const guideActions = document.getElementById('guideExpeditionActions');
   if (!guideActions) return;
-  if (user && user.type === 'guide') {
+  const cadasturValue = user ? user.cadastur : null;
+  const hasValidCadastur = Boolean(
+    typeof cadasturValue === 'string'
+      ? cadasturValue.trim().length > 0
+      : typeof cadasturValue === 'number'
+        ? cadasturValue.toString().trim().length > 0
+        : false
+  );
+  if (user && user.type === 'guide' && hasValidCadastur) {
     guideActions.classList.add('is-visible');
   } else {
     guideActions.classList.remove('is-visible');
