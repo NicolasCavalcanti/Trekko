@@ -6,6 +6,95 @@ import prisma from '../../../lib/prisma'
 import { verifyAuthToken } from '../../../lib/authToken'
 
 const MAX_PAGE_SIZE = 50
+const MAX_UPLOAD_IMAGES = 5
+const ACCEPTED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const ACCEPTED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp']
+
+function parseBrazilianDateString(value: string): Date | null {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value.trim())
+  if (!match) {
+    return null
+  }
+
+  const [, dayStr, monthStr, yearStr] = match
+  const day = Number.parseInt(dayStr, 10)
+  const monthIndex = Number.parseInt(monthStr, 10) - 1
+  const year = Number.parseInt(yearStr, 10)
+
+  if (
+    Number.isNaN(day)
+    || Number.isNaN(monthIndex)
+    || Number.isNaN(year)
+    || day < 1
+    || monthIndex < 0
+    || monthIndex > 11
+    || year < 1900
+  ) {
+    return null
+  }
+
+  const date = new Date(Date.UTC(year, monthIndex, day))
+  if (
+    date.getUTCFullYear() !== year
+    || date.getUTCMonth() !== monthIndex
+    || date.getUTCDate() !== day
+  ) {
+    return null
+  }
+
+  return date
+}
+
+function isAllowedImagePayload(value: string): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return false
+  }
+
+  if (trimmed.startsWith('data:')) {
+    const match = /^data:(image\/[a-z0-9+.-]+);base64,/i.exec(trimmed)
+    if (!match) {
+      return false
+    }
+    return ACCEPTED_IMAGE_MIME_TYPES.has(match[1].toLowerCase())
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    const lower = trimmed.toLowerCase()
+    return ACCEPTED_IMAGE_EXTENSIONS.some(ext => lower.endsWith(ext))
+  }
+
+  return false
+}
+
+function sanitizeImageArray(input: unknown): string[] {
+  if (input === undefined || input === null) {
+    return []
+  }
+  if (!Array.isArray(input)) {
+    throw new Error('INVALID_IMAGE_PAYLOAD')
+  }
+  if (input.length > MAX_UPLOAD_IMAGES) {
+    throw new Error('TOO_MANY_IMAGES')
+  }
+
+  const sanitized: string[] = []
+  for (const value of input) {
+    if (typeof value !== 'string') {
+      throw new Error('INVALID_IMAGE_PAYLOAD')
+    }
+    const trimmed = value.trim()
+    if (!trimmed) {
+      continue
+    }
+    if (!isAllowedImagePayload(trimmed)) {
+      throw new Error('INVALID_IMAGE_TYPE')
+    }
+    sanitized.push(trimmed)
+  }
+
+  return sanitized
+}
 
 type GuideUser = Prisma.UserGetPayload<{ include: { guide: true } }>
 
@@ -40,7 +129,17 @@ function parseDate(value: string): Date | null {
   if (!value) {
     return null
   }
-  const date = new Date(value)
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const brazilianFormat = parseBrazilianDateString(trimmed)
+  if (brazilianFormat) {
+    return brazilianFormat
+  }
+
+  const date = new Date(trimmed)
   if (Number.isNaN(date.getTime())) {
     return null
   }
@@ -50,6 +149,10 @@ function parseDate(value: string): Date | null {
 function startOfToday(): Date {
   const now = new Date()
   return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+}
+
+function normalizeToStartOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
 async function findGuideUserByEmail(email: string): Promise<GuideUser | null> {
@@ -342,6 +445,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     endDate: expedition.endDate.toISOString(),
     pricePerPerson: Number(expedition.pricePerPerson),
     maxPeople: expedition.maxPeople,
+    images: expedition.images ?? [],
     status: expedition.status,
     createdAt: expedition.createdAt.toISOString(),
     updatedAt: expedition.updatedAt.toISOString(),
@@ -416,7 +520,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     startDate,
     endDate,
     pricePerPerson,
-    maxPeople
+    maxPeople,
+    images
   } = req.body as Record<string, unknown>
 
   const normalizedTrailId = String(trailId ?? '').trim()
@@ -424,20 +529,17 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ message: 'Trilha obrigatória.' })
   }
 
-  const normalizedTitle = String(title ?? '').trim()
-  if (!normalizedTitle) {
-    return res.status(400).json({ message: 'Título é obrigatório.' })
-  }
+  const normalizedTitleInput = typeof title === 'string' ? title.trim() : ''
 
   const normalizedDescription = String(description ?? '').trim()
   if (!normalizedDescription) {
     return res.status(400).json({ message: 'Descrição é obrigatória.' })
   }
-
-  const normalizedDifficulty = String(difficultyLevel ?? '').trim()
-  if (!normalizedDifficulty) {
-    return res.status(400).json({ message: 'Nível de dificuldade é obrigatório.' })
+  if (normalizedDescription.length < 50) {
+    return res.status(400).json({ message: 'Descrição deve ter pelo menos 50 caracteres.' })
   }
+
+  const normalizedDifficultyInput = typeof difficultyLevel === 'string' ? difficultyLevel.trim() : ''
 
   const start = parseDate(String(startDate ?? ''))
   const end = parseDate(String(endDate ?? ''))
@@ -445,8 +547,16 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ message: 'Datas inválidas.' })
   }
 
-  if (end < start) {
-    return res.status(400).json({ message: 'Data de término deve ser posterior à data de início.' })
+  const normalizedStart = normalizeToStartOfDay(start)
+  const normalizedEnd = normalizeToStartOfDay(end)
+  const today = startOfToday()
+
+  if (normalizedStart < today) {
+    return res.status(400).json({ message: 'Data inicial deve ser igual ou posterior à data atual.' })
+  }
+
+  if (normalizedEnd < normalizedStart) {
+    return res.status(400).json({ message: 'Data final deve ser igual ou posterior à data inicial.' })
   }
 
   const price = typeof pricePerPerson === 'string' || typeof pricePerPerson === 'number'
@@ -463,35 +573,51 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
     return res.status(400).json({ message: 'Número máximo de pessoas inválido.' })
   }
 
+  let sanitizedImages: string[] = []
+  try {
+    sanitizedImages = sanitizeImageArray(images as unknown)
+  } catch (error) {
+    const code = (error as Error).message
+    if (code === 'TOO_MANY_IMAGES') {
+      return res.status(400).json({ message: 'É permitido enviar até 5 imagens.' })
+    }
+    return res.status(400).json({ message: 'Imagens inválidas. Utilize arquivos JPG, PNG ou WEBP.' })
+  }
+
+  const persistedTrailName = String(trailName ?? '').trim()
   const persistedTrail = await prisma.trail.upsert({
     where: { id: normalizedTrailId },
     create: {
       id: normalizedTrailId,
-      name: String(trailName ?? normalizedTitle).trim() || normalizedTitle,
+      name: persistedTrailName || normalizedTitleInput || normalizedTrailId,
       state: String(trailState ?? '').trim() || null,
       city: String(trailCity ?? '').trim() || null,
       park: String(trailPark ?? '').trim() || null
     },
     update: {
-      name: String(trailName ?? normalizedTitle).trim() || normalizedTitle,
+      name: persistedTrailName || normalizedTitleInput || normalizedTrailId,
       state: String(trailState ?? '').trim() || null,
       city: String(trailCity ?? '').trim() || null,
       park: String(trailPark ?? '').trim() || null
     }
   })
 
+  const finalTitle = normalizedTitleInput || `Expedição ${persistedTrail.name}`
+  const finalDifficulty = normalizedDifficultyInput || 'personalizado'
+
   const expedition = await prisma.expedition.create({
     data: {
       trailId: persistedTrail.id,
       guideUserId: user.id,
-      title: normalizedTitle,
+      title: finalTitle,
       description: normalizedDescription,
       highlights: String(highlights ?? '').trim() || null,
-      difficultyLevel: normalizedDifficulty,
-      startDate: start,
-      endDate: end,
+      difficultyLevel: finalDifficulty,
+      startDate: normalizedStart,
+      endDate: normalizedEnd,
       pricePerPerson: new Prisma.Decimal(price.toFixed(2)),
       maxPeople: maxPeopleValue,
+      images: sanitizedImages,
       status: ExpeditionStatus.ACTIVE
     }
   })

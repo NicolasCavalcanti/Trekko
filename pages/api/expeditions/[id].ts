@@ -70,6 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       endDate: expedition.endDate.toISOString(),
       pricePerPerson: Number(expedition.pricePerPerson),
       maxPeople: expedition.maxPeople,
+      images: expedition.images ?? [],
       status: expedition.status,
       createdAt: expedition.createdAt.toISOString(),
       updatedAt: expedition.updatedAt.toISOString(),
