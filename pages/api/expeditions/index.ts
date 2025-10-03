@@ -4,6 +4,7 @@ import { Prisma, ExpeditionStatus, UserRole } from '@prisma/client'
 
 import prisma from '../../../lib/prisma'
 import { verifyAuthToken } from '../../../lib/authToken'
+import { hashPassword } from '../../../lib/password'
 
 const MAX_PAGE_SIZE = 50
 const MAX_UPLOAD_IMAGES = 5
@@ -98,8 +99,9 @@ function sanitizeImageArray(input: unknown): string[] {
 
 type GuideUser = Prisma.UserGetPayload<{ include: { guide: true } }>
 
-function generatePlaceholderPassword(): string {
-  return crypto.randomBytes(32).toString('hex')
+async function generatePlaceholderPasswordHash(): Promise<string> {
+  const random = crypto.randomBytes(32).toString('hex')
+  return hashPassword(random)
 }
 
 function getQueryValue(value: string | string[] | undefined): string {
@@ -262,6 +264,9 @@ async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof ver
     .filter(Boolean)
     .join(', ')
 
+  const existingGuide = await prisma.guide.findUnique({ where: { cadastur } })
+  const guidePasswordHash = existingGuide?.password ?? (await generatePlaceholderPasswordHash())
+
   const guide = await prisma.guide.upsert({
     where: { cadastur },
     create: {
@@ -272,7 +277,10 @@ async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof ver
       uf: state,
       city,
       validity,
-      specialties: specialties || null
+      specialties: specialties || null,
+      password: guidePasswordHash,
+      contacts: existingGuide?.contacts ?? null,
+      photoUrl: existingGuide?.photoUrl ?? null
     },
     update: {
       name,
@@ -281,7 +289,8 @@ async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof ver
       uf: state,
       city,
       validity,
-      specialties: specialties || null
+      specialties: specialties || null,
+      password: existingGuide?.password ?? guidePasswordHash
     }
   })
 
@@ -290,12 +299,13 @@ async function ensureGuideUserFromPayload(payload: Awaited<ReturnType<typeof ver
     create: {
       email,
       name,
-      password: generatePlaceholderPassword(),
+      password: guidePasswordHash,
       role: UserRole.guide,
       guideId: guide.id
     },
     update: {
       name,
+      password: guidePasswordHash,
       role: UserRole.guide,
       guideId: guide.id
     }

@@ -303,14 +303,9 @@
                             photos: [],
                             termsAccepted: document.getElementById('guideTerms').checked
                         }, window.cadasturData || null);
-                        if (registration && registration.verificationToken) {
-                            try {
-                                Auth.verifyEmail(registration.verificationToken);
-                            } catch (verificationError) {
-                                console.warn('Falha ao verificar automaticamente o guia', verificationError);
-                            }
+                        if (registration && registration.session && registration.session.user) {
+                            console.info('Sessão criada para o guia', registration.session.user);
                         }
-                        await Auth.login(guideEmail, guidePassword);
                         resultMessage.innerHTML = '<span class="success">Cadastro de guia realizado com sucesso! Redirecionando para a página inicial...</span>';
                         setTimeout(() => {
                             window.location.href = 'index.html';
