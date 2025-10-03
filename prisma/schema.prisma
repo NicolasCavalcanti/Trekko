@@ -29,17 +29,36 @@ enum UserRole {
 model Guide {
   id          Int               @id @default(autoincrement())
   name        String
-  email       String
+  email       String            @unique
+  password    String            @map("senha")
   phone       String?
   cadastur    String            @unique
-  uf          String?
-  city        String?
+  uf          String?           @map("estado")
+  city        String?           @map("municipio")
   validity    DateTime?
   specialties String?
+  contacts    Json?             @map("contatos")
+  photoUrl    String?           @map("foto_url")
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   imports     GuideImportItem[]
   User        User[]
+  sessions    GuideSession[]
+}
+
+model GuideSession {
+  id               Int      @id @default(autoincrement())
+  guideId          Int
+  refreshTokenHash String   @unique @map("refresh_token_hash")
+  expiresAt        DateTime @map("expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  guide Guide @relation(fields: [guideId], references: [id], onDelete: Cascade)
+
+  @@index([guideId])
+  @@map("guide_sessions")
 }
 
 model GuideImport {
