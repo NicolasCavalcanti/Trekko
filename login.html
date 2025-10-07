@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Entrar na Trekko</title>
+  <meta name="description" content="Acesse sua conta Trekko para acompanhar trilhas, expedições e ativar seu perfil de guia." />
+  <link rel="canonical" href="https://www.trekko.com.br/login.html" />
+  <link rel="preload" href="/assets/css/main.css" as="style" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+<body>
+<a class="skip-link" href="#principal">Pular para o conteúdo</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Principal">
+    <a class="nav__logo" href="/">Trekko</a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <ul id="menu" class="nav__menu" data-state="closed">
+      <li><a href="/trilhas.html">Trilhas</a></li>
+      <li><a href="/guias.html">Guias CADASTUR</a></li>
+      <li><a href="/expedicoes.html">Expedições</a></li>
+      <li><a href="/signup.html" class="button button--ghost">Criar conta</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="principal" class="section">
+  <header class="section__header">
+    <div>
+      <h1 class="section__title">Entrar</h1>
+      <p class="section__description">Use seu e-mail e senha para acessar a Trekko. Se você é guia CADASTUR, ative sua conta após o login.</p>
+    </div>
+  </header>
+
+  <form class="form" id="loginForm" aria-label="Formulário de login" data-analytics="filter" data-category="login">
+    <div class="form__group">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" required autocomplete="email" />
+    </div>
+    <div class="form__group">
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" required autocomplete="current-password" />
+    </div>
+    <div class="form__actions">
+      <button class="button button--primary" type="submit">Entrar</button>
+      <a class="link" href="/signup.html">Criar conta</a>
+    </div>
+  </form>
+
+  <section class="section" aria-labelledby="ativar-guia">
+    <h2 id="ativar-guia" class="section__title">Ativar perfil de guia CADASTUR</h2>
+    <p>Após fazer login, valide sua titularidade na base CADASTUR para publicar expedições.</p>
+    <form class="form" id="activationForm" aria-label="Formulário de ativação de guia">
+      <div class="form__group">
+        <label for="cadasturNome">Nome completo (como no CADASTUR)</label>
+        <input id="cadasturNome" name="nome" type="text" required />
+      </div>
+      <div class="form__group">
+        <label for="cadasturNumero">Número CADASTUR</label>
+        <input id="cadasturNumero" name="cadastur" type="text" required />
+      </div>
+      <div class="form__group">
+        <label for="cadasturContato">Contato cadastrado (e-mail ou telefone)</label>
+        <input id="cadasturContato" name="contato" type="text" required />
+      </div>
+      <div class="form__group">
+        <label for="token">Código de ativação (opcional)</label>
+        <input id="token" name="token" type="text" />
+      </div>
+      <button class="button button--primary" type="submit" data-analytics="cta" data-category="guide_activation">Ativar guia</button>
+    </form>
+  </section>
+</main>
+<footer class="site-footer">
+  <nav aria-label="Rodapé">
+    <a href="/sobre.html">Sobre</a>
+    <a href="/contato.html">Contato</a>
+    <a href="/politica.html">Política e Termos</a>
+  </nav>
+  <small>© Trekko</small>
+</footer>
+<script src="/assets/js/main.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Criar expedição — Trekko</title>
+  <meta name="description" content="Publique expedições vinculadas a trilhas oficiais e controle vagas, preço e datas." />
+  <link rel="canonical" href="https://www.trekko.com.br/criar-expedicao.html" />
+  <link rel="preload" href="/assets/css/main.css" as="style" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <meta property="og:title" content="Criar expedição — Trekko" />
+  <meta property="og:type" content="website" />
+  <meta property="og:description" content="Ferramenta exclusiva para guias CADASTUR ativados organizarem suas expedições." />
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Principal">
+    <a class="nav__logo" href="/">Trekko</a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <ul id="menu" class="nav__menu" data-state="closed">
+      <li><a href="/trilhas.html">Trilhas</a></li>
+      <li><a href="/guias.html">Guias CADASTUR</a></li>
+      <li><a href="/expedicoes.html">Expedições</a></li>
+      <li><a href="/login.html" class="button button--primary">Entrar</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="conteudo" class="section">
+  <header class="section__header">
+    <div>
+      <h1 class="section__title">Cadastrar nova expedição</h1>
+      <p class="section__description">Somente guias com conta ativada podem publicar expedições. Todas as informações são obrigatórias.</p>
+    </div>
+    <p class="status-indicator" data-state="loading">Sincronizando trilhas disponíveis</p>
+  </header>
+
+  <form class="form" id="expeditionForm" aria-label="Formulário de criação de expedição">
+    <fieldset class="details-grid__item">
+      <legend>Filtrar trilhas</legend>
+      <div class="grid grid--two">
+        <label>Estado
+          <input type="text" name="estadoFiltro" placeholder="UF" maxlength="2" data-trail-filter />
+        </label>
+        <label>Cidade
+          <input type="text" name="cidadeFiltro" placeholder="Cidade" data-trail-filter />
+        </label>
+        <label>Nome da trilha
+          <input type="text" name="nomeFiltro" placeholder="Nome" data-trail-filter />
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="form__group">
+      <label for="trailId">Trilha</label>
+      <select id="trailId" name="trailId" required></select>
+    </div>
+
+    <div class="grid grid--two">
+      <label for="inicio">Data de início
+        <input id="inicio" name="inicio" type="text" inputmode="numeric" pattern="\\d{2}/\\d{2}/\\d{4}" placeholder="dd/mm/aaaa" required />
+      </label>
+      <label for="fim">Data de término
+        <input id="fim" name="fim" type="text" inputmode="numeric" pattern="\\d{2}/\\d{2}/\\d{4}" placeholder="dd/mm/aaaa" required />
+      </label>
+    </div>
+
+    <div class="grid grid--two">
+      <label for="precoPorPessoa">Preço por pessoa (R$)
+        <input id="precoPorPessoa" name="precoPorPessoa" type="number" min="0" step="0.01" required />
+      </label>
+      <label for="vagas">Vagas disponíveis
+        <input id="vagas" name="vagas" type="number" min="1" step="1" required />
+      </label>
+    </div>
+
+    <div class="form__group">
+      <label for="descricao">Descrição detalhada</label>
+      <textarea id="descricao" name="descricao" rows="5" required placeholder="Inclua logística, equipamentos obrigatórios e política de cancelamento."></textarea>
+    </div>
+
+    <div class="form__actions">
+      <button class="button button--primary" type="submit" data-analytics="cta" data-category="expedition">Publicar expedição</button>
+      <p class="muted">Ao publicar você concorda com os Termos Trekko.</p>
+    </div>
+  </form>
+</main>
+<footer class="site-footer">
+  <nav aria-label="Rodapé">
+    <a href="/sobre.html">Sobre</a>
+    <a href="/contato.html">Contato</a>
+    <a href="/politica.html">Política e Termos</a>
+  </nav>
+  <small>© Trekko</small>
+</footer>
+<script src="/assets/js/main.js" defer></script>
+</body>
+</html>

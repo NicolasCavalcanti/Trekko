@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Contato — Trekko</title>
+  <meta name="description" content="Fale com a equipe Trekko para parcerias, suporte ou dúvidas sobre trilhas e expedições." />
+  <link rel="canonical" href="https://www.trekko.com.br/contato.html" />
+  <link rel="preload" href="/assets/css/main.css" as="style" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Principal">
+    <a class="nav__logo" href="/">Trekko</a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <ul id="menu" class="nav__menu" data-state="closed">
+      <li><a href="/trilhas.html">Trilhas</a></li>
+      <li><a href="/guias.html">Guias CADASTUR</a></li>
+      <li><a href="/expedicoes.html">Expedições</a></li>
+      <li><a href="/login.html" class="button button--ghost">Entrar</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="conteudo" class="section">
+  <header class="section__header">
+    <div>
+      <h1 class="section__title">Contato</h1>
+      <p class="section__description">Envie sua mensagem para suporte, parcerias ou sugestões.</p>
+    </div>
+  </header>
+
+  <section class="section" aria-labelledby="formulario">
+    <h2 id="formulario" class="section__title">Fale com a Trekko</h2>
+    <form class="form" action="https://formspree.io/f/trekko" method="post">
+      <div class="form__group">
+        <label for="assunto">Assunto</label>
+        <select id="assunto" name="assunto" required>
+          <option value="">Selecione</option>
+          <option>Suporte</option>
+          <option>Parcerias</option>
+          <option>Problemas com expedição</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="form__group">
+        <label for="nome">Nome</label>
+        <input id="nome" name="nome" type="text" required />
+      </div>
+      <div class="form__group">
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" required />
+      </div>
+      <div class="form__group">
+        <label for="mensagem">Mensagem</label>
+        <textarea id="mensagem" name="mensagem" rows="5" required></textarea>
+      </div>
+      <div class="form__actions">
+        <button class="button button--primary" type="submit">Enviar</button>
+        <p class="muted">Tempo médio de resposta: 2 dias úteis.</p>
+      </div>
+    </form>
+  </section>
+
+  <section class="section" aria-labelledby="canais">
+    <h2 id="canais" class="section__title">Canais oficiais</h2>
+    <ul class="list">
+      <li>E-mail: <a href="mailto:contato@trekko.com.br">contato@trekko.com.br</a></li>
+      <li>WhatsApp: <a href="https://wa.me/5511999999999" rel="noopener">(11) 99999-9999</a></li>
+      <li>Endereço: Rua das Trilhas, 123 — São Paulo/SP</li>
+    </ul>
+  </section>
+</main>
+<footer class="site-footer">
+  <nav aria-label="Rodapé">
+    <a href="/sobre.html">Sobre</a>
+    <a href="/contato.html" aria-current="page">Contato</a>
+    <a href="/politica.html">Política e Termos</a>
+  </nav>
+  <small>© Trekko</small>
+</footer>
+<script src="/assets/js/main.js" defer></script>
+</body>
+</html>

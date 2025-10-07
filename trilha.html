@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Detalhe da trilha — Trekko</title>
+  <meta name="description" content="Informações detalhadas sobre trilhas oficiais: distância, nível, infraestrutura, custos e expedições futuras." />
+  <link rel="canonical" href="https://www.trekko.com.br/trilha.html" />
+  <link rel="preload" href="/assets/css/main.css" as="style" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <meta property="og:title" content="Detalhe da trilha — Trekko" />
+  <meta property="og:type" content="article" />
+  <meta property="og:description" content="Veja dados completos da trilha, logística, comentários e expedições." />
+  <meta property="og:image" content="https://cdn.trekko.com/og-trilha.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json" id="trailSchema">{"@context":"https://schema.org","@type":"TouristTrip"}</script>
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Principal">
+    <a class="nav__logo" href="/">Trekko</a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <ul id="menu" class="nav__menu" data-state="closed">
+      <li><a href="/trilhas.html">Trilhas</a></li>
+      <li><a href="/guias.html">Guias CADASTUR</a></li>
+      <li><a href="/expedicoes.html">Expedições</a></li>
+      <li><a href="/login.html" class="button button--primary">Entrar</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="conteudo" class="section" data-trail-details>
+  <header class="section__header">
+    <div>
+      <h1 class="section__title" data-trail-name>Trilha</h1>
+      <p class="section__description" data-trail-summary>Carregando informações da trilha...</p>
+      <p class="badge" data-trail-meta></p>
+      <p class="muted" data-trail-location></p>
+    </div>
+    <a class="button button--primary" href="#trailExpeditions" data-analytics="cta" data-category="trail">Agendar expedição</a>
+  </header>
+
+  <section class="section" aria-labelledby="sobre-trilha">
+    <h2 id="sobre-trilha" class="section__title">Informações gerais</h2>
+    <div class="grid grid--two">
+      <article class="details-grid__item">
+        <h3>Infraestrutura</h3>
+        <ul class="list" data-trail-infra></ul>
+      </article>
+      <article class="details-grid__item">
+        <h3>Custos</h3>
+        <table class="table table--pricing" data-trail-costs>
+          <tbody></tbody>
+        </table>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="logistica">
+    <h2 id="logistica" class="section__title">Logística e acessos</h2>
+    <div class="details-grid" data-trail-logistics data-state="loading"></div>
+  </section>
+
+  <section class="section" aria-labelledby="mapa">
+    <h2 id="mapa" class="section__title">Mapa da trilha</h2>
+    <div class="iframe-wrapper">
+      <iframe data-trail-map title="Mapa da trilha" loading="lazy" allowfullscreen></iframe>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="expedicoes">
+    <div class="section__header">
+      <h2 id="expedicoes" class="section__title">Próximas expedições</h2>
+      <a class="button button--ghost" href="/expedicoes.html" data-analytics="cta" data-category="trail">Ver todas as expedições</a>
+    </div>
+    <div id="trailExpeditions" class="grid" data-state="loading" aria-live="polite"></div>
+  </section>
+
+  <section class="section" id="trailComments" aria-labelledby="comentarios">
+    <div class="section__header">
+      <h2 id="comentarios" class="section__title">Comentários da comunidade</h2>
+    </div>
+    <p class="status-indicator" data-state="loading">Carregando comentários</p>
+    <div data-comments-list class="grid" aria-live="polite"></div>
+    <form class="form comment-form" id="commentForm" aria-label="Enviar comentário" method="post">
+      <div class="form__group">
+        <label for="mensagem">Compartilhe sua experiência</label>
+        <textarea id="mensagem" name="mensagem" rows="4" required minlength="10" placeholder="Conte como foi sua expedição"></textarea>
+      </div>
+      <div class="form__actions">
+        <button class="button button--primary" type="submit">Publicar comentário</button>
+        <p class="muted">Necessário estar autenticado.</p>
+      </div>
+    </form>
+  </section>
+
+  <div data-trail-status class="status-indicator" data-state="loading">Carregando detalhes</div>
+</main>
+<footer class="site-footer">
+  <nav aria-label="Rodapé">
+    <a href="/sobre.html">Sobre</a>
+    <a href="/contato.html">Contato</a>
+    <a href="/politica.html">Política e Termos</a>
+  </nav>
+  <small>© Trekko</small>
+</footer>
+<script>
+  (function(){
+    const params=new URLSearchParams(location.search);
+    const id=params.get('id');
+    if(id){
+      const form=document.getElementById('commentForm');
+      if(form){form.dataset.trailId=id;}
+    }
+  })();
+</script>
+<script src="/assets/js/main.js" defer></script>
+</body>
+</html>
