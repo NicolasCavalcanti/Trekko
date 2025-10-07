@@ -18,6 +18,19 @@
     autocompleteActiveIndex: -1,
   };
 
+  const resolveRelativeUrl = (input) => {
+    if (typeof input !== 'string' || !input) return input;
+    if (/^(?:[a-z]+:)?\/\//i.test(input) || input.startsWith('mailto:') || input.startsWith('tel:')) {
+      return input;
+    }
+    try {
+      return new URL(input, document.baseURI).toString();
+    } catch (error) {
+      console.warn('Não foi possível resolver a URL relativa', input, error);
+      return input;
+    }
+  };
+
   const debounce = (fn, delay = 250) => {
     let timer;
     return (...args) => {
@@ -57,7 +70,7 @@
   };
 
   const fetchJSON = async (url, options = {}) => {
-    const response = await fetch(url, {
+    const response = await fetch(resolveRelativeUrl(url), {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -113,7 +126,7 @@
 
     const link = document.createElement('a');
     link.className = 'button button--ghost';
-    link.href = `/trilha.html?id=${encodeURIComponent(trail?.id)}`;
+    link.setAttribute('href', resolveRelativeUrl(`trilha.html?id=${encodeURIComponent(trail?.id)}`));
     link.textContent = 'Ver detalhes';
     body.appendChild(link);
 
@@ -161,7 +174,7 @@
 
     const profile = document.createElement('a');
     profile.className = 'button button--primary';
-    profile.href = `/guia.html?id=${encodeURIComponent(guide?.id)}`;
+    profile.setAttribute('href', resolveRelativeUrl(`guia.html?id=${encodeURIComponent(guide?.id)}`));
     profile.textContent = 'Ver perfil';
     actions.appendChild(profile);
 
@@ -188,7 +201,7 @@
         <h3>${stateData.uf}</h3>
         <p class="muted">${stateData.cidade || ''}</p>
       </div>
-      <a class="button button--ghost" href="/trilhas.html?estado=${stateData.uf}">Explorar</a>
+      <a class="button button--ghost" href="${resolveRelativeUrl(`trilhas.html?estado=${stateData.uf}`)}">Explorar</a>
     `;
     return article;
   };
@@ -272,8 +285,8 @@
         return;
       }
       try {
-        const data = await fetchJSON(`/api/search/autocomplete?q=${encodeURIComponent(value)}`);
-        const items = (data?.results || []).map((result) => ({
+        const data = await fetchJSON(`api/search?s=${encodeURIComponent(value)}`);
+        const items = (data?.items || data?.results || []).map((result) => ({
           label: `${result.nome} — ${result.cidade || result.parque || result.estado || ''}`.trim(),
           value: result.nome || result.cidade || result.estado,
         }));
@@ -337,7 +350,7 @@
     if (trailContainer) {
       updateDataState(trailContainer, 'loading');
       try {
-        const data = await fetchJSON('/api/trails?limit=10&sort=featured');
+        const data = await fetchJSON('api/trails?limit=10&sort=trending');
         const trails = data?.data || data?.results || [];
         if (!trails.length) {
           updateDataState(trailContainer, 'empty');
@@ -356,7 +369,7 @@
     if (guideContainer) {
       updateDataState(guideContainer, 'loading');
       try {
-        const data = await fetchJSON('/api/guides?limit=4&sort=featured');
+        const data = await fetchJSON('api/guides?limit=8&sort=recent');
         const guides = data?.data || data?.results || [];
         if (!guides.length) {
           updateDataState(guideContainer, 'empty');
@@ -375,7 +388,7 @@
     if (estadosGrid) {
       updateDataState(estadosGrid, 'loading');
       try {
-        const data = await fetchJSON('/api/trails/states');
+        const data = await fetchJSON('api/trails/states-count');
         const states = data?.data || data?.results || [];
         if (!states.length) {
           updateDataState(estadosGrid, 'empty');
@@ -464,7 +477,7 @@
     const loadTrails = async () => {
       updateDataState(listContainer, 'loading');
       const params = buildQuery();
-      const url = `/api/trails?${params.toString()}`;
+      const url = `api/trails?${params.toString()}`;
       try {
         const data = await fetchJSON(url);
         const trails = data?.data || data?.results || [];
@@ -544,7 +557,7 @@
     if (status) status.dataset.state = 'loading';
 
     try {
-      const trail = await fetchJSON(`/api/trails/${encodeURIComponent(id)}`);
+      const trail = await fetchJSON(`api/trails/${encodeURIComponent(id)}`);
       renderTrailDetail(trail);
       if (status) status.dataset.state = 'ready';
       if (trail?.nome) {
@@ -651,7 +664,7 @@
     if (!container) return;
     updateDataState(container, 'loading');
     try {
-      const data = await fetchJSON(`/api/expeditions?trailId=${encodeURIComponent(trailId)}&from=${encodeURIComponent(new Date().toISOString())}`);
+      const data = await fetchJSON(`api/expeditions?trailId=${encodeURIComponent(trailId)}&from=${encodeURIComponent(new Date().toISOString())}`);
       const expeditions = data?.data || data?.results || [];
       container.innerHTML = '';
       if (!expeditions.length) {
@@ -680,7 +693,7 @@
       </p>
       <p>${expedition?.descricao || ''}</p>
       <p class="badge">${formatCurrency(expedition?.precoPorPessoa)} por pessoa</p>
-      <a class="button button--primary" href="/expedicoes.html?trailId=${encodeURIComponent(expedition?.trailId)}">Agendar</a>
+      <a class="button button--primary" href="${resolveRelativeUrl(`expedicoes.html?trailId=${encodeURIComponent(expedition?.trailId)}`)}">Agendar</a>
     `;
     return article;
   };
@@ -692,7 +705,7 @@
     const status = container.querySelector('.status-indicator');
     if (status) status.dataset.state = 'loading';
     try {
-      const data = await fetchJSON(`/api/trails/${encodeURIComponent(trailId)}/comments`);
+      const data = await fetchJSON(`api/trails/${encodeURIComponent(trailId)}/comments`);
       const comments = data?.data || data?.results || [];
       list.innerHTML = '';
       if (!comments.length) {
@@ -730,7 +743,7 @@
       const trailId = form.dataset.trailId;
       try {
         const payload = Object.fromEntries(formData.entries());
-        await fetchJSON(`/api/trails/${encodeURIComponent(trailId)}/comments`, {
+        await fetchJSON(`api/trails/${encodeURIComponent(trailId)}/comments`, {
           method: 'POST',
           body: JSON.stringify(payload),
         });
@@ -781,7 +794,7 @@
       if (!params.get('page')) params.set('page', '1');
       if (!params.get('limit')) params.set('limit', '30');
       try {
-        const data = await fetchJSON(`/api/guides?${params.toString()}`);
+        const data = await fetchJSON(`api/guides?${params.toString()}`);
         const guides = data?.data || data?.results || [];
         const meta = data?.meta || { page: Number(params.get('page')), totalPages: 1 };
         list.innerHTML = '';
@@ -843,7 +856,7 @@
     const status = container.querySelector('.status-indicator');
     if (status) status.dataset.state = 'loading';
     try {
-      const guide = await fetchJSON(`/api/guides/${encodeURIComponent(id)}`);
+      const guide = await fetchJSON(`api/guides/${encodeURIComponent(id)}`);
       renderGuideProfile(guide);
       if (status) status.dataset.state = 'ready';
       loadGuideExpeditions(id);
@@ -918,7 +931,7 @@
     if (!container) return;
     updateDataState(container, 'loading');
     try {
-      const data = await fetchJSON(`/api/expeditions?guideId=${encodeURIComponent(guideId)}`);
+      const data = await fetchJSON(`api/expeditions?guideId=${encodeURIComponent(guideId)}`);
       const expeditions = data?.data || data?.results || [];
       container.innerHTML = '';
       if (!expeditions.length) {
@@ -949,7 +962,7 @@
         if (stateField?.value) filters.set('estado', stateField.value);
         if (cityField?.value) filters.set('cidade', cityField.value);
         if (nameField?.value) filters.set('nome', nameField.value);
-        const data = await fetchJSON(`/api/trails?${filters.toString()}&limit=50`);
+        const data = await fetchJSON(`api/trails?${filters.toString()}&limit=50`);
         const trails = data?.data || data?.results || [];
         trailSelect.innerHTML = '<option value="" disabled selected>Selecione uma trilha</option>';
         trails.forEach((trail) => {
@@ -979,7 +992,7 @@
       }
       const payload = Object.fromEntries(new FormData(form).entries());
       try {
-        await fetchJSON('/api/expeditions', {
+        await fetchJSON('api/expeditions', {
           method: 'POST',
           body: JSON.stringify(payload),
         });
@@ -1025,7 +1038,7 @@
       updateDataState(list, 'loading');
       const params = buildQuery();
       try {
-        const data = await fetchJSON(`/api/expeditions?${params.toString()}`);
+        const data = await fetchJSON(`api/expeditions?${params.toString()}`);
         const expeditions = data?.data || data?.results || [];
         const meta = data?.meta || { page: Number(params.get('page')), totalPages: 1 };
         list.innerHTML = '';
@@ -1082,7 +1095,7 @@
         event.preventDefault();
         const payload = Object.fromEntries(new FormData(loginForm).entries());
         try {
-          await fetchJSON('/api/auth/login', {
+          await fetchJSON('api/auth/login', {
             method: 'POST',
             body: JSON.stringify(payload),
           });
@@ -1099,7 +1112,7 @@
         event.preventDefault();
         const payload = Object.fromEntries(new FormData(signupForm).entries());
         try {
-          await fetchJSON('/api/auth/signup', {
+          await fetchJSON('api/auth/signup', {
             method: 'POST',
             body: JSON.stringify(payload),
           });
@@ -1118,7 +1131,7 @@
       event.preventDefault();
       const payload = Object.fromEntries(new FormData(activationForm).entries());
       try {
-        await fetchJSON('/api/auth/activate-guide', {
+        await fetchJSON('api/auth/activate-guide', {
           method: 'POST',
           body: JSON.stringify(payload),
         });
@@ -1143,7 +1156,7 @@
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
         try {
-          await fetch('/api/admin/cadastur', {
+          await fetch(resolveRelativeUrl('api/admin/cadastur'), {
             method: 'POST',
             body: formData,
           });
