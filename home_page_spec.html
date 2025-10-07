@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>TreKKo Home Page Functional Specification</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      background-color: #f5f5f5;
+      color: #1e1e1e;
+    }
+
+    body {
+      margin: 0;
+      padding: 2.5rem;
+      max-width: 960px;
+      margin-left: auto;
+      margin-right: auto;
+      background-color: #ffffff;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      color: #1e3a5f;
+      margin-top: 2.25rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+    }
+
+    h2 {
+      font-size: 1.9rem;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      color: #2d6a4f;
+    }
+
+    p {
+      margin: 0 0 1rem 0;
+    }
+
+    ul {
+      list-style: disc inside;
+      margin: 0 0 1.4rem 0;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    .palette {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.4rem;
+    }
+
+    .swatch {
+      width: 110px;
+      height: 110px;
+      border-radius: 12px;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .swatch span {
+      font-size: 0.8rem;
+      opacity: 0.85;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1.8rem;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      border: 1px solid rgba(30, 58, 95, 0.15);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: rgba(45, 106, 79, 0.1);
+      font-weight: 700;
+    }
+
+    .tag-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.6rem;
+    }
+
+    .tag {
+      background-color: rgba(30, 58, 95, 0.08);
+      color: #1e3a5f;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .section-intro {
+      background: linear-gradient(135deg, rgba(45, 106, 79, 0.1), rgba(30, 58, 95, 0.15));
+      padding: 1.5rem;
+      border-radius: 14px;
+      margin-bottom: 2rem;
+      color: #1e3a5f;
+    }
+
+    .section-intro h2 {
+      margin-top: 0;
+      color: inherit;
+    }
+
+    .grid-specs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .grid-card {
+      background-color: rgba(231, 217, 192, 0.35);
+      border-radius: 14px;
+      padding: 1.25rem;
+      border: 1px solid rgba(124, 75, 42, 0.2);
+    }
+
+    .grid-card h4 {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      color: #7c4b2a;
+    }
+
+    .steps {
+      counter-reset: step;
+    }
+
+    .steps li {
+      position: relative;
+      padding-left: 3.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .steps li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.1rem;
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2d6a4f, #1e3a5f);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(30, 58, 95, 0.2);
+      font-size: 0.9rem;
+      color: rgba(51, 51, 51, 0.8);
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 1.5rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      h2 {
+        font-size: 1.6rem;
+      }
+
+      h3 {
+        font-size: 1.35rem;
+      }
+
+      .swatch {
+        width: 100px;
+        height: 100px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TreKKo Home Page Functional Specification</h1>
+    <p class="section-intro">
+      Documento detalhado para orientar os times de produto, design e engenharia na construção da página inicial do TreKKo,
+      enfatizando uma experiência de descoberta de trilhas e expedições, sincronização com os dados oficiais do BD_CADASTUR e
+      alinhamento com os padrões de autenticação, desempenho e observabilidade da plataforma.
+    </p>
+  </header>
+
+  <section>
+    <h2>1. Objetivos</h2>
+    <ul>
+      <li>Entregar uma landing page visualmente envolvente inspirada na experiência do Airbnb.</li>
+      <li>Exibir dados reais de trilhas, parques e expedições (sem uso de mocks).</li>
+      <li>Habilitar descoberta geoespacial com transições fluidas entre listagem e mapa.</li>
+      <li>Suportar fluxos de ativação de guias baseados no registro BD_CADASTUR.</li>
+      <li>Manter altos padrões de desempenho, acessibilidade, SEO e observabilidade.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Layout e Arquitetura da Informação</h2>
+
+    <article>
+      <h3>2.1 Cabeçalho</h3>
+      <div class="palette" aria-label="Paleta de cores TreKKo">
+        <div class="swatch" style="background-color: #2D6A4F;">#2D6A4F<span>Verde Floresta</span></div>
+        <div class="swatch" style="background-color: #7C4B2A;">#7C4B2A<span>Marrom Terra</span></div>
+        <div class="swatch" style="background-color: #1E3A5F;">#1E3A5F<span>Azul Petróleo</span></div>
+        <div class="swatch" style="background-color: #E7D9C0; color: #333;">#E7D9C0<span>Bege</span></div>
+        <div class="swatch" style="background-color: #333333;">#333333<span>Grafite</span></div>
+      </div>
+      <ul>
+        <li><strong>Logo:</strong> aplicação da paleta TreKKo acima.</li>
+        <li><strong>Pílula de busca principal:</strong>
+          <ul>
+            <li>Placeholder: <em>Buscar por trilha, parque, cidade ou estado</em>.</li>
+            <li>Sugestões automáticas alimentadas por datasets de trilhas, parques, cidades e estados.</li>
+            <li>Botão com ícone de busca dispara submissão.</li>
+          </ul>
+        </li>
+        <li><strong>Ações à direita:</strong> Favoritos (usuários autenticados), Ajuda/FAQ e menu do usuário (Entrar, Perfil, Minhas reservas, Sair).</li>
+        <li><strong>Comportamento responsivo:</strong>
+          <ul>
+            <li>Reduzir cabeçalho e compactar busca ao rolar.</li>
+            <li>No mobile, centralizar a busca com botão flutuante para acessibilidade.</li>
+          </ul>
+        </li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>2.2 Carrossel de Categorias</h3>
+      <p>Carrossel horizontal de filtros rápidos com ícones pictográficos.</p>
+      <div class="tag-group" aria-label="Categorias iniciais">
+        <span class="tag">Montanha</span>
+        <span class="tag">Cachoeira</span>
+        <span class="tag">Parques Nacionais</span>
+        <span class="tag">Pet-friendly</span>
+        <span class="tag">Multi-day</span>
+        <span class="tag">Trilhas curtas</span>
+        <span class="tag">Trilhas com camping</span>
+      </div>
+      <p>Cada seleção aplica o filtro correspondente via módulo de busca.</p>
+    </article>
+
+    <article>
+      <h3>2.3 Grade de Trilhas e Expedições</h3>
+      <div class="grid-specs">
+        <div class="grid-card">
+          <h4>Layout Responsivo</h4>
+          <ul>
+            <li>4 colunas no desktop.</li>
+            <li>2 colunas em tablets.</li>
+            <li>1 coluna em dispositivos móveis.</li>
+          </ul>
+        </div>
+        <div class="grid-card">
+          <h4>Conteúdo dos Cards</h4>
+          <ul>
+            <li>Imagem de capa com carrossel no hover (desktop) e gesto de swipe no mobile.</li>
+            <li>Nome da trilha e metadados do parque/região.</li>
+            <li>Cidade e UF.</li>
+            <li>Dificuldade, distância, ganho de elevação.</li>
+            <li>Preço da expedição (quando existir).</li>
+            <li>Avaliação média com ícone de estrela e contagem de reviews.</li>
+            <li>Badges: Pet-friendly, Guia obrigatório, Camping permitido.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article>
+      <h3>2.4 Alternância para Mapa</h3>
+      <ul>
+        <li>Botão "Ver no mapa" transforma o layout em divisão 50/50: lista à esquerda e mapa à direita.</li>
+        <li><strong>Interações:</strong>
+          <ul>
+            <li>Pins representam trilhas/expedições filtradas na visão atual.</li>
+            <li>Selecionar um pin destaca e rola até o card associado.</li>
+            <li>Selecionar um card foca o pin correspondente no mapa.</li>
+          </ul>
+        </li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>2.5 Como Funciona</h3>
+      <ul class="steps">
+        <li>Encontrar trilha ideal.</li>
+        <li>Reservar com guias certificados no CADASTUR.</li>
+        <li>Viver a experiência com segurança e sustentabilidade.</li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>2.6 Destinos em Alta</h3>
+      <p>Carrossel que destaca os estados/regiões mais buscados.</p>
+      <ul>
+        <li>Exibir nome do destino.</li>
+        <li>Contagem em tempo real de trilhas disponíveis.</li>
+        <li>Imagem hero proveniente da primeira trilha daquele local.</li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>2.7 Rodapé</h3>
+      <ul>
+        <li>Links: Sobre, Contato, Política de Privacidade, Termos de Uso.</li>
+        <li>Ícones de redes sociais e placeholder para botão "Baixar App".</li>
+        <li>Seletor de idioma: pt-BR (padrão) e en-US.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section>
+    <h2>3. Dados e Integrações</h2>
+    <article>
+      <h3>3.1 BD_CADASTUR</h3>
+      <p>Fonte oficial para cadastro de guias.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Campo obrigatório</th>
+            <th>Descrição</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>cadastur_numero</td>
+            <td>Código de identificação CADASTUR.</td>
+          </tr>
+          <tr>
+            <td>nome_completo</td>
+            <td>Nome do guia conforme cadastro oficial.</td>
+          </tr>
+          <tr>
+            <td>uf</td>
+            <td>Unidade federativa.</td>
+          </tr>
+          <tr>
+            <td>municipio</td>
+            <td>Município associado.</td>
+          </tr>
+          <tr>
+            <td>contato_email</td>
+            <td>E-mail para contato.</td>
+          </tr>
+          <tr>
+            <td>whatsapp</td>
+            <td>Número de WhatsApp.</td>
+          </tr>
+          <tr>
+            <td>instagram</td>
+            <td>Conta do Instagram.</td>
+          </tr>
+          <tr>
+            <td>foto_url</td>
+            <td>URL da foto do guia.</td>
+          </tr>
+          <tr>
+            <td>status_cadastur</td>
+            <td>Status de validação no CADASTUR.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Atualizado via upload de CSV pelo painel administrativo com sincronização de staging para produção.</p>
+    </article>
+
+    <article>
+      <h3>3.2 Tabelas da Plataforma</h3>
+      <ul>
+        <li><strong>users:</strong> gerencia autenticação e tipos de usuário (<em>trekker</em>, <em>guia</em>).</li>
+        <li><strong>guides:</strong> vincula usuários a entradas do BD_CADASTUR e controla status de ativação.</li>
+        <li><strong>trails</strong>, <strong>expeditions</strong>, <strong>reviews</strong>: alimentam conteúdo da home e resultados de busca.</li>
+      </ul>
+    </article>
+
+    <article>
+      <h3>3.3 Serviço de Busca</h3>
+      <ul>
+        <li>Consulta principal indexa trilhas, parques, cidades e estados.</li>
+        <li>Filtros: categoria, dificuldade, distância, ganho de elevação, pontos de água, camping, pet-friendly e obrigatoriedade de guia.</li>
+        <li>Ordenação: relevância (padrão), avaliação, distância, menor preço.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section>
+    <h2>4. Autenticação e Ativação de Guias</h2>
+    <ul>
+      <li>Login com magic link (preferencial), Google OAuth e Apple OAuth.</li>
+      <li>Sessões com cookies HTTP-only, proteção CSRF, rate limiting, CAPTCHA Turnstile e timeout após 24h de inatividade.</li>
+      <li>Fluxo de ativação de guia:</li>
+    </ul>
+    <ol>
+      <li>Usuário autenticado com <code>tipo_usuario != "guia"</code> vê CTA "Ativar cadastro de guia CADASTUR".</li>
+      <li>Formulário captura número CADASTUR, nome (pré-preenchido e editável), UF e município.</li>
+      <li>Backend valida dados contra o BD_CADASTUR com correspondência case e accent insensitive.</li>
+      <li>Sucesso: cria/atualiza registro em <code>guides</code> com <code>status_platform = "pending"</code> e notifica admin.</li>
+      <li>Falha: exibe mensagens de erro contextuais e registra tentativa.</li>
+      <li>Admin revisa, altera status para <code>active</code> e promove <code>users.tipo_usuario</code>.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>5. Desempenho, SEO e Acessibilidade</h2>
+    <ul>
+      <li>Stack: Next.js App Router com SSR e ISR.</li>
+      <li>Otimizações: CDN, lazy-loading de imagens, metadados schema.org, tags OG, sitemap e robots.txt.</li>
+      <li>Metas de Core Web Vitals: LCP &lt; 2,5s, CLS &lt; 0,1, INP &lt; 200ms.</li>
+      <li>Acessibilidade: semântica ARIA, contraste AA, navegação por teclado.</li>
+      <li>i18n: pt-BR como padrão com opção en-US.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>6. Observabilidade e Analytics</h2>
+    <ul>
+      <li>Eventos rastreados: <code>search_submitted</code>, <code>filter_applied</code>, <code>card_clicked</code>, <code>map_opened</code>, <code>guide_activation_opened</code>, <code>guide_activation_success</code>, <code>guide_activation_fail</code>.</li>
+      <li>Gerar alerta quando a taxa de falha de ativação de guias exceder 3%.</li>
+      <li>Logs de auditoria com IP, user agent, timestamps e resultados das tentativas de ativação.</li>
+    </ul>
+  </section>
+
+  <footer class="footer">
+    <p>TreKKo &copy; 2024 &mdash; Documento interno de especificação funcional.</p>
+  </footer>
+</body>
+</html>
