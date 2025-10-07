@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>TreKKo Platform Architecture Plan</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+        line-height: 1.6;
+      }
+
+      body {
+        margin: 2.5rem auto;
+        padding: 0 1.5rem 3rem;
+        max-width: 960px;
+        background-color: inherit;
+        color: inherit;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        line-height: 1.25;
+      }
+
+      h1 {
+        margin-bottom: 1.5rem;
+      }
+
+      h2 {
+        margin-top: 2.5rem;
+        border-bottom: 1px solid currentColor;
+        padding-bottom: 0.5rem;
+      }
+
+      h3 {
+        margin-top: 1.75rem;
+      }
+
+      ul,
+      ol {
+        margin-left: 1.5rem;
+      }
+
+      code {
+        font-family: "Fira Code", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        background-color: color-mix(in srgb, currentColor 12%, transparent);
+        padding: 0.1rem 0.35rem;
+        border-radius: 0.25rem;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1.5rem 0;
+      }
+
+      th,
+      td {
+        border: 1px solid currentColor;
+        padding: 0.5rem;
+        text-align: left;
+      }
+
+      @media (max-width: 640px) {
+        body {
+          margin: 1.5rem auto;
+          padding: 0 1rem 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>TreKKo Platform Architecture Plan</h1>
+    </header>
+
+    <section>
+      <h2>1. Product Overview</h2>
+      <p>
+        TreKKo é um marketplace para reservar experiências de trilhas guiadas no Brasil. A plataforma agrega dados oficiais do
+        CADASTUR, perfis de guias enriquecidos pela comunidade, conteúdo curado sobre trilhas e reservas de expedições em uma
+        experiência única. Os principais fluxos incluem:
+      </p>
+      <ul>
+        <li>
+          Descoberta por meio de uma página inicial inspirada no Airbnb, com busca rápida, conteúdo em destaque e mapa
+          alternável.
+        </li>
+        <li>
+          Páginas dedicadas de busca de guias e trilhas, com filtros multidimensionais, ordenação e paginação utilizando dados
+          do CADASTUR e internos.
+        </li>
+        <li>
+          Contas de usuário com autenticação, gerenciamento de perfil e ativação de guia condicionada à validação CADASTUR e
+          revisão administrativa.
+        </li>
+        <li>Páginas de expedições com disponibilidade, preços e avaliações.</li>
+        <li>Ferramentas administrativas para ingestão de dados CADASTUR e aprovação de guias.</li>
+      </ul>
+      <p>
+        A solução prioriza desempenho (SSR/ISR, Core Web Vitals), acessibilidade (WCAG AA), SEO (dados estruturados) e
+        observabilidade (métricas, tracing, eventos analíticos).
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Technology Stack</h2>
+      <ul>
+        <li>
+          <strong>Frontend:</strong> Next.js (App Router) com TypeScript, React Server Components, Tailwind CSS ou styled-system
+          para design tokens, next/image para mídia otimizada, Mapbox GL JS para mapa e React Query/Ações de Servidor para
+          dados.
+        </li>
+        <li><strong>Backend:</strong> Next.js API Routes/Ações de Servidor com Prisma ORM.</li>
+        <li><strong>Banco de dados:</strong> PostgreSQL com extensões <code>pg_trgm</code> e opcionalmente <code>postgis</code>.</li>
+        <li>
+          <strong>Autenticação:</strong> Auth.js (NextAuth) usando Magic Link e OAuth (Google, Apple, Microsoft). Cookies de
+          sessão HTTP-only, Secure, SameSite=Lax, complementados por tokens CSRF e rate limiting.
+        </li>
+        <li>
+          <strong>Cache &amp; Delivery:</strong> Vercel/Next.js ISR com cache CDN, Redis (ou Upstash) para controle de sessão e
+          buscas salvas.
+        </li>
+        <li>
+          <strong>Observabilidade:</strong> Tracing com OpenTelemetry, Vercel Analytics, Logflare e eventos personalizados em
+          PostHog ou Segment.
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. Data Model</h2>
+      <article>
+        <h3>3.1 Core Tables</h3>
+        <ul>
+          <li><strong>users</strong> (<code>id, email, name, avatar_url, locale, tipo_usuario, created_at</code>)</li>
+          <li><strong>user_sessions</strong> (<code>id, user_id, provider, expires_at, metadata</code>)</li>
+          <li>
+            <strong>guides_cadastur</strong>
+            (<code>cadastur_numero, nome, uf, municipio, contato_email, whatsapp, instagram, foto_url, status_cadastur, updated_hash, ingested_at, version_id</code>)
+          </li>
+          <li>
+            <strong>guide_profiles</strong>
+            (<code>id, user_id, cadastur_numero, bio, idiomas, categorias, preco_base, agenda, status_platform, rating_media, reviews_count</code>)
+          </li>
+          <li>
+            <strong>trails</strong>
+            (<code>id, nome, parque_regiao, cidade, uf, nivel, distancia_km, ganho_m, guia_obrigatorio, entrada_paga, preco_entrada, agua, camping, estacionamento, preco_estacionamento, aeroporto_prox, rodoviaria_prox, geo_lat, geo_lng, popularidade, created_at</code>)
+          </li>
+          <li><strong>trail_reviews</strong> (<code>id, trail_id, user_id, rating, comment, created_at</code>)</li>
+          <li>
+            <strong>expeditions</strong>
+            (<code>id, trail_id, guide_profile_id, titulo, descricao, preco, capacidade, datas, created_at</code>)
+          </li>
+          <li>
+            <strong>bookings</strong>
+            (<code>id, expedition_id, user_id, status, total_price, pax_adults, pax_children, check_in, check_out</code>)
+          </li>
+          <li>
+            <strong>cadastur_versions</strong>
+            (<code>id, file_name, checksum, processed_by, processed_at, diff_summary, rolled_back</code>)
+          </li>
+          <li>
+            <strong>guide_activation_requests</strong>
+            (<code>id, user_id, cadastur_numero, nome, uf, municipio, status, reviewer_id, reviewed_at, notes</code>)
+          </li>
+          <li>
+            <strong>saved_searches</strong> (<code>id, user_id, type, filters, created_at</code>)
+          </li>
+          <li>
+            <strong>analytics_events</strong> (<code>id, user_id, event_name, payload, occurred_at</code>)
+          </li>
+        </ul>
+      </article>
+      <article>
+        <h3>3.2 Indexing Strategy</h3>
+        <ul>
+          <li>
+            <strong>guides_cadastur:</strong> índices BTREE em <code>(uf, municipio)</code>, <code>cadastur_numero</code> e GIN
+            trigram em <code>nome</code> e <code>municipio</code>.
+          </li>
+          <li>
+            <strong>guide_profiles:</strong> BTREE em <code>status_platform</code> e <code>user_id</code>, índices parciais para
+            guias ativos.
+          </li>
+          <li>
+            <strong>trails:</strong> BTREE em <code>(uf, cidade, nivel)</code>, GIN trigram em <code>nome</code>,
+            <code>parque_regiao</code> e <code>cidade</code>, além de GiST em <code>geography(Point,4326)</code> quando houver busca
+            por raio.
+          </li>
+          <li><strong>expeditions:</strong> BTREE em <code>(guide_profile_id, trail_id)</code>.</li>
+          <li>Views materializadas <code>guides_search_view</code> e <code>trails_search_view</code> para filtros rápidos.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section>
+      <h2>4. API Design</h2>
+      <article>
+        <h3>4.1 Guide Search <code>/api/guides/search</code></h3>
+        <ul>
+          <li>
+            <strong>Query Params:</strong>
+            <code>uf, municipio, nome, cadastur, categorias[], idiomas[], precoMin, precoMax, ratingMin, disponInicio, disponFim, acessibilidade, petFriendly, page, size, sort</code>
+          </li>
+          <li>
+            <strong>Ordenação:</strong> <code>relevancia</code>, <code>melhor_avaliado</code>, <code>mais_experiente</code>,
+            <code>menor_preco</code>, <code>mais_proximo</code>
+          </li>
+          <li>
+            <strong>Resposta:</strong> envelope paginado com <code>GuideCard</code> enriquecido (foto, categorias, preço, rating,
+            agenda) e <em>facets</em>.
+          </li>
+          <li>
+            <strong>Implementação:</strong> Prisma consultando <code>guides_search_view</code> com trigram e distância geoespacial
+            quando disponível.
+          </li>
+        </ul>
+      </article>
+      <article>
+        <h3>4.2 Trail Search <code>/api/trails/search</code></h3>
+        <ul>
+          <li>
+            <strong>Query Params:</strong>
+            <code>nome, parque, cidade, uf, nivel, distMin, distMax, ganhoMin, ganhoMax, agua, camping, guiaObrig, entradaPaga, precoEntradaMax, estacionamento, precoEstMax, page, size, sort</code>
+          </li>
+          <li>
+            <strong>Ordenação:</strong> <code>relevancia</code>, <code>melhor_avaliada</code>, <code>menor_distancia</code>,
+            <code>menor_ganho</code>, <code>mais_proxima</code>
+          </li>
+          <li>
+            <strong>Resposta:</strong> envelope paginado com <code>TrailCard</code> e coordenadas para mapa.
+          </li>
+          <li>
+            <strong>Implementação:</strong> view SQL com score de relevância combinando similaridade textual e popularidade.
+          </li>
+        </ul>
+      </article>
+      <article>
+        <h3>4.3 Guide Activation <code>/api/guides/activate</code></h3>
+        <p>
+          Valida payload contra <code>guides_cadastur</code>. Sucesso cria/atualiza <code>guide_profiles</code>, insere
+          <code>guide_activation_request</code> com <code>status=pending</code> e emite evento analítico.
+        </p>
+      </article>
+      <article>
+        <h3>4.4 Admin CADASTUR Sync <code>/api/admin/cadastur/upload</code></h3>
+        <ul>
+          <li>Upload de CSV com validação de esquema, checksum e armazenamento seguro.</li>
+          <li>
+            Parse em streaming para tabela de staging, geração de diff (novos/atualizados/inativos) e confirmação transacional.
+          </li>
+          <li>Rollback via endpoint dedicado utilizando versões armazenadas.</li>
+        </ul>
+      </article>
+      <article>
+        <h3>4.5 Admin Activation Review <code>/api/admin/activations</code></h3>
+        <p>
+          Lista, aprova e rejeita solicitações. Aprovação ativa guia e atualiza role; rejeição registra notas e notifica usuário.
+        </p>
+      </article>
+    </section>
+
+    <section>
+      <h2>5. Frontend Architecture</h2>
+      <article>
+        <h3>5.1 Routing (App Router)</h3>
+        <ul>
+          <li>
+            <code>/</code>: home SSR com busca, categorias, trilhas em destaque e mapa alternável com suporte a i18n via
+            <code>next-intl</code>.
+          </li>
+          <li>
+            <code>/guides</code>: busca de guias com filtros, lista virtualizada, sincronização com mapa e metadados SSR.
+          </li>
+          <li>
+            <code>/trails</code>: busca de trilhas com filtros avançados recolhidos por padrão.
+          </li>
+          <li>
+            <code>/trails/[id]</code>: detalhes da trilha com SSR, seções dinâmicas, avaliações e mapa.
+          </li>
+          <li>
+            <code>/expeditions/[id]</code>: fluxo de reserva protegido por autenticação.
+          </li>
+          <li>
+            <code>/profile</code>: dashboard do usuário com aba de ativação de guia.
+          </li>
+          <li>
+            <code>/admin/cadastur</code>: painel de ingestão de CSV protegido, com wizard e histórico.
+          </li>
+          <li><code>/admin/guides</code>: fila de revisão de ativações.</li>
+        </ul>
+      </article>
+      <article>
+        <h3>5.2 Shared UI Elements</h3>
+        <ul>
+          <li>Cabeçalho de filtros fixo com acessibilidade (ARIA, navegação por teclado).</li>
+          <li>Cartões de busca com carregamento esquelético e grid responsivo.</li>
+          <li>Componente de mapa com importação dinâmica e sincronização com a lista.</li>
+          <li>Botão de buscas salvas integrado ao armazenamento local.</li>
+        </ul>
+      </article>
+      <article>
+        <h3>5.3 State Management</h3>
+        <ul>
+          <li>Server Actions para hidratação inicial e React Query/SWR para revalidação.</li>
+          <li>URLSearchParams sincronizados com filtros para URLs compartilháveis e caching.</li>
+          <li>Buscas com debounce e endpoints de autocomplete.</li>
+        </ul>
+      </article>
+    </section>
+
+    <section>
+      <h2>6. Authentication &amp; Authorization</h2>
+      <ul>
+        <li>Providers Auth.js: Magic Link, Google, Apple, Microsoft.</li>
+        <li>Middleware garantindo acesso apenas autenticado às rotas protegidas.</li>
+        <li>Autorização baseada em papéis (cliente, guia, admin) via helpers no servidor.</li>
+        <li>Proteção CSRF em formulários sensíveis.</li>
+        <li>Rate limiting para login e ativação usando Redis.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. Guide Activation Flow</h2>
+      <ol>
+        <li>Usuário autenticado acessa <code>/profile</code> e encontra CTA para ativar cadastro de guia.</li>
+        <li>Formulário coleta número CADASTUR, nome, UF e município; backend normaliza e busca em <code>guides_cadastur</code>.</li>
+        <li>
+          Em caso de correspondência, cria/atualiza <code>guide_profiles</code> com <code>status_platform="pending"</code> e
+          associa ao usuário.
+        </li>
+        <li>Insere solicitação na fila administrativa e notifica responsáveis.</li>
+        <li>Admin analisa com contexto completo e aprova ou rejeita, disparando notificações.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>8. CADASTUR Ingestion Pipeline</h2>
+      <ol>
+        <li>Upload autenticado do CSV, validação de cabeçalho e tipos, armazenamento seguro.</li>
+        <li>Stream para tabela de staging com hash por linha para detectar mudanças.</li>
+        <li>Geração de diff e apresentação para confirmação.</li>
+        <li>Upsert transacional em <code>guides_cadastur</code> marcando inativos.</li>
+        <li>Registro de versão com checksum, métricas e opção de rollback.</li>
+        <li>Rollback reverte para versão anterior usando diff ou snapshot.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>9. Search Experience &amp; Ranking</h2>
+      <ul>
+        <li>
+          <strong>Score de Relevância (Guias):</strong> combinação de similaridade trigram, proximidade geográfica e reforço por
+          status e rating.
+        </li>
+        <li>
+          <strong>Score de Relevância (Trilhas):</strong> similaridade textual + popularidade normalizada + boost de avaliações.
+        </li>
+        <li>Ordenação alternativa (alfabética) quando filtros limitam contexto.</li>
+        <li>Eventos de telemetria <code>guides_filter_applied</code> e <code>trails_filter_applied</code>.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>10. Performance, SEO, and Accessibility</h2>
+      <ul>
+        <li>Uso de ISR com revalidação baseada em alterações de dados.</li>
+        <li>Otimização de Core Web Vitals: skeletons, prefetch, placeholders de imagem.</li>
+        <li>Geração de dados estruturados <code>TouristTrip</code> e <code>LocalBusiness</code>.</li>
+        <li>Formulários acessíveis com rótulos, atributos ARIA e contraste adequado.</li>
+        <li>i18n com <code>next-intl</code> (pt-BR padrão, en-US fallback).</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>11. Observability &amp; Metrics</h2>
+      <ul>
+        <li>Instrumentação com OpenTelemetry em rotas e banco de dados.</li>
+        <li>Logs de latência, contagem de resultados e erros, além de eventos analíticos.</li>
+        <li>KPIs em dashboard: conversão de busca, SLA de aprovação, saúde da ingestão CADASTUR.</li>
+        <li>Monitoramento de erros (Sentry) com tags de release.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>12. Deployment &amp; DevOps</h2>
+      <ul>
+        <li>Infraestrutura em Vercel (frontend/backend) + PostgreSQL gerenciado (Supabase/Neon) + Redis (Upstash).</li>
+        <li>
+          CI/CD com GitHub Actions executando lint, type-check, testes unitários/integrados, Lighthouse CI e migrações Prisma.
+        </li>
+        <li>Feature flags para mapa, filtros avançados e reviews via LaunchDarkly ou toggles em banco.</li>
+        <li>Backups diários do Postgres e artefatos CADASTUR.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>13. Implementation Roadmap (High-Level)</h2>
+      <ol>
+        <li>Fundação: bootstrap do app Next.js, Auth.js, Prisma e UI base.</li>
+        <li>Camada de dados: ingestão inicial CADASTUR, seed de trilhas, views e índices.</li>
+        <li>Página de busca de guias: filtros, lista, mapa e integração API.</li>
+        <li>Página de busca de trilhas: filtros e ranking.</li>
+        <li>Página inicial: hero de busca, categorias, trilhas em destaque, mapa.</li>
+        <li>Fluxo de ativação de guia: UI, validações, fila admin, notificações.</li>
+        <li>Ferramentas admin: ingestão CADASTUR e gestão de ativações.</li>
+        <li>Performance e observabilidade: otimizações finais, SEO e acessibilidade.</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>14. Open Questions</h2>
+      <ul>
+        <li>Confirmar modelo de precificação e comissionamento.</li>
+        <li>Determinar fonte dos dados de disponibilidade das expedições.</li>
+        <li>Definir provedor de mapas (Mapbox x Google) e fallback offline.</li>
+        <li>Especificar cadência de notificações de buscas salvas (email/push).</li>
+        <li>Estabelecer SLA para aprovações e mensagem ao usuário em caso de atraso.</li>
+      </ul>
+    </section>
+  </body>
+</html>
