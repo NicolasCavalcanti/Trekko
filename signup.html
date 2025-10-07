@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Criar conta Trekko</title>
+  <meta name="description" content="Cadastre-se na Trekko para salvar trilhas, comentar e ativar seu perfil de guia CADASTUR." />
+  <link rel="canonical" href="https://www.trekko.com.br/signup.html" />
+  <link rel="preload" href="/assets/css/main.css" as="style" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+<body>
+<a class="skip-link" href="#principal">Pular para o conteúdo</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Principal">
+    <a class="nav__logo" href="/">Trekko</a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <ul id="menu" class="nav__menu" data-state="closed">
+      <li><a href="/trilhas.html">Trilhas</a></li>
+      <li><a href="/guias.html">Guias CADASTUR</a></li>
+      <li><a href="/expedicoes.html">Expedições</a></li>
+      <li><a href="/login.html" class="button button--ghost">Entrar</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="principal" class="section">
+  <header class="section__header">
+    <div>
+      <h1 class="section__title">Criar conta</h1>
+      <p class="section__description">Em poucos passos você poderá seguir trilhas, comentar expedições e ativar seu perfil de guia.</p>
+    </div>
+  </header>
+
+  <form class="form" id="signupForm" aria-label="Formulário de cadastro" data-analytics="filter" data-category="signup">
+    <div class="form__group">
+      <label for="nome">Nome completo</label>
+      <input id="nome" name="nome" type="text" required autocomplete="name" />
+    </div>
+    <div class="form__group">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" required autocomplete="email" />
+    </div>
+    <div class="form__group">
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" required minlength="8" autocomplete="new-password" />
+    </div>
+    <div class="form__group">
+      <label for="confirmacao">Confirmar senha</label>
+      <input id="confirmacao" name="confirmacao" type="password" required minlength="8" autocomplete="new-password" />
+    </div>
+    <label class="form__group"><input type="checkbox" name="aceite" value="true" required /> Concordo com os Termos e Política de Privacidade</label>
+    <div class="form__actions">
+      <button class="button button--primary" type="submit">Criar conta</button>
+      <a class="link" href="/login.html">Já tenho conta</a>
+    </div>
+  </form>
+</main>
+<footer class="site-footer">
+  <nav aria-label="Rodapé">
+    <a href="/sobre.html">Sobre</a>
+    <a href="/contato.html">Contato</a>
+    <a href="/politica.html">Política e Termos</a>
+  </nav>
+  <small>© Trekko</small>
+</footer>
+<script>
+  document.getElementById('signupForm').addEventListener('submit', function(e){
+    const senha=document.getElementById('senha').value;
+    const confirmacao=document.getElementById('confirmacao').value;
+    if(senha!==confirmacao){
+      e.preventDefault();
+      alert('As senhas não conferem.');
+    }
+  });
+</script>
+<script src="/assets/js/main.js" defer></script>
+</body>
+</html>

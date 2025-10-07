@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trekko — Trilhas, Guias CADASTUR e Expedições</title>
+  <meta name="description" content="Encontre trilhas reais no Brasil, guias certificados pelo CADASTUR e expedições organizadas com segurança." />
+  <link rel="canonical" href="https://www.trekko.com.br/" />
+  <link rel="preconnect" href="https://cdn.trekko.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preload" href="/assets/css/main.css" as="style" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <meta property="og:title" content="Trekko — Trilhas, Guias CADASTUR e Expedições" />
+  <meta property="og:description" content="A plataforma brasileira para trilhas certificadas, guias e expedições." />
+  <meta property="og:url" content="https://www.trekko.com.br/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://cdn.trekko.com/og.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Trekko — Trilhas, Guias CADASTUR e Expedições" />
+  <meta name="twitter:description" content="Busque trilhas, encontre guias certificados e agende expedições pelo Brasil." />
+  <meta name="twitter:image" content="https://cdn.trekko.com/og.jpg" />
+  <meta name="theme-color" content="#2D6A4F" />
+  <style>
+    body{margin:0;font-family:"Outfit","Sora",sans-serif;color:#333;background:#f6f6f4}
+    .nav__menu[data-state="closed"],.skip-link{position:absolute;top:-100px;left:0}
+    .skip-link:focus{top:0}
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Trekko",
+    "url": "https://www.trekko.com.br/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.trekko.com.br/trilhas.html?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+</head>
+<body>
+<a class="skip-link" href="#content">Pular para o conteúdo</a>
+<header class="site-header">
+  <div class="alert-banner" role="status">Plataforma em beta. Dados oficiais CADASTUR e ICMBio atualizados diariamente.</div>
+  <nav class="nav" aria-label="Principal">
+    <a class="nav__logo" href="/">Trekko</a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <ul id="menu" class="nav__menu" data-state="closed">
+      <li><a href="/trilhas.html">Trilhas</a></li>
+      <li><a href="/guias.html">Guias CADASTUR</a></li>
+      <li><a href="/expedicoes.html">Expedições</a></li>
+      <li><a href="/sobre.html">Sobre</a></li>
+      <li><a href="/login.html" class="button button--primary">Entrar</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="content">
+  <section class="hero" role="search" aria-label="Busca por trilhas">
+    <div class="section__header">
+      <div>
+        <h1 class="hero__title">Encontre sua próxima trilha ⛰️</h1>
+        <p class="hero__subtitle">Busque por trilhas homologadas, guias certificados e expedições com disponibilidade real no Brasil inteiro.</p>
+      </div>
+    </div>
+    <form class="search-bar" id="searchForm" action="/trilhas.html" method="get" data-analytics="filter" data-category="home_search">
+      <div class="search-bar__group">
+        <label for="q">Trilha, Parque, Cidade ou Estado</label>
+        <input id="q" name="q" class="search-bar__field" type="search" placeholder="Ex.: Serra Fina, Itatiaia, MG" autocomplete="off" required minlength="2" />
+        <ul id="autocomplete" class="autocomplete" role="listbox" hidden></ul>
+      </div>
+      <button class="button button--primary" type="submit" data-analytics="cta" data-category="search">Buscar</button>
+    </form>
+  </section>
+
+  <section class="section" aria-labelledby="trail-highlights">
+    <div class="section__header">
+      <div>
+        <h2 id="trail-highlights" class="section__title">Trilhas em destaque</h2>
+        <p class="section__description">Confira as 10 trilhas mais buscadas pelos aventureiros nesta semana.</p>
+      </div>
+      <a class="button button--ghost" href="/trilhas.html">Ver todas</a>
+    </div>
+    <div class="cards" id="trailHighlights" data-state="loading" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <section class="section" aria-labelledby="guides">
+    <div class="section__header">
+      <div>
+        <h2 id="guides" class="section__title">Guias certificados (CADASTUR)</h2>
+        <p class="section__description">Todos os guias são validados na base CADASTUR diariamente. Faça sua expedição com quem entende.</p>
+      </div>
+      <a class="button button--ghost" href="/guias.html">Ver todos os guias</a>
+    </div>
+    <div class="cards" id="guideHighlights" data-state="loading" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <section class="section" aria-labelledby="by-state">
+    <div class="section__header">
+      <h2 id="by-state" class="section__title">Explorar por estado</h2>
+      <p class="section__description">Visualize os estados com mais trilhas cadastradas e planeje sua próxima viagem.</p>
+    </div>
+    <div class="estados-grid" id="estadosGrid" data-state="loading" aria-live="polite" aria-busy="true"></div>
+  </section>
+
+  <section class="section" aria-labelledby="blog">
+    <div class="section__header">
+      <div>
+        <h2 id="blog" class="section__title">Blog e conteúdo</h2>
+        <p class="section__description">Artigos sobre segurança em trilhas, checklist de equipamentos e relatos de expedições.</p>
+      </div>
+      <a class="button button--ghost" href="/blog.html">Ir para o blog</a>
+    </div>
+    <div class="cards" data-state="ready">
+      <article class="card">
+        <div class="card__body">
+          <h3 class="card__title">Checklist de equipamentos para travessias longas</h3>
+          <p class="card__meta">Por Equipe Trekko</p>
+          <p>Entenda os itens indispensáveis para trilhas acima de 20 km e como otimizar o peso da mochila.</p>
+          <a class="button button--ghost" href="/blog/checklist-equipamentos.html">Ler artigo</a>
+        </div>
+      </article>
+      <article class="card">
+        <div class="card__body">
+          <h3 class="card__title">Como funciona a certificação CADASTUR</h3>
+          <p class="card__meta">Por Ministério do Turismo</p>
+          <p>Saiba como identificar um guia certificado e os benefícios para turistas e para o trade turístico.</p>
+          <a class="button button--ghost" href="/blog/cadastur.html">Ler artigo</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="cta-guia">
+    <div class="section__header">
+      <div>
+        <h2 id="cta-guia" class="section__title">É guia CADASTUR? Ative seu perfil</h2>
+        <p class="section__description">Se você já está na base CADASTUR, basta ativar seu perfil Trekko para divulgar expedições e receber reservas.</p>
+      </div>
+      <a class="button button--primary" href="/login.html?ativar=1" data-analytics="cta" data-category="activate-guide">Ativar guia</a>
+    </div>
+  </section>
+</main>
+<footer class="site-footer">
+  <nav aria-label="Rodapé">
+    <a href="/sobre.html">Sobre</a>
+    <a href="/contato.html">Contato</a>
+    <a href="/politica.html">Política e Termos</a>
+    <a href="/sitemap.xml">Sitemap</a>
+  </nav>
+  <small>© <span id="currentYear">2024</span> Trekko • Todos os direitos reservados</small>
+</footer>
+<script>document.getElementById('currentYear').textContent=new Date().getFullYear();</script>
+<script src="/assets/js/main.js" defer></script>
+</body>
+</html>

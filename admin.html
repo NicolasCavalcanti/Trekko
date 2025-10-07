@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Painel administrativo — Trekko</title>
+  <meta name="description" content="Área restrita para gestão da base CADASTUR, trilhas, expedições e usuários." />
+  <link rel="canonical" href="https://www.trekko.com.br/admin.html" />
+  <link rel="preload" href="/assets/css/main.css" as="style" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https://images.unsplash.com https://cdn.trekko.com; connect-src 'self'; script-src 'self'; style-src 'self';" />
+</head>
+<body>
+<a class="skip-link" href="#painel">Pular para o conteúdo</a>
+<header class="site-header">
+  <nav class="nav" aria-label="Principal">
+    <a class="nav__logo" href="/">Trekko</a>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
+    <ul id="menu" class="nav__menu" data-state="closed">
+      <li><a href="/trilhas.html">Trilhas</a></li>
+      <li><a href="/guias.html">Guias CADASTUR</a></li>
+      <li><a href="/expedicoes.html">Expedições</a></li>
+      <li><a href="/login.html" class="button button--ghost">Sair</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="painel" class="section">
+  <header class="section__header">
+    <div>
+      <h1 class="section__title">Administração Trekko</h1>
+      <p class="section__description">Gerencie dados críticos, mantenha a base CADASTUR atualizada e valide expedições.</p>
+    </div>
+  </header>
+
+  <section class="section" aria-labelledby="cadastur-upload">
+    <h2 id="cadastur-upload" class="section__title">Base CADASTUR</h2>
+    <p>Atualize o CSV oficial (UTF-8) para que os guias possam ativar seus perfis. Somente arquivos com cabeçalhos padrão são aceitos.</p>
+    <form class="form" id="cadasturUploadForm" aria-label="Upload CADASTUR">
+      <div class="form__group">
+        <label for="cadasturFile">Arquivo CSV</label>
+        <input id="cadasturFile" name="cadasturFile" type="file" accept=".csv" required />
+      </div>
+      <button class="button button--primary" type="submit">Enviar arquivo</button>
+    </form>
+  </section>
+
+  <section class="section" aria-labelledby="gestao-trilhas">
+    <h2 id="gestao-trilhas" class="section__title">Gestão de trilhas</h2>
+    <p>Cadastre novas trilhas ou edite as existentes. As alterações refletem nos endpoints da API imediatamente.</p>
+    <div class="grid grid--two">
+      <article class="details-grid__item">
+        <h3>Importar trilhas</h3>
+        <p>Importe arquivos JSON ou GeoJSON conforme o padrão Trekko.</p>
+        <button class="button">Importar arquivo</button>
+      </article>
+      <article class="details-grid__item">
+        <h3>Publicar atualização</h3>
+        <p>Após revisar as trilhas, publique a atualização para os usuários.</p>
+        <button class="button button--primary">Publicar</button>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="moderacao">
+    <h2 id="moderacao" class="section__title">Moderação</h2>
+    <div class="grid grid--two">
+      <article class="details-grid__item">
+        <h3>Expedições pendentes</h3>
+        <p>Analise expedições aguardando validação e aprove ou rejeite.</p>
+        <button class="button button--ghost">Ver pendências</button>
+      </article>
+      <article class="details-grid__item">
+        <h3>Usuários</h3>
+        <p>Gerencie permissões de administradores, guias e trilheiros.</p>
+        <button class="button button--ghost">Gerenciar usuários</button>
+      </article>
+    </div>
+  </section>
+</main>
+<footer class="site-footer">
+  <nav aria-label="Rodapé">
+    <a href="/sobre.html">Sobre</a>
+    <a href="/contato.html">Contato</a>
+    <a href="/politica.html">Política e Termos</a>
+  </nav>
+  <small>© Trekko</small>
+</footer>
+<script src="/assets/js/main.js" defer></script>
+</body>
+</html>
